@@ -1,0 +1,99 @@
+  rmdl  io
+  mdst  io
+  res   io
+  push
+  res   5
+  push
+  res   4
+  push
+  res   3
+  push
+  res   2
+  push
+  res   1
+  push
+  anew  5
+  push
+  jmp   12
+
+@$anon_4_29
+  push
+  tget  0
+  set   x
+  res
+  tget  1
+  set   y
+  res   x
+  push
+  res   y
+  push
+  sub
+  ret
+  res   $anon_4_29
+  call  sort
+  call  println
+  res   io
+  push
+  res   1
+  push
+  res   2
+  push
+  res   3
+  push
+  res   4
+  push
+  res   5
+  push
+  anew  5
+  push
+  jmp   12
+
+@$anon_5_29
+  push
+  tget  0
+  set   x
+  res
+  tget  1
+  set   y
+  res   x
+  push
+  res   y
+  push
+  sub
+  ret
+  res   $anon_5_29
+  call  sort
+  call  println
+  res   io
+  push
+  res   2
+  push
+  res   1
+  push
+  res   5
+  push
+  res   3
+  push
+  res   4
+  push
+  anew  5
+  push
+  jmp   12
+
+@$anon_6_29
+  push
+  tget  0
+  set   x
+  res
+  tget  1
+  set   y
+  res   x
+  push
+  res   y
+  push
+  sub
+  ret
+  res   $anon_6_29
+  call  sort
+  call  println
+  exit  0

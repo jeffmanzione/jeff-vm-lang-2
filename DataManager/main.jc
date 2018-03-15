@@ -1,0 +1,648 @@
+  rmdl  io
+  mdst  io
+  rmdl  math
+  mdst  math
+  res   io
+  push  
+  res   math
+  push  
+  res   4.000000
+  call  sqrt
+  call  println
+  res   3
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  tupl  3
+  push  
+  tget  0
+  set   a
+  res   
+  push  
+  tget  1
+  set   b
+  res   
+  tget  2
+  set   c
+  res   io
+  push  
+  res   c
+  push  
+  res   b
+  push  
+  res   a
+  push  
+  tupl  3
+  call  println
+  res   0
+  set   a
+  res   a
+  push  
+  res   10
+  push  
+  lt    
+  ifn   11
+  res   io
+  push  
+  res   a
+  call  println
+  res   a
+  push  
+  res   1
+  push  
+  add   
+  set   a
+  jmp   -16
+  res   io
+  push  
+  res   Nil
+  not   
+  if    2
+  res   'False'
+  jmp   1
+  res   'True'
+  call  println
+  res   0
+  set   a
+  res   a
+  push  
+  res   10
+  push  
+  lt    
+  ifn   11
+  res   io
+  push  
+  res   a
+  call  println
+  res   a
+  push  
+  res   1
+  push  
+  add   
+  set   a
+  jmp   -17
+
+class Test
+  jmp   7
+
+@new
+  set   a
+  res   a
+  push  
+  res   self
+  fld   a
+  res   self
+  ret   
+  jmp   6
+
+@test
+  res   2
+  push  
+  res   1
+  push  
+  anew  2
+  ret   
+  jmp   6
+
+@test2
+  res   4
+  push  
+  res   3
+  push  
+  anew  2
+  ret   
+  jmp   3
+
+@test3
+  res   self
+  get   a
+  ret   
+endclass
+  jmp   5
+
+@test
+  res   io
+  push  
+  res   'test'
+  call  println
+  ret   
+  res   math
+  push  
+  res   6
+  push  
+  res   5
+  push  
+  res   4
+  push  
+  tupl  3
+  call  max3
+  set   x
+  res   io
+  push  
+  res   x
+  call  println
+  anew  
+  set   a
+  res   3
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  anew  3
+  set   b
+  res   io
+  push  
+  res   b
+  push  
+  res   1
+  aidx  
+  call  println
+  res   4
+  push  
+  res   b
+  push  
+  res   10
+  aset  
+  res   io
+  push  
+  res   b
+  call  println
+  res   9
+  push  
+  res   b
+  fld   a
+  res   io
+  push  
+  res   b
+  get   a
+  call  println
+  res   io
+  push  
+  res   self
+  call  println
+  res   io
+  push  
+  res   test
+  call  println
+  res   test
+  push  
+  call  
+  res   Test
+  push  
+  res   55
+  call  
+  set   t1
+  res   io
+  push  
+  res   t1
+  get   a
+  call  println
+  res   io
+  push  
+  res   t1
+  push  
+  call  test
+  call  println
+  res   io
+  push  
+  res   t1
+  call  println
+  res   io
+  push  
+  res   t1
+  push  
+  call  test3
+  call  println
+  res   io
+  get   println
+  set   println
+  res   3
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  tupl  3
+  set   z
+  res   println
+  push  
+  res   z
+  get   len
+  push  
+  res   z
+  push  
+  tupl  2
+  call  
+  res   io
+  push  
+  res   ''
+  call  println
+  res   io
+  push  
+  res   math
+  push  
+  res   5
+  push  
+  res   2
+  push  
+  tupl  2
+  call  int_pow
+  call  println
+  res   io
+  push  
+  res   'abc'
+  push  
+  res   String
+  push  
+  is    
+  call  println
+  jmp   11
+
+@$anon_70_8
+  push  
+  tget  0
+  set   func
+  res   
+  tget  1
+  set   arg
+  res   func
+  push  
+  res   arg
+  call  
+  ret   
+  res   $anon_70_8
+  set   pass
+  res   pass
+  push  
+  res   'Hello, world!'
+  push  
+  res   io
+  get   println
+  push  
+  tupl  2
+  call  
+  res   5
+  push  
+  res   4
+  push  
+  res   3
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  res   0
+  push  
+  anew  6
+  set   arr
+  res   io
+  push  
+  res   arr
+  get   len
+  push  
+  res   arr
+  get   len
+  push  
+  tupl  2
+  call  println
+  res   0
+  set   i
+  res   i
+  push  
+  res   arr
+  get   len
+  push  
+  lt    
+  ifn   14
+  res   io
+  push  
+  res   arr
+  push  
+  res   i
+  aidx  
+  call  println
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -20
+  res   True
+  push  
+  res   True
+  push  
+  res   True
+  push  
+  or    
+  push  
+  or    
+  ifn   4
+  res   io
+  push  
+  res   'Test'
+  call  println
+  res   io
+  push  
+  res   math
+  push  
+  res   self
+  get   $parent
+  get   $block
+  get   $ip
+  push  
+  tupl  2
+  call  println
+  res   True
+  if    5
+  res   io
+  push  
+  res   'NoTest'
+  call  println
+  jmp   4
+  res   io
+  push  
+  res   'Test'
+  call  println
+  jmp   15
+
+@$anon_90_5
+  set   a
+  res   io
+  push  
+  res   String
+  push  
+  res   ' turd'
+  push  
+  res   a
+  push  
+  anew  2
+  push  
+  call  flatten
+  call  
+  call  println
+  ret   
+  res   $anon_90_5
+  set   x
+  res   pass
+  push  
+  res   'Hello'
+  push  
+  res   x
+  push  
+  tupl  2
+  call  
+  res   io
+  push  
+  res   math
+  get   e
+  push  
+  res   math
+  get   pi
+  push  
+  tupl  2
+  call  println
+  res   io
+  push  
+  res   Array
+  get   class
+  call  println
+  res   io
+  push  
+  res   Function
+  call  println
+  res   io
+  push  
+  res   5
+  push  
+  res   4
+  push  
+  res   3
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  res   0
+  push  
+  anew  6
+  push  
+  jmp   10
+
+@$anon_100_30
+  set   x
+  res   range
+  push  
+  res   x
+  push  
+  res   0
+  push  
+  tupl  2
+  call  
+  ret   
+  res   $anon_100_30
+  call  map
+  push  
+  call  flatten
+  call  println
+  res   io
+  push  
+  res   io
+  get   println
+  call  println
+  res   Object
+  push  
+  call  
+  set   x
+  res   io
+  push  
+  res   x
+  call  println
+  res   'quux'
+  push  
+  res   'baz'
+  push  
+  res   'bar'
+  push  
+  res   'foo'
+  push  
+  anew  4
+  set   crap
+  res   io
+  push  
+  res   crap
+  push  
+  jmp   16
+
+@$anon_112_34
+  push  
+  tget  0
+  set   a
+  res   
+  tget  1
+  set   e
+  res   a
+  push  
+  res   ', '
+  push  
+  res   e
+  push  
+  add   
+  push  
+  add   
+  ret   
+  res   $anon_112_34
+  push  
+  jmp   2
+
+@$anon_112_25
+  res   ''
+  ret   
+  res   $anon_112_25
+  push  
+  tupl  2
+  call  collect
+  call  println
+  res   io
+  push  
+  res   ', '
+  push  
+  res   crap
+  call  join
+  call  println
+  res   io
+  push  
+  res   'abcdefg'
+  push  
+  res   'abb'
+  call  starts_with
+  push  
+  res   'abcdefg'
+  push  
+  res   'abc'
+  call  starts_with
+  push  
+  tupl  2
+  call  println
+  res   io
+  push  
+  res   'abcdefg'
+  push  
+  res   'ffg'
+  call  ends_with
+  push  
+  res   'abcdefg'
+  push  
+  res   'efg'
+  call  ends_with
+  push  
+  tupl  2
+  call  println
+  res   io
+  push  
+  res   5
+  push  
+  res   4
+  push  
+  res   3
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  anew  5
+  push  
+  jmp   12
+
+@$anon_118_29
+  push  
+  tget  0
+  set   x
+  res   
+  tget  1
+  set   y
+  res   x
+  push  
+  res   y
+  push  
+  sub   
+  ret   
+  res   $anon_118_29
+  call  sort
+  call  println
+  res   io
+  push  
+  res   1
+  push  
+  res   2
+  push  
+  res   3
+  push  
+  res   4
+  push  
+  res   5
+  push  
+  anew  5
+  push  
+  jmp   12
+
+@$anon_119_29
+  push  
+  tget  0
+  set   x
+  res   
+  tget  1
+  set   y
+  res   x
+  push  
+  res   y
+  push  
+  sub   
+  ret   
+  res   $anon_119_29
+  call  sort
+  call  println
+  res   io
+  push  
+  res   2
+  push  
+  res   1
+  push  
+  res   5
+  push  
+  res   3
+  push  
+  res   4
+  push  
+  anew  5
+  push  
+  jmp   12
+
+@$anon_120_29
+  push  
+  tget  0
+  set   x
+  res   
+  tget  1
+  set   y
+  res   x
+  push  
+  res   y
+  push  
+  sub   
+  ret   
+  res   $anon_120_29
+  call  sort
+  call  println
+  res   io
+  push  
+  res   io
+  call  println
+  res   io
+  push  
+  res   Object
+  call  println
+  exit  0

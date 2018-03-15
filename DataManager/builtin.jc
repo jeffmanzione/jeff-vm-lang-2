@@ -1,0 +1,702 @@
+module builtin
+  rmdl  io
+  mdst  io
+  jmp   29
+
+@range
+  push  
+  tget  0
+  set   start
+  res   
+  tget  1
+  set   end
+  anew  
+  set   arr
+  res   start
+  set   i
+  res   i
+  push  
+  res   end
+  push  
+  lt    
+  ifn   11
+  res   arr
+  push  
+  res   i
+  call  append
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -16
+  res   arr
+  ret   
+
+class Object
+  jmp   8
+
+@to_s
+  res   self
+  get   class
+  get   name
+  push  
+  res   '()'
+  push  
+  add   
+  ret   
+endclass
+
+class Class
+  jmp   7
+
+@to_s
+  res   self
+  get   name
+  push  
+  res   '.class'
+  push  
+  add   
+  ret   
+endclass
+
+class Function
+  jmp   27
+
+@to_s
+  res   self
+  get   class
+  get   name
+  push  
+  res   '('
+  push  
+  res   self
+  get   $module
+  get   name
+  push  
+  res   '.'
+  push  
+  res   self
+  get   name
+  push  
+  res   ')'
+  push  
+  add   
+  push  
+  add   
+  push  
+  add   
+  push  
+  add   
+  push  
+  add   
+  ret   
+endclass
+
+class Module
+  jmp   11
+
+@to_s
+  res   'Module('
+  push  
+  res   self
+  get   name
+  push  
+  res   ')'
+  push  
+  add   
+  push  
+  add   
+  ret   
+endclass
+
+class Array
+  jmp   9
+
+@append
+  set   elt
+  res   elt
+  push  
+  res   self
+  push  
+  res   self
+  get   len
+  aset  
+  ret   
+  jmp   37
+
+@map
+  set   f
+  anew  
+  set   arr
+  res   self
+  get   len
+  push  
+  res   1
+  push  
+  sub   
+  set   i
+  res   i
+  push  
+  res   0
+  push  
+  gte   
+  ifn   19
+  res   f
+  push  
+  res   self
+  push  
+  res   i
+  aidx  
+  call  
+  push  
+  res   arr
+  push  
+  res   i
+  aset  
+  res   i
+  push  
+  res   1
+  push  
+  sub   
+  set   i
+  jmp   -24
+  res   arr
+  ret   
+  jmp   65
+
+@flatten
+  anew  
+  set   arr
+  res   0
+  set   i
+  res   i
+  push  
+  res   self
+  get   len
+  push  
+  lt    
+  ifn   52
+  res   self
+  push  
+  res   i
+  aidx  
+  push  
+  res   Array
+  push  
+  is    
+  if    8
+  res   arr
+  push  
+  res   self
+  push  
+  res   i
+  aidx  
+  call  append
+  jmp   28
+  res   self
+  push  
+  res   i
+  aidx  
+  set   child
+  res   0
+  set   j
+  res   j
+  push  
+  res   child
+  get   len
+  push  
+  lt    
+  ifn   14
+  res   arr
+  push  
+  res   child
+  push  
+  res   j
+  aidx  
+  call  append
+  res   j
+  push  
+  res   1
+  push  
+  add   
+  set   j
+  jmp   -20
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -58
+  res   arr
+  ret   
+  jmp   63
+
+@collect
+  push  
+  tget  0
+  set   s
+  res   
+  tget  1
+  set   f
+  res   self
+  get   len
+  push  
+  res   0
+  push  
+  eq    
+  ifn   15
+  res   s
+  push  
+  res   Function
+  push  
+  is    
+  if    3
+  res   s
+  set   a
+  jmp   4
+  res   s
+  push  
+  call  
+  set   a
+  res   a
+  ret   
+  res   self
+  push  
+  res   0
+  aidx  
+  set   a
+  res   1
+  set   i
+  res   i
+  push  
+  res   self
+  get   len
+  push  
+  lt    
+  ifn   19
+  res   f
+  push  
+  res   self
+  push  
+  res   i
+  aidx  
+  push  
+  res   a
+  push  
+  tupl  2
+  call  
+  set   a
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -25
+  res   a
+  ret   
+  jmp   43
+
+@starts_with
+  set   array
+  res   array
+  get   len
+  push  
+  res   self
+  get   len
+  push  
+  gt    
+  ifn   2
+  res   False
+  ret   
+  res   0
+  set   i
+  res   i
+  push  
+  res   array
+  get   len
+  push  
+  lt    
+  ifn   21
+  res   array
+  push  
+  res   i
+  aidx  
+  push  
+  res   self
+  push  
+  res   i
+  aidx  
+  push  
+  neq   
+  ifn   2
+  res   False
+  ret   
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -27
+  res   True
+  ret   
+  jmp   64
+
+@ends_with
+  set   array
+  res   array
+  get   len
+  push  
+  res   self
+  get   len
+  push  
+  gt    
+  ifn   2
+  res   False
+  ret   
+  res   self
+  get   len
+  push  
+  res   1
+  push  
+  sub   
+  set   self_len
+  res   array
+  get   len
+  push  
+  res   1
+  push  
+  sub   
+  set   array_len
+  res   0
+  set   i
+  res   i
+  push  
+  res   array_len
+  push  
+  lte   
+  ifn   29
+  res   array
+  push  
+  res   array_len
+  push  
+  res   i
+  push  
+  sub   
+  aidx  
+  push  
+  res   self
+  push  
+  res   self_len
+  push  
+  res   i
+  push  
+  sub   
+  aidx  
+  push  
+  neq   
+  ifn   2
+  res   False
+  ret   
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -34
+  res   True
+  ret   
+  jmp   116
+
+@partition
+  push  
+  tget  0
+  set   c
+  res   
+  push  
+  tget  1
+  set   l
+  res   
+  tget  2
+  set   h
+  res   self
+  push  
+  res   h
+  aidx  
+  set   x
+  res   l
+  push  
+  res   1
+  push  
+  sub   
+  set   i
+  res   l
+  set   j
+  res   j
+  push  
+  res   h
+  push  
+  res   1
+  push  
+  sub   
+  push  
+  lte   
+  ifn   49
+  res   c
+  push  
+  res   x
+  push  
+  res   self
+  push  
+  res   j
+  aidx  
+  push  
+  tupl  2
+  call  
+  push  
+  res   0
+  push  
+  lte   
+  ifn   26
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  res   self
+  push  
+  res   i
+  aidx  
+  set   tmp
+  res   self
+  push  
+  res   j
+  aidx  
+  push  
+  res   self
+  push  
+  res   i
+  aset  
+  res   tmp
+  push  
+  res   self
+  push  
+  res   j
+  aset  
+  res   j
+  push  
+  res   1
+  push  
+  add   
+  set   j
+  jmp   -58
+  res   self
+  push  
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  aidx  
+  set   tmp
+  res   self
+  push  
+  res   h
+  aidx  
+  push  
+  res   self
+  push  
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  aset  
+  res   tmp
+  push  
+  res   self
+  push  
+  res   h
+  aset  
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  ret   
+  jmp   64
+
+@qsort
+  push  
+  tget  0
+  set   c
+  res   
+  push  
+  tget  1
+  set   l
+  res   
+  tget  2
+  set   h
+  res   c
+  push  
+  res   h
+  push  
+  res   l
+  push  
+  tupl  2
+  call  
+  push  
+  res   0
+  push  
+  lt    
+  ifn   39
+  res   self
+  push  
+  res   h
+  push  
+  res   l
+  push  
+  res   c
+  push  
+  tupl  3
+  call  partition
+  set   p
+  res   self
+  push  
+  res   p
+  push  
+  res   1
+  push  
+  sub   
+  push  
+  res   l
+  push  
+  res   c
+  push  
+  tupl  3
+  call  qsort
+  res   self
+  push  
+  res   h
+  push  
+  res   p
+  push  
+  res   1
+  push  
+  add   
+  push  
+  res   c
+  push  
+  tupl  3
+  call  qsort
+  res   self
+  ret   
+  jmp   17
+
+@sort
+  set   c
+  res   self
+  push  
+  res   self
+  get   len
+  push  
+  res   1
+  push  
+  sub   
+  push  
+  res   0
+  push  
+  res   c
+  push  
+  tupl  3
+  call  qsort
+  ret   
+endclass
+
+class String
+  jmp   26
+
+@new
+  set   array
+  res   0
+  set   i
+  res   i
+  push  
+  res   array
+  get   len
+  push  
+  lt    
+  ifn   14
+  res   self
+  push  
+  res   array
+  push  
+  res   i
+  aidx  
+  call  append
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -20
+  res   self
+  ret   
+  jmp   46
+
+@join
+  set   array
+  res   array
+  get   len
+  push  
+  res   0
+  push  
+  eq    
+  ifn   2
+  res   ''
+  ret   
+  res   array
+  push  
+  res   0
+  aidx  
+  set   a
+  res   1
+  set   i
+  res   i
+  push  
+  res   array
+  get   len
+  push  
+  lt    
+  ifn   20
+  res   a
+  push  
+  res   self
+  push  
+  res   array
+  push  
+  res   i
+  aidx  
+  push  
+  add   
+  push  
+  add   
+  set   a
+  res   i
+  push  
+  res   1
+  push  
+  add   
+  set   i
+  jmp   -26
+  res   a
+  ret   
+endclass
+  exit  0

@@ -1,0 +1,126 @@
+/*
+ * arena.c
+ *
+ *  Created on: Feb 10, 2018
+ *      Author: Jeff
+ */
+
+#include "arena.h"
+
+#include <stdlib.h>
+
+#include "element.h"
+#include "error.h"
+#include "memory.h"
+#include "memory_graph.h"
+#include "tape.h"
+
+ARENA_DECLARE(Element);
+ARENA_DECLARE(Node);
+ARENA_DECLARE(NodeEdge);
+ARENA_DECLARE(InsContainer);
+ARENA_DECLARE(Token);
+
+#define DEFAULT_ELTS_IN_CHUNK 2048
+
+//int descriptor_sz;
+//
+//typedef struct {
+//  void *prev_freed;
+//} Descriptor;
+
+struct Subarena_ {
+  Subarena *prev;
+  void *block;
+  size_t block_sz;
+};
+
+void arenas_init() {
+  ARENA_INIT(Element);
+  ARENA_INIT(Node);
+  ARENA_INIT(NodeEdge);
+  ARENA_INIT(InsContainer);
+  ARENA_INIT(Token);
+}
+
+void arenas_finalize() {
+  ARENA_FINALIZE(Element);
+  ARENA_FINALIZE(Node);
+  ARENA_FINALIZE(NodeEdge);
+  ARENA_FINALIZE(InsContainer);
+  ARENA_FINALIZE(Token);
+}
+
+Subarena *subarena_create(Subarena *prev, size_t sz) {
+  Subarena *sa = ALLOC2(Subarena);
+  sa->block_sz = sz * DEFAULT_ELTS_IN_CHUNK;
+  sa->block = malloc(sa->block_sz);
+  sa->prev = prev;
+  return sa;
+}
+
+void subarena_delete(Subarena *sa) {
+//  DEBUGF("Deleting subarena.");
+  if (NULL != sa->prev) {
+    subarena_delete(sa->prev);
+  }
+  free(sa->block);
+  DEALLOC(sa);
+}
+
+void arena_init(Arena *arena, size_t sz) {
+  ASSERT_NOT_NULL(arena);
+//  descriptor_sz = ((int) ceil(((float) sizeof(Descriptor)) / 8)) * 8;
+  arena->alloc_sz = sz /*+ descriptor_sz*/;
+  arena->last = subarena_create(NULL, arena->alloc_sz);
+  arena->next = arena->last->block;
+  arena->end = arena->last->block + arena->last->block_sz;
+//  arena->last_freed = NULL;
+#ifdef DEBUG
+  arena->requests = 0;
+  arena->removes = 0;
+#endif
+}
+
+void arena_finalize(Arena *arena) {
+  ASSERT_NOT_NULL(arena);
+  subarena_delete(arena->last);
+//#ifdef DEBUG
+//  DEBUGF("Arena had %d requests, %d removals.", arena->requests,
+//      arena->removes);
+//#endif
+}
+
+void *arena_alloc(Arena *arena) {
+#ifdef DEBUG
+  arena->requests++;
+#endif
+  ASSERT_NOT_NULL(arena);
+//  // Use up spacee that was already freed.
+//  if (NULL != arena->last_freed) {
+//    void *free_spot = arena->last_freed;
+//    arena->last_freed = ((Descriptor *) free_spot)->prev_freed;
+//    return free_spot + descriptor_sz;
+//  }
+  // Allocate a new suarena if the current one is full.
+  if (arena->next == arena->end) {
+    Subarena *new_sa = subarena_create(arena->last, arena->alloc_sz);
+    new_sa->prev = arena->last;
+    arena->last = new_sa;
+    arena->next = arena->last->block;
+    arena->end = arena->last->block + arena->last->block_sz;
+  }
+  void *spot = arena->next;
+  arena->next += arena->alloc_sz;
+  return spot /*+ descriptor_sz*/;
+}
+
+//void arena_dealloc(Arena *arena, void *ptr) {
+//#ifdef DEBUG
+//  arena->removes--;
+//#endif
+//  ASSERT(NOT_NULL(arena), NOT_NULL(ptr));
+//  Descriptor *d = (Descriptor *) (ptr - descriptor_sz);
+//  d->prev_freed = arena->last_freed;
+//  arena->last_freed = (void *) d;
+//}

@@ -1,0 +1,2619 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  us/call  us/call  name    
+100.00      0.01     0.01     8151     1.23     1.23  string_hasher
+  0.00      0.01     0.00   214071     0.00     0.04  map_lookup
+  0.00      0.01     0.00   193657     0.00     0.00  default_hasher
+  0.00      0.01     0.00   181877     0.00     0.00  default_comparator
+  0.00      0.01     0.00    95652     0.00     0.04  obj_get_field
+  0.00      0.01     0.00    88757     0.00     0.00  parser_next__
+  0.00      0.01     0.00    88711     0.00     0.00  queue_peek
+  0.00      0.01     0.00    26436     0.00     0.00  set_lookup
+  0.00      0.01     0.00    24016     0.00     0.00  node_edge_hasher
+  0.00      0.01     0.00    22356     0.00     0.04  obj_set_field
+  0.00      0.01     0.00    20321     0.00     0.00  match_merge
+  0.00      0.01     0.00    19027     0.00     0.00  node_edge_comparator
+  0.00      0.01     0.00    16451     0.00     0.16  memory_graph_set_field
+  0.00      0.01     0.00    15693     0.00     0.00  map_insert_helper
+  0.00      0.01     0.00    14895     0.00     0.00  create_int
+  0.00      0.01     0.00    11079     0.00     0.08  map_insert
+  0.00      0.01     0.00    10322     0.00     0.00  queue_remove
+  0.00      0.01     0.00    10056     0.00     0.00  token_to_val
+  0.00      0.01     0.00     9518     0.00     0.00  expando_get
+  0.00      0.01     0.00     8105     0.00     0.29  vm_shift_ip
+  0.00      0.01     0.00     7814     0.00     0.51  execute
+  0.00      0.01     0.00     7814     0.00     0.00  module_ins
+  0.00      0.01     0.00     7800     0.00     0.08  set_insert
+  0.00      0.01     0.00     7455     0.00     0.01  string_comparator
+  0.00      0.01     0.00     7422     0.00     0.04  strings_intern
+  0.00      0.01     0.00     6810     0.00     0.00  string_literal
+  0.00      0.01     0.00     6491     0.00     0.00  serialize_module
+  0.00      0.01     0.00     6330     0.00     0.00  array_size
+  0.00      0.01     0.00     5688     0.00     0.00  queue_last
+  0.00      0.01     0.00     5541     0.00     0.00  read_word
+  0.00      0.01     0.00     5541     0.00     0.00  resolve_type
+  0.00      0.01     0.00     5429     0.00     0.00  queue_add
+  0.00      0.01     0.00     5429     0.00     0.00  token_delete
+  0.00      0.01     0.00     4901     0.00     0.00  queue_add_front
+  0.00      0.01     0.00     4817     0.00     0.01  assignment_tuple
+  0.00      0.01     0.00     3826     0.00     0.26  execute_no_param
+  0.00      0.01     0.00     3766     0.00     0.00  length_expression
+  0.00      0.01     0.00     3208     0.00     0.00  codegen_file
+  0.00      0.01     0.00     3152     0.00     0.00  array_declaration
+  0.00      0.01     0.00     3152     0.00     0.00  identifier
+  0.00      0.01     0.00     3152     0.00     0.00  module_statement
+  0.00      0.01     0.00     3152     0.00     0.00  postfix_expression
+  0.00      0.01     0.00     3152     0.00     0.00  primary_expression
+  0.00      0.01     0.00     2996     0.00     0.00  array_enqueue
+  0.00      0.01     0.00     2928     0.00     0.41  or_expression
+  0.00      0.01     0.00     2841     0.00     0.03  multiplicative_expression1
+  0.00      0.01     0.00     2608     0.00     0.30  execute_id_param
+  0.00      0.01     0.00     2482     0.00     0.13  memory_graph_array_enqueue
+  0.00      0.01     0.00     2444     0.00     0.00  array_dequeue
+  0.00      0.01     0.00     2444     0.00     0.12  memory_graph_array_dequeue
+  0.00      0.01     0.00     2216     0.00     0.00  match_rollback
+  0.00      0.01     0.00     2177     0.00     0.12  vm_lookup
+  0.00      0.01     0.00     2105     0.00     0.15  additive_expression
+  0.00      0.01     0.00     2105     0.00     0.00  map_iterate
+  0.00      0.01     0.00     2105     0.00     0.11  multiplicative_expression
+  0.00      0.01     0.00     2034     0.00     0.00  map_finalize
+  0.00      0.01     0.00     2034     0.00     0.00  map_init
+  0.00      0.01     0.00     2005     0.00     0.16  tokenize_line
+  0.00      0.01     0.00     2003     0.00     0.44  and_expression
+  0.00      0.01     0.00     2003     0.00     0.36  equality_expression
+  0.00      0.01     0.00     2003     0.00     0.28  relational_expression
+  0.00      0.01     0.00     2003     0.00     0.52  xor_expression
+  0.00      0.01     0.00     1793     0.00     0.04  additive_expression1
+  0.00      0.01     0.00     1720     0.00     0.00  expando_len
+  0.00      0.01     0.00     1716     0.00     0.05  module_instruction
+  0.00      0.01     0.00     1704     0.00     0.00  expando_append
+  0.00      0.01     0.00     1704     0.00     0.00  instruction_delete
+  0.00      0.01     0.00     1700     0.00     0.00  op_type
+  0.00      0.01     0.00     1691     0.00     0.04  and_expression1
+  0.00      0.01     0.00     1691     0.00     0.04  equality_expression1
+  0.00      0.01     0.00     1691     0.00     0.05  relational_expression1
+  0.00      0.01     0.00     1691     0.00     0.04  xor_expression1
+  0.00      0.01     0.00     1661     0.00     0.06  or_expression1
+  0.00      0.01     0.00     1634     0.00     0.15  postfix_expression1
+  0.00      0.01     0.00     1408     0.00     0.00  set_iterate
+  0.00      0.01     0.00     1351     0.00     0.00  set_finalize
+  0.00      0.01     0.00     1350     0.00     0.00  set_init
+  0.00      0.01     0.00     1278     0.00     0.29  execute_val_param
+  0.00      0.01     0.00     1278     0.00     0.00  val_to_elt
+  0.00      0.01     0.00     1085     0.00     0.10  anon_function
+  0.00      0.01     0.00      977     0.00     0.00  is_expression
+  0.00      0.01     0.00      712     0.00     0.20  tuple_expression
+  0.00      0.01     0.00      696     0.00     0.00  debugf
+  0.00      0.01     0.00      693     0.00     0.00  instruction
+  0.00      0.01     0.00      674     0.00     0.00  map_remove
+  0.00      0.01     0.00      674     0.00     0.00  obj_delete_ptr
+  0.00      0.01     0.00      674     0.00     0.00  set_remove
+  0.00      0.01     0.00      673     0.00     0.08  memory_graph_new_node
+  0.00      0.01     0.00      669     0.00     0.32  create_obj_of_class
+  0.00      0.01     0.00      654     0.00     0.00  instruction_id
+  0.00      0.01     0.00      567     0.00     0.11  tuple_expression1
+  0.00      0.01     0.00      530     0.00     0.00  tuple_size
+  0.00      0.01     0.00      466     0.00     0.12  expression_statement
+  0.00      0.01     0.00      463     0.00     0.06  inherits_from
+  0.00      0.01     0.00      439     0.00     0.00  array_get
+  0.00      0.01     0.00      371     0.00     0.00  ends_with
+  0.00      0.01     0.00      365     0.00     0.00  contains_char
+  0.00      0.01     0.00      319     0.00     0.00  write_ins
+  0.00      0.01     0.00      302     0.00     0.00  instruction_val
+  0.00      0.01     0.00      300     0.00     0.32  create_obj
+  0.00      0.01     0.00      298     0.00     0.00  module_name
+  0.00      0.01     0.00      297     0.00     0.00  array_pop
+  0.00      0.01     0.00      297     0.00     0.00  array_push
+  0.00      0.01     0.00      297     0.00     0.17  memory_graph_array_pop
+  0.00      0.01     0.00      297     0.00     0.24  memory_graph_array_push
+  0.00      0.01     0.00      293     0.00     1.61  vm_new_block
+  0.00      0.01     0.00      290     0.00     0.00  is_true
+  0.00      0.01     0.00      290     0.00     0.13  vm_maybe_initialize_and_execute
+  0.00      0.01     0.00      289     0.00     2.25  call_fn
+  0.00      0.01     0.00      274     0.00     0.13  memory_graph_tuple_add
+  0.00      0.01     0.00      274     0.00     0.00  tuple_add
+  0.00      0.01     0.00      256     0.00     0.00  tuple_get
+  0.00      0.01     0.00      248     0.00     0.11  vm_object_lookup
+  0.00      0.01     0.00      227     0.00     0.00  write_ins_no_arg
+  0.00      0.01     0.00      206     0.00     0.00  array_create
+  0.00      0.01     0.00      206     0.00     0.00  array_delete
+  0.00      0.01     0.00      197     0.00     0.00  elt_to_str
+  0.00      0.01     0.00      166     0.00     0.14  statement_list
+  0.00      0.01     0.00      156     0.00     0.48  string_create
+  0.00      0.01     0.00      155     0.00     0.00  operator_add
+  0.00      0.01     0.00      154     0.00     0.00  create_none
+  0.00      0.01     0.00      152     0.00     0.00  codegen
+  0.00      0.01     0.00      147     0.00     0.00  operator_sub
+  0.00      0.01     0.00      146     0.00     0.12  element_true
+  0.00      0.01     0.00      145     0.00     0.12  element_false
+  0.00      0.01     0.00      117     0.00     0.48  create_tuple
+  0.00      0.01     0.00      117     0.00     0.00  tuple_create
+  0.00      0.01     0.00      117     0.00     0.00  tuple_delete
+  0.00      0.01     0.00      104     0.00     0.04  obj_to_str
+  0.00      0.01     0.00      102     0.00     0.54  execute_str_param
+  0.00      0.01     0.00       99     0.00     0.12  operator_lt
+  0.00      0.01     0.00       88     0.00     0.00  expression_tree_delete
+  0.00      0.01     0.00       82     0.00     0.00  array_set
+  0.00      0.01     0.00       82     0.00     0.00  codegen_postfix1
+  0.00      0.01     0.00       82     0.00     0.12  memory_graph_array_set
+  0.00      0.01     0.00       78     0.00     0.00  read_string
+  0.00      0.01     0.00       72     0.00     0.12  operator_lte
+  0.00      0.01     0.00       65     0.00     0.17  function_argument_list
+  0.00      0.01     0.00       63     0.00     0.00  write_ins_int
+  0.00      0.01     0.00       62     0.00     0.00  primary_expression_no_constants
+  0.00      0.01     0.00       58     0.00     0.00  array_append
+  0.00      0.01     0.00       56     0.00     0.00  tuple_print
+  0.00      0.01     0.00       55     0.00     0.05  jump_statement
+  0.00      0.01     0.00       54     0.00     0.21  statement_list1
+  0.00      0.01     0.00       51     0.00     0.00  instruction_str
+  0.00      0.01     0.00       51     0.00     0.00  string_copy_range
+  0.00      0.01     0.00       50     0.00     0.32  create_array
+  0.00      0.01     0.00       50     0.00     0.11  function_argument_list1
+  0.00      0.01     0.00       40     0.00     1.27  create_function
+  0.00      0.01     0.00       29     0.00     0.41  memory_graph_array_join
+  0.00      0.01     0.00       29     0.00     0.57  string_add
+  0.00      0.01     0.00       22     0.00     0.00  value_negate
+  0.00      0.01     0.00       21     0.00     0.00  append
+  0.00      0.01     0.00       21     0.00     0.00  codegen_assignment
+  0.00      0.01     0.00       21     0.00     0.00  map_delete
+  0.00      0.01     0.00       20     0.00     0.00  map_create
+  0.00      0.01     0.00       20     0.00     0.00  noop_instruction
+  0.00      0.01     0.00       17     0.00     0.00  create_float
+  0.00      0.01     0.00       15     0.00     1.74  create_method
+  0.00      0.01     0.00       12     0.00     0.00  array_print
+  0.00      0.01     0.00       12     0.00     0.12  operator_neq
+  0.00      0.01     0.00       11     0.00     0.00  codegen_tuple
+  0.00      0.01     0.00       11     0.00     0.12  operator_gt
+  0.00      0.01     0.00       10     0.00     0.95  class_fill
+  0.00      0.01     0.00        9     0.00     0.00  queue_init
+  0.00      0.01     0.00        9     0.00     0.00  set_create
+  0.00      0.01     0.00        9     0.00     0.00  set_delete
+  0.00      0.01     0.00        8     0.00     0.00  codegen_anon_function
+  0.00      0.01     0.00        8     0.00     0.00  memory_graph_print
+  0.00      0.01     0.00        8     0.00     0.00  operator_div
+  0.00      0.01     0.00        8     0.00     0.12  operator_eq
+  0.00      0.01     0.00        8     0.00     0.00  queue_remove_last
+  0.00      0.01     0.00        8     0.00     0.00  write_anon_label
+  0.00      0.01     0.00        8     0.00     0.00  write_ins_anon
+  0.00      0.01     0.00        7     0.00     0.12  operator_gte
+  0.00      0.01     0.00        6     0.00     0.00  codegen_function_args
+  0.00      0.01     0.00        6     0.00     0.00  resize_table
+  0.00      0.01     0.00        6     0.00     0.04  unary_expression
+  0.00      0.01     0.00        5     0.00     0.16  class_statement
+  0.00      0.01     0.00        5     0.00     0.00  codegen_function
+  0.00      0.01     0.00        5     0.00     0.00  compound_statement
+  0.00      0.01     0.00        5     0.00     0.06  field_statement
+  0.00      0.01     0.00        5     0.00     0.00  file_fn
+  0.00      0.01     0.00        5     0.00     0.00  file_info_delete
+  0.00      0.01     0.00        5     0.00     0.04  function_definition
+  0.00      0.01     0.00        5     0.00     0.00  queue_deep_delete
+  0.00      0.01     0.00        5     0.00     0.00  write_label
+  0.00      0.01     0.00        4     0.00     0.96  create_module
+  0.00      0.01     0.00        4     0.00     0.23  create_obj_unsafe
+  0.00      0.01     0.00        4     0.00     0.00  expando__
+  0.00      0.01     0.00        4     0.00     0.00  expando_delete
+  0.00      0.01     0.00        4     0.00     0.00  file_info_file
+  0.00      0.01     0.00        4     0.00    96.71  load_fn
+  0.00      0.01     0.00        4     0.00     0.00  module_classes
+  0.00      0.01     0.00        4     0.00    72.48  module_create_file
+  0.00      0.01     0.00        4     0.00     0.00  module_delete
+  0.00      0.01     0.00        4     0.00    22.75  module_load
+  0.00      0.01     0.00        4     0.00     0.00  module_refs
+  0.00      0.01     0.00        4     0.00     0.00  operator_mult
+  0.00      0.01     0.00        4     0.00     0.00  queue_shallow_delete
+  0.00      0.01     0.00        4     0.00    72.43  tokenize
+  0.00      0.01     0.00        3     0.00     0.00  codegen_assignment_ext
+  0.00      0.01     0.00        3     0.00     0.00  codegen_if
+  0.00      0.01     0.00        3     0.00     0.04  file_info_set_name
+  0.00      0.01     0.00        3     0.00    72.57  module_create
+  0.00      0.01     0.00        3     0.00     1.56  vm_add_module
+  0.00      0.01     0.00        2     0.00     0.00  assignment_expression
+  0.00      0.01     0.00        2     0.00     0.44  call_new
+  0.00      0.01     0.00        2     0.00     1.43  class_create
+  0.00      0.01     0.00        2     0.00     0.00  class_definition
+  0.00      0.01     0.00        2     0.00     0.59  class_statement_list
+  0.00      0.01     0.00        2     0.00     0.00  codegen_for
+  0.00      0.01     0.00        2     0.00     0.00  codegen_import
+  0.00      0.01     0.00        2     0.00     0.12  operator_or
+  0.00      0.01     0.00        1     0.00     0.00  alloc_finalize
+  0.00      0.01     0.00        1     0.00     0.00  alloc_init
+  0.00      0.01     0.00        1     0.00    11.24  class_init
+  0.00      0.01     0.00        1     0.00     0.89  class_statement_list1
+  0.00      0.01     0.00        1     0.00     0.00  codegen_class
+  0.00      0.01     0.00        1     0.00     0.12  element_not
+  0.00      0.01     0.00        1     0.00     0.05  file_info
+  0.00      0.01     0.00        1     0.00     5.56  file_level_statement_list
+  0.00      0.01     0.00        1     0.00     5.32  file_level_statement_list1
+  0.00      0.01     0.00        1     0.00     0.00  map_create_default
+  0.00      0.01     0.00        1     0.00     0.00  memory_graph_create
+  0.00      0.01     0.00        1     0.00     0.15  memory_graph_create_root_element
+  0.00      0.01     0.00        1     0.00     0.00  memory_graph_delete
+  0.00      0.01     0.00        1     0.00     5.56  parse_file
+  0.00      0.01     0.00        1     0.00     0.00  set_init_default
+  0.00      0.01     0.00        1     0.00     0.00  strings_finalize
+  0.00      0.01     0.00        1     0.00     0.00  strings_init
+  0.00      0.01     0.00        1     0.00     1.65  strings_insert_constants
+  0.00      0.01     0.00        1     0.00    98.32  vm_add_builtin
+  0.00      0.01     0.00        1     0.00   112.73  vm_create
+  0.00      0.01     0.00        1     0.00     0.09  vm_delete
+  0.00      0.01     0.00        1     0.00     0.36  vm_set_module
+  0.00      0.01     0.00        1     0.00     0.00  write_class
+  0.00      0.01     0.00        1     0.00     0.00  write_endclass
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 100.00% of 0.01 seconds
+
+index % time    self  children    called     name
+                0.00    0.00     696/8151        map_insert [14]
+                0.01    0.00    7455/8151        map_lookup [2]
+[1]    100.0    0.01    0.00    8151         string_hasher [1]
+-----------------------------------------------
+                0.00    0.00       1/214071      class_statement_list [118]
+                0.00    0.00       1/214071      __fn__.4831 [127]
+                0.00    0.00       2/214071      __fn__.4991 [139]
+                0.00    0.00       2/214071      __fn__.4955 [134]
+                0.00    0.00       2/214071      file_level_statement_list [97]
+                0.00    0.00       3/214071      __fn__.3621 [15]
+                0.00    0.00       3/214071      __fn__.4518 [122]
+                0.00    0.00       3/214071      __fn__.4098 [126]
+                0.00    0.00       4/214071      class_statement_list1 [121]
+                0.00    0.00       5/214071      field_statement [130]
+                0.00    0.00       5/214071      function_definition [133]
+                0.00    0.00       5/214071      class_statement [125]
+                0.00    0.00       6/214071      unary_expression [131]
+                0.00    0.00       6/214071      __fn__.4176 [128]
+                0.00    0.00      10/214071      __fn__.4685 [110]
+                0.00    0.00      24/214071      memory_graph_array_set [91]
+                0.00    0.00      33/214071      strings_insert_constants [112]
+                0.00    0.00      55/214071      jump_statement [108]
+                0.00    0.00     100/214071      memory_graph_tuple_add [70]
+                0.00    0.00     104/214071      obj_to_str <cycle 1> [102]
+                0.00    0.00     108/214071      statement_list [77]
+                0.00    0.00     110/214071      statement_list1 [88]
+                0.00    0.00     122/214071      file_level_statement_list1 [99]
+                0.00    0.00     128/214071      function_argument_list1 [96]
+                0.00    0.00     130/214071      function_argument_list [89]
+                0.00    0.00     232/214071      expression_statement [62]
+                0.00    0.00     272/214071      append_child_edges.2852 [83]
+                0.00    0.00     301/214071      __fn__.5059 [78]
+                0.00    0.00     404/214071      __fn__.5031 [59]
+                0.00    0.00     586/214071      memory_graph_array_push [58]
+                0.00    0.00     586/214071      memory_graph_array_pop [67]
+                0.00    0.00     728/214071      module_instruction [49]
+                0.00    0.00     983/214071      __fn__.3661 [24]
+                0.00    0.00    1048/214071      assignment_tuple [68]
+                0.00    0.00    1068/214071      __fn__.3937 [41]
+                0.00    0.00    1185/214071      tuple_expression1 [60]
+                0.00    0.00    1424/214071      tuple_expression [42]
+                0.00    0.00    1691/214071      equality_expression1 [55]
+                0.00    0.00    1691/214071      and_expression1 [56]
+                0.00    0.00    1691/214071      xor_expression1 [57]
+                0.00    0.00    1691/214071      or_expression1 [46]
+                0.00    0.00    1697/214071      relational_expression1 [53]
+                0.00    0.00    1793/214071      additive_expression1 <cycle 3> [52]
+                0.00    0.00    1793/214071      multiplicative_expression1 [51]
+                0.00    0.00    1922/214071      memory_graph_array_dequeue [33]
+                0.00    0.00    1934/214071      memory_graph_array_enqueue [28]
+                0.00    0.00    1951/214071      or_expression [9]
+                0.00    0.00    2003/214071      relational_expression [21]
+                0.00    0.00    2003/214071      equality_expression [17]
+                0.00    0.00    2003/214071      and_expression [13]
+                0.00    0.00    2003/214071      xor_expression [10]
+                0.00    0.00    2054/214071      anon_function [45]
+                0.00    0.00    2105/214071      additive_expression <cycle 3> [29]
+                0.00    0.00    3152/214071      __fn__.3212 [43]
+                0.00    0.00    4210/214071      multiplicative_expression [38]
+                0.00    0.00    4383/214071      postfix_expression1 [37]
+                0.00    0.00    4670/214071      __fn__.3182 [23]
+                0.00    0.00    6773/214071      __fn__.3015 [32]
+                0.00    0.00    7422/214071      strings_intern [31]
+                0.00    0.00   12787/214071      __fn__.2961 [20]
+                0.00    0.00   12852/214071      memory_graph_set_field [7]
+                0.00    0.00   22356/214071      obj_set_field [12]
+                0.00    0.00   95652/214071      obj_get_field [5]
+[2]     91.9    0.00    0.01  214071         map_lookup [2]
+                0.01    0.00    7455/8151        string_hasher [1]
+                0.00    0.00    6759/7455        string_comparator [64]
+                0.00    0.00  188340/193657      default_hasher [146]
+                0.00    0.00  180659/181877      default_comparator [147]
+                0.00    0.00   18276/24016       node_edge_hasher [150]
+                0.00    0.00   12536/19027       node_edge_comparator [152]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]     69.0    0.00    0.01                 main [3]
+                0.00    0.01       1/1           vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00       3/4           load_fn [26]
+                0.00    0.00       1/1           vm_create [44]
+                0.00    0.00       3/3           vm_add_module [100]
+                0.00    0.00       1/1           strings_insert_constants [112]
+                0.00    0.00       1/1           vm_set_module [129]
+                0.00    0.00       1/1           vm_delete [138]
+                0.00    0.00       3/4           module_delete [141]
+                0.00    0.00       1/1           alloc_finalize [142]
+                0.00    0.00       1/1           alloc_init [265]
+                0.00    0.00       1/1           strings_init [271]
+                0.00    0.00       1/1           strings_finalize [270]
+-----------------------------------------------
+[4]     64.9    0.00    0.01       1+14828   <cycle 4 as a whole> [4]
+                0.00    0.00    7814             execute <cycle 4> [6]
+                0.00    0.00    3826             execute_no_param <cycle 4> [11]
+                0.00    0.00    2608             execute_id_param <cycle 4> [16]
+                0.00    0.00     289             call_fn <cycle 4> [18]
+                0.00    0.00     290             vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00       2             call_new <cycle 4> [123]
+-----------------------------------------------
+                0.00    0.00       1/95652       vm_set_module [129]
+                0.00    0.00       1/95652       vm_delete [138]
+                0.00    0.00       2/95652       call_new <cycle 4> [123]
+                0.00    0.00       6/95652       add_class.3140 [109]
+                0.00    0.00      29/95652       memory_graph_array_join [86]
+                0.00    0.00      82/95652       memory_graph_array_set [91]
+                0.00    0.00     274/95652       memory_graph_tuple_add [70]
+                0.00    0.00     297/95652       memory_graph_array_push [58]
+                0.00    0.00     297/95652       memory_graph_array_pop [67]
+                0.00    0.00     539/95652       execute_val_param [27]
+                0.00    0.00     596/95652       vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00     609/95652       vm_object_lookup [74]
+                0.00    0.00     625/95652       inherits_from [73]
+                0.00    0.00    1156/95652       call_fn <cycle 4> [18]
+                0.00    0.00    1758/95652       vm_new_block [22]
+                0.00    0.00    2444/95652       memory_graph_array_dequeue [33]
+                0.00    0.00    2482/95652       memory_graph_array_enqueue [28]
+                0.00    0.00    2768/95652       execute_no_param <cycle 4> [11]
+                0.00    0.00    3339/95652       execute_id_param <cycle 4> [16]
+                0.00    0.00    6325/95652       vm_lookup [36]
+                0.00    0.00   16451/95652       memory_graph_set_field [7]
+                0.00    0.00   24315/95652       vm_shift_ip [8]
+                0.00    0.00   31256/95652       execute <cycle 4> [6]
+[5]     41.1    0.00    0.00   95652         obj_get_field [5]
+                0.00    0.00   95652/214071      map_lookup [2]
+-----------------------------------------------
+                                7814             vm_maybe_initialize_and_execute <cycle 4> [69]
+[6]     40.0    0.00    0.00    7814         execute <cycle 4> [6]
+                0.00    0.00    7814/8105        vm_shift_ip [8]
+                0.00    0.00   31256/95652       obj_get_field [5]
+                0.00    0.00    1278/1278        execute_val_param [27]
+                0.00    0.00     102/102         execute_str_param [63]
+                0.00    0.00    7814/7814        module_ins [158]
+                                3826             execute_no_param <cycle 4> [11]
+                                2608             execute_id_param <cycle 4> [16]
+-----------------------------------------------
+                0.00    0.00       1/16451       call_new <cycle 4> [123]
+                0.00    0.00       2/16451       class_create [107]
+                0.00    0.00       2/16451       add_class.3155 [105]
+                0.00    0.00       2/16451       add_ref.3136 [113]
+                0.00    0.00       2/16451       vm_set_module [129]
+                0.00    0.00       3/16451       vm_add_builtin [47]
+                0.00    0.00       4/16451       create_obj_unsafe [120]
+                0.00    0.00       4/16451       create_module [104]
+                0.00    0.00       8/16451       add_method.3159 [87]
+                0.00    0.00       9/16451       class_init [90]
+                0.00    0.00       9/16451       vm_add_module [100]
+                0.00    0.00      11/16451       vm_create [44]
+                0.00    0.00      12/16451       add_class.3140 [109]
+                0.00    0.00      15/16451       add_method.3144 [72]
+                0.00    0.00      16/16451       add_ref.3152 [76]
+                0.00    0.00      20/16451       vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00      29/16451       string_add [82]
+                0.00    0.00      30/16451       class_fill [92]
+                0.00    0.00      37/16451       execute_str_param [63]
+                0.00    0.00      45/16451       create_method [75]
+                0.00    0.00     117/16451       create_tuple [61]
+                0.00    0.00     120/16451       create_function [66]
+                0.00    0.00     156/16451       string_create [54]
+                0.00    0.00     784/16451       execute_val_param [27]
+                0.00    0.00     867/16451       call_fn <cycle 4> [18]
+                0.00    0.00     875/16451       create_obj_of_class [40]
+                0.00    0.00    1363/16451       execute_no_param <cycle 4> [11]
+                0.00    0.00    1465/16451       vm_new_block [22]
+                0.00    0.00    2338/16451       execute_id_param <cycle 4> [16]
+                0.00    0.00    8105/16451       vm_shift_ip [8]
+[7]     25.8    0.00    0.00   16451         memory_graph_set_field [7]
+                0.00    0.00   16451/22356       obj_set_field [12]
+                0.00    0.00   16451/95652       obj_get_field [5]
+                0.00    0.00   12852/214071      map_lookup [2]
+                0.00    0.00    4826/7800        set_insert [19]
+                0.00    0.00    3171/11079       map_insert [14]
+                0.00    0.00   12852/26436       set_lookup [149]
+-----------------------------------------------
+                0.00    0.00     291/8105        execute_val_param [27]
+                0.00    0.00    7814/8105        execute <cycle 4> [6]
+[8]     23.2    0.00    0.00    8105         vm_shift_ip [8]
+                0.00    0.00    8105/16451       memory_graph_set_field [7]
+                0.00    0.00   24315/95652       obj_get_field [5]
+                0.00    0.00    8105/14895       create_int [154]
+-----------------------------------------------
+                0.00    0.00     977/2928        __fn__.3661 [24]
+                0.00    0.00    1951/2928        __fn__.3621 [15]
+[9]     12.0    0.00    0.00    2928         or_expression [9]
+                0.00    0.00    1951/2003        xor_expression [10]
+                0.00    0.00    1661/1661        or_expression1 [46]
+                0.00    0.00    1951/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1661/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00      52/2003        or_expression1 [46]
+                0.00    0.00    1951/2003        or_expression [9]
+[10]    10.4    0.00    0.00    2003         xor_expression [10]
+                0.00    0.00    2003/2003        and_expression [13]
+                0.00    0.00    2003/214071      map_lookup [2]
+                0.00    0.00    1691/1691        xor_expression1 [57]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1691/20321       match_merge [151]
+-----------------------------------------------
+                                3826             execute <cycle 4> [6]
+[11]    10.1    0.00    0.00    3826         execute_no_param <cycle 4> [11]
+                0.00    0.00    2314/2482        memory_graph_array_enqueue [28]
+                0.00    0.00    1982/2444        memory_graph_array_dequeue [33]
+                0.00    0.00    1363/16451       memory_graph_set_field [7]
+                0.00    0.00    2768/95652       obj_get_field [5]
+                0.00    0.00     289/297         memory_graph_array_pop [67]
+                0.00    0.00     144/2177        vm_lookup [36]
+                0.00    0.00      29/29          string_add [82]
+                0.00    0.00      99/99          operator_lt [85]
+                0.00    0.00      82/82          memory_graph_array_set [91]
+                0.00    0.00      72/72          operator_lte [93]
+                0.00    0.00      65/145         element_false [80]
+                0.00    0.00       9/50          create_array [84]
+                0.00    0.00      12/12          operator_neq [114]
+                0.00    0.00      11/11          operator_gt [115]
+                0.00    0.00       8/8           operator_eq [119]
+                0.00    0.00       7/7           operator_gte [124]
+                0.00    0.00       7/146         element_true [79]
+                0.00    0.00       2/2           operator_or [132]
+                0.00    0.00       1/1           element_not [137]
+                0.00    0.00      31/2198        obj_to_str <cycle 1> [102]
+                0.00    0.00     155/155         operator_add [210]
+                0.00    0.00     151/6330        array_size [161]
+                0.00    0.00     151/439         array_get [195]
+                0.00    0.00     147/147         operator_sub [213]
+                0.00    0.00      65/197         elt_to_str [209]
+                0.00    0.00       8/8           operator_div [240]
+                0.00    0.00       4/4           operator_mult [257]
+                                 144             call_fn <cycle 4> [18]
+                                   1             call_new <cycle 4> [123]
+-----------------------------------------------
+                0.00    0.00      29/22356       memory_graph_array_join [86]
+                0.00    0.00      82/22356       memory_graph_array_set [91]
+                0.00    0.00     274/22356       memory_graph_tuple_add [70]
+                0.00    0.00     297/22356       memory_graph_array_push [58]
+                0.00    0.00     297/22356       memory_graph_array_pop [67]
+                0.00    0.00    2444/22356       memory_graph_array_dequeue [33]
+                0.00    0.00    2482/22356       memory_graph_array_enqueue [28]
+                0.00    0.00   16451/22356       memory_graph_set_field [7]
+[12]     9.6    0.00    0.00   22356         obj_set_field [12]
+                0.00    0.00   22356/214071      map_lookup [2]
+-----------------------------------------------
+                0.00    0.00    2003/2003        xor_expression [10]
+[13]     8.8    0.00    0.00    2003         and_expression [13]
+                0.00    0.00    2003/2003        equality_expression [17]
+                0.00    0.00    2003/214071      map_lookup [2]
+                0.00    0.00    1691/1691        and_expression1 [56]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1691/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       1/11079       __fn__.4955 [134]
+                0.00    0.00       1/11079       function_argument_list1 [96]
+                0.00    0.00       1/11079       function_argument_list [89]
+                0.00    0.00       1/11079       field_statement [130]
+                0.00    0.00       1/11079       assignment_tuple [68]
+                0.00    0.00       1/11079       __fn__.3212 [43]
+                0.00    0.00       1/11079       multiplicative_expression [38]
+                0.00    0.00       1/11079       additive_expression <cycle 3> [29]
+                0.00    0.00       1/11079       relational_expression1 [53]
+                0.00    0.00       1/11079       relational_expression [21]
+                0.00    0.00       1/11079       equality_expression1 [55]
+                0.00    0.00       1/11079       equality_expression [17]
+                0.00    0.00       1/11079       and_expression1 [56]
+                0.00    0.00       1/11079       and_expression [13]
+                0.00    0.00       1/11079       xor_expression1 [57]
+                0.00    0.00       1/11079       xor_expression [10]
+                0.00    0.00       1/11079       or_expression1 [46]
+                0.00    0.00       1/11079       or_expression [9]
+                0.00    0.00       1/11079       __fn__.3661 [24]
+                0.00    0.00       1/11079       additive_expression1 <cycle 3> [52]
+                0.00    0.00       1/11079       multiplicative_expression1 [51]
+                0.00    0.00       1/11079       __fn__.3937 [41]
+                0.00    0.00       1/11079       tuple_expression1 [60]
+                0.00    0.00       1/11079       jump_statement [108]
+                0.00    0.00       1/11079       expression_statement [62]
+                0.00    0.00       1/11079       statement_list1 [88]
+                0.00    0.00       1/11079       statement_list [77]
+                0.00    0.00       1/11079       class_statement [125]
+                0.00    0.00       1/11079       class_statement_list1 [121]
+                0.00    0.00       1/11079       class_statement_list [118]
+                0.00    0.00       1/11079       postfix_expression1 [37]
+                0.00    0.00       1/11079       file_level_statement_list1 [99]
+                0.00    0.00       2/11079       __fn__.2961 [20]
+                0.00    0.00       2/11079       __fn__.3182 [23]
+                0.00    0.00       2/11079       tuple_expression [42]
+                0.00    0.00       2/11079       anon_function [45]
+                0.00    0.00       2/11079       __fn__.3015 [32]
+                0.00    0.00       2/11079       file_level_statement_list [97]
+                0.00    0.00       3/11079       __fn__.5031 [59]
+                0.00    0.00       5/11079       __fn__.5059 [78]
+                0.00    0.00      56/11079       module_instruction [49]
+                0.00    0.00    3171/11079       memory_graph_set_field [7]
+                0.00    0.00    7800/11079       set_insert [19]
+[14]     8.5    0.00    0.00   11079         map_insert [14]
+                0.00    0.00     696/8151        string_hasher [1]
+                0.00    0.00   11079/15693       map_insert_helper [153]
+                0.00    0.00    5740/24016       node_edge_hasher [150]
+                0.00    0.00    4643/193657      default_hasher [146]
+                0.00    0.00       6/6           resize_table [245]
+-----------------------------------------------
+                                                 <spontaneous>
+[15]     8.0    0.00    0.00                 __fn__.3621 [15]
+                0.00    0.00    1951/2928        or_expression [9]
+                0.00    0.00     835/88757       parser_next__ [71]
+                0.00    0.00       3/214071      map_lookup [2]
+                0.00    0.00     838/20321       match_merge [151]
+                0.00    0.00       3/10322       queue_remove [155]
+                0.00    0.00       3/6810        string_literal [159]
+-----------------------------------------------
+                                2608             execute <cycle 4> [6]
+[16]     7.9    0.00    0.00    2608         execute_id_param <cycle 4> [16]
+                0.00    0.00    2338/16451       memory_graph_set_field [7]
+                0.00    0.00    1741/2177        vm_lookup [36]
+                0.00    0.00    3339/95652       obj_get_field [5]
+                0.00    0.00     248/248         vm_object_lookup [74]
+                0.00    0.00     150/2444        memory_graph_array_dequeue [33]
+                0.00    0.00     130/2482        memory_graph_array_enqueue [28]
+                                 144             call_fn <cycle 4> [18]
+                                   1             call_new <cycle 4> [123]
+-----------------------------------------------
+                0.00    0.00    2003/2003        and_expression [13]
+[17]     7.2    0.00    0.00    2003         equality_expression [17]
+                0.00    0.00    2003/2003        relational_expression [21]
+                0.00    0.00    2003/214071      map_lookup [2]
+                0.00    0.00    1691/1691        equality_expression1 [55]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1691/20321       match_merge [151]
+-----------------------------------------------
+                                   1             call_new <cycle 4> [123]
+                                 144             execute_id_param <cycle 4> [16]
+                                 144             execute_no_param <cycle 4> [11]
+[18]     6.5    0.00    0.00     289         call_fn <cycle 4> [18]
+                0.00    0.00     289/293         vm_new_block [22]
+                0.00    0.00     867/16451       memory_graph_set_field [7]
+                0.00    0.00    1156/95652       obj_get_field [5]
+                0.00    0.00     289/14895       create_int [154]
+                                 289             vm_maybe_initialize_and_execute <cycle 4> [69]
+-----------------------------------------------
+                0.00    0.00       2/7800        memory_graph_create_root_element [135]
+                0.00    0.00      24/7800        memory_graph_array_set [91]
+                0.00    0.00      58/7800        append_child_edges.2852 [83]
+                0.00    0.00     100/7800        memory_graph_tuple_add [70]
+                0.00    0.00     272/7800        memory_graph_array_push [58]
+                0.00    0.00     460/7800        memory_graph_array_enqueue [28]
+                0.00    0.00     673/7800        memory_graph_new_node [65]
+                0.00    0.00     689/7800        module_instruction [49]
+                0.00    0.00     696/7800        string_comparator [64]
+                0.00    0.00    4826/7800        memory_graph_set_field [7]
+[19]     6.0    0.00    0.00    7800         set_insert [19]
+                0.00    0.00    7800/11079       map_insert [14]
+-----------------------------------------------
+                                                 <spontaneous>
+[20]     5.9    0.00    0.00                 __fn__.2961 [20]
+                0.00    0.00   12787/214071      map_lookup [2]
+                0.00    0.00    2161/4817        assignment_tuple [68]
+                0.00    0.00      86/712         tuple_expression [42]
+                0.00    0.00    6525/88757       parser_next__ [71]
+                0.00    0.00       2/11079       map_insert [14]
+                0.00    0.00    3152/6810        string_literal [159]
+                0.00    0.00    3152/3152        identifier [171]
+                0.00    0.00    2161/3766        length_expression [168]
+                0.00    0.00     139/20321       match_merge [151]
+                0.00    0.00      97/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00    2003/2003        equality_expression [17]
+[21]     5.6    0.00    0.00    2003         relational_expression [21]
+                0.00    0.00    2003/2009        additive_expression <cycle 3> [29]
+                0.00    0.00    2003/214071      map_lookup [2]
+                0.00    0.00    1691/1691        relational_expression1 [53]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1691/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       4/293         vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00     289/293         call_fn <cycle 4> [18]
+[22]     4.7    0.00    0.00     293         vm_new_block [22]
+                0.00    0.00    1465/16451       memory_graph_set_field [7]
+                0.00    0.00     293/300         create_obj [48]
+                0.00    0.00    1758/95652       obj_get_field [5]
+                0.00    0.00     293/297         memory_graph_array_push [58]
+                0.00    0.00     293/14895       create_int [154]
+-----------------------------------------------
+                                                 <spontaneous>
+[23]     4.5    0.00    0.00                 __fn__.3182 [23]
+                0.00    0.00    1634/1634        postfix_expression1 [37]
+                0.00    0.00    4670/214071      map_lookup [2]
+                0.00    0.00       2/11079       map_insert [14]
+                0.00    0.00    3152/3152        array_declaration [170]
+                0.00    0.00    1634/20321       match_merge [151]
+                0.00    0.00    1518/3152        module_statement [172]
+-----------------------------------------------
+                                                 <spontaneous>
+[24]     4.4    0.00    0.00                 __fn__.3661 [24]
+                0.00    0.00     977/2928        or_expression [9]
+                0.00    0.00     983/214071      map_lookup [2]
+                0.00    0.00    1972/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      30/20321       match_merge [151]
+                0.00    0.00       9/10322       queue_remove [155]
+                0.00    0.00       6/977         is_expression [188]
+-----------------------------------------------
+[25]     4.0    0.00    0.00    2009+1889    <cycle 3 as a whole> [25]
+                0.00    0.00    2105             additive_expression <cycle 3> [29]
+                0.00    0.00    1793             additive_expression1 <cycle 3> [52]
+-----------------------------------------------
+                0.00    0.00       1/4           vm_add_builtin [47]
+                0.00    0.00       3/4           main [3]
+[26]     3.9    0.00    0.00       4         load_fn [26]
+                0.00    0.00       3/3           module_create [39]
+                0.00    0.00       4/4           module_load [50]
+                0.00    0.00       1/4           module_create_file [34]
+                0.00    0.00       1/1           parse_file [98]
+                0.00    0.00       1/1           file_info [140]
+                0.00    0.00       1/7422        strings_intern [31]
+                0.00    0.00       5/371         ends_with [196]
+                0.00    0.00       1/5           file_fn [248]
+                0.00    0.00       1/3208        codegen_file [169]
+                0.00    0.00       1/88          expression_tree_delete [216]
+                0.00    0.00       1/5           file_info_delete [249]
+-----------------------------------------------
+                0.00    0.00    1278/1278        execute <cycle 4> [6]
+[27]     3.7    0.00    0.00    1278         execute_val_param [27]
+                0.00    0.00     784/16451       memory_graph_set_field [7]
+                0.00    0.00     291/8105        vm_shift_ip [8]
+                0.00    0.00     117/117         create_tuple [61]
+                0.00    0.00     312/2444        memory_graph_array_dequeue [33]
+                0.00    0.00     274/274         memory_graph_tuple_add [70]
+                0.00    0.00     539/95652       obj_get_field [5]
+                0.00    0.00      38/2482        memory_graph_array_enqueue [28]
+                0.00    0.00       9/50          create_array [84]
+                0.00    0.00    1278/1278        val_to_elt [187]
+                0.00    0.00     256/530         tuple_size [194]
+                0.00    0.00     256/256         tuple_get [205]
+-----------------------------------------------
+                0.00    0.00      38/2482        execute_val_param [27]
+                0.00    0.00     130/2482        execute_id_param <cycle 4> [16]
+                0.00    0.00    2314/2482        execute_no_param <cycle 4> [11]
+[28]     3.3    0.00    0.00    2482         memory_graph_array_enqueue [28]
+                0.00    0.00    2482/22356       obj_set_field [12]
+                0.00    0.00    2482/95652       obj_get_field [5]
+                0.00    0.00    1934/214071      map_lookup [2]
+                0.00    0.00     460/7800        set_insert [19]
+                0.00    0.00    2482/2996        array_enqueue [175]
+                0.00    0.00    2482/6330        array_size [161]
+                0.00    0.00    2482/14895       create_int [154]
+                0.00    0.00    1934/26436       set_lookup [149]
+-----------------------------------------------
+                                  96             additive_expression1 <cycle 3> [52]
+                0.00    0.00       6/2009        relational_expression1 [53]
+                0.00    0.00    2003/2009        relational_expression [21]
+[29]     3.2    0.00    0.00    2105         additive_expression <cycle 3> [29]
+                0.00    0.00    2105/2105        multiplicative_expression [38]
+                0.00    0.00    2105/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1793/20321       match_merge [151]
+                                1793             additive_expression1 <cycle 3> [52]
+-----------------------------------------------
+                0.00    0.00     193/2005        parser_next__ [71]
+                0.00    0.00    1812/2005        tokenize [35]
+[30]     3.2    0.00    0.00    2005         tokenize_line [30]
+                0.00    0.00    7357/7422        strings_intern [31]
+                0.00    0.00     639/7455        string_comparator [64]
+                0.00    0.00    5688/5688        queue_last [162]
+                0.00    0.00    5541/5541        read_word [163]
+                0.00    0.00    5541/5541        resolve_type [164]
+                0.00    0.00    5429/5429        queue_add [165]
+                0.00    0.00      78/78          read_string [219]
+-----------------------------------------------
+                0.00    0.00       1/7422        load_fn [26]
+                0.00    0.00       1/7422        file_info [140]
+                0.00    0.00       1/7422        vm_add_builtin [47]
+                0.00    0.00       1/7422        vm_delete [138]
+                0.00    0.00       3/7422        module_create [39]
+                0.00    0.00       3/7422        file_info_set_name [136]
+                0.00    0.00       4/7422        module_create_file [34]
+                0.00    0.00      51/7422        module_instruction [49]
+                0.00    0.00    7357/7422        tokenize_line [30]
+[31]     3.2    0.00    0.00    7422         strings_intern [31]
+                0.00    0.00    7422/214071      map_lookup [2]
+                0.00    0.00    7422/26436       set_lookup [149]
+-----------------------------------------------
+                                                 <spontaneous>
+[32]     3.1    0.00    0.00                 __fn__.3015 [32]
+                0.00    0.00    6773/214071      map_lookup [2]
+                0.00    0.00    1608/4817        assignment_tuple [68]
+                0.00    0.00       9/712         tuple_expression [42]
+                0.00    0.00    3549/88757       parser_next__ [71]
+                0.00    0.00       2/11079       map_insert [14]
+                0.00    0.00    3152/6810        string_literal [159]
+                0.00    0.00    1605/3766        length_expression [168]
+                0.00    0.00     423/10322       queue_remove [155]
+                0.00    0.00      18/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00     150/2444        execute_id_param <cycle 4> [16]
+                0.00    0.00     312/2444        execute_val_param [27]
+                0.00    0.00    1982/2444        execute_no_param <cycle 4> [11]
+[33]     2.9    0.00    0.00    2444         memory_graph_array_dequeue [33]
+                0.00    0.00    2444/22356       obj_set_field [12]
+                0.00    0.00    2444/95652       obj_get_field [5]
+                0.00    0.00    1922/214071      map_lookup [2]
+                0.00    0.00    2444/2444        array_dequeue [176]
+                0.00    0.00    2444/6330        array_size [161]
+                0.00    0.00    2444/14895       create_int [154]
+                0.00    0.00    1922/26436       set_lookup [149]
+-----------------------------------------------
+                0.00    0.00       1/4           load_fn [26]
+                0.00    0.00       3/4           module_create [39]
+[34]     2.9    0.00    0.00       4         module_create_file [34]
+                0.00    0.00       4/4           tokenize [35]
+                0.00    0.00       4/7422        strings_intern [31]
+                0.00    0.00       1/7455        string_comparator [64]
+                0.00    0.00      12/20          map_create [230]
+                0.00    0.00       8/9           set_create [236]
+                0.00    0.00       8/9           queue_init [235]
+                0.00    0.00       6/10322       queue_remove [155]
+                0.00    0.00       6/5429        token_delete [166]
+                0.00    0.00       4/4           file_info_file [254]
+                0.00    0.00       4/88711       queue_peek [148]
+-----------------------------------------------
+                0.00    0.00       4/4           module_create_file [34]
+[35]     2.9    0.00    0.00       4         tokenize [35]
+                0.00    0.00    1812/2005        tokenize_line [30]
+-----------------------------------------------
+                0.00    0.00       1/2177        element_not [137]
+                0.00    0.00     144/2177        execute_no_param <cycle 4> [11]
+                0.00    0.00     145/2177        element_false [80]
+                0.00    0.00     146/2177        element_true [79]
+                0.00    0.00    1741/2177        execute_id_param <cycle 4> [16]
+[36]     2.7    0.00    0.00    2177         vm_lookup [36]
+                0.00    0.00    6325/95652       obj_get_field [5]
+                0.00    0.00     149/154         create_none [211]
+-----------------------------------------------
+                                 726             postfix_expression1 [37]
+                0.00    0.00    1634/1634        __fn__.3182 [23]
+[37]     2.5    0.00    0.00    1634+726     postfix_expression1 [37]
+                0.00    0.00    4383/214071      map_lookup [2]
+                0.00    0.00     304/712         tuple_expression [42]
+                0.00    0.00    9654/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    2041/20321       match_merge [151]
+                0.00    0.00    1634/3152        module_statement [172]
+                0.00    0.00    1348/10322       queue_remove [155]
+                0.00    0.00     389/6810        string_literal [159]
+                                 726             postfix_expression1 [37]
+-----------------------------------------------
+                0.00    0.00    2105/2105        additive_expression <cycle 3> [29]
+[38]     2.3    0.00    0.00    2105         multiplicative_expression [38]
+                0.00    0.00    4210/214071      map_lookup [2]
+                0.00    0.00    1793/2841        multiplicative_expression1 [51]
+                0.00    0.00    2105/88757       parser_next__ [71]
+                0.00    0.00       6/6           unary_expression [131]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    2099/3152        postfix_expression [173]
+                0.00    0.00    1799/20321       match_merge [151]
+                0.00    0.00       6/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00       3/3           load_fn [26]
+[39]     2.2    0.00    0.00       3         module_create [39]
+                0.00    0.00       3/4           module_create_file [34]
+                0.00    0.00       3/7422        strings_intern [31]
+                0.00    0.00       3/3           file_info_set_name [136]
+                0.00    0.00       2/7455        string_comparator [64]
+                0.00    0.00       3/5           file_fn [248]
+-----------------------------------------------
+                0.00    0.00       2/669         call_new <cycle 4> [123]
+                0.00    0.00       4/669         create_module [104]
+                0.00    0.00      40/669         create_function [66]
+                0.00    0.00      50/669         create_array [84]
+                0.00    0.00     117/669         create_tuple [61]
+                0.00    0.00     156/669         string_create [54]
+                0.00    0.00     300/669         create_obj [48]
+[40]     2.2    0.00    0.00     669         create_obj_of_class [40]
+                0.00    0.00     875/16451       memory_graph_set_field [7]
+                0.00    0.00     669/673         memory_graph_new_node [65]
+                0.00    0.00     463/463         inherits_from [73]
+                0.00    0.00     206/206         array_create [207]
+-----------------------------------------------
+                                                 <spontaneous>
+[41]     1.6    0.00    0.00                 __fn__.3937 [41]
+                0.00    0.00    1027/1085        anon_function [45]
+                0.00    0.00    1068/214071      map_lookup [2]
+                0.00    0.00    1048/4817        assignment_tuple [68]
+                0.00    0.00    1891/88757       parser_next__ [71]
+                0.00    0.00      21/2841        multiplicative_expression1 [51]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    1047/3152        postfix_expression [173]
+                0.00    0.00     865/20321       match_merge [151]
+                0.00    0.00      21/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00       1/712         __fn__.4098 [126]
+                0.00    0.00       2/712         __fn__.4518 [122]
+                0.00    0.00       9/712         __fn__.3015 [32]
+                0.00    0.00      78/712         __fn__.2912 [81]
+                0.00    0.00      86/712         __fn__.2961 [20]
+                0.00    0.00     232/712         expression_statement [62]
+                0.00    0.00     304/712         postfix_expression1 [37]
+[42]     1.4    0.00    0.00     712         tuple_expression [42]
+                0.00    0.00    1424/214071      map_lookup [2]
+                0.00    0.00     567/567         tuple_expression1 [60]
+                0.00    0.00     712/2841        multiplicative_expression1 [51]
+                0.00    0.00       2/11079       map_insert [14]
+                0.00    0.00     567/20321       match_merge [151]
+-----------------------------------------------
+                                                 <spontaneous>
+[43]     1.4    0.00    0.00                 __fn__.3212 [43]
+                0.00    0.00    3152/214071      map_lookup [2]
+                0.00    0.00    3152/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00    3152/3152        primary_expression [174]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[44]     1.1    0.00    0.00       1         vm_create [44]
+                0.00    0.00       1/1           vm_add_builtin [47]
+                0.00    0.00       1/1           class_init [90]
+                0.00    0.00      11/16451       memory_graph_set_field [7]
+                0.00    0.00       3/50          create_array [84]
+                0.00    0.00       1/300         create_obj [48]
+                0.00    0.00       1/1           memory_graph_create_root_element [135]
+                0.00    0.00       3/154         create_none [211]
+                0.00    0.00       1/1           memory_graph_create [268]
+                0.00    0.00       1/14895       create_int [154]
+-----------------------------------------------
+                0.00    0.00      58/1085        __fn__.5031 [59]
+                0.00    0.00    1027/1085        __fn__.3937 [41]
+[45]     1.1    0.00    0.00    1085         anon_function [45]
+                0.00    0.00    2054/214071      map_lookup [2]
+                0.00    0.00      56/65          function_argument_list [89]
+                0.00    0.00      56/466         expression_statement [62]
+                0.00    0.00    1195/88757       parser_next__ [71]
+                0.00    0.00       2/11079       map_insert [14]
+                0.00    0.00     971/977         is_expression [188]
+                0.00    0.00     280/20321       match_merge [151]
+                0.00    0.00     168/10322       queue_remove [155]
+-----------------------------------------------
+                                  30             or_expression1 [46]
+                0.00    0.00    1661/1661        or_expression [9]
+[46]     1.0    0.00    0.00    1661+30      or_expression1 [46]
+                0.00    0.00    1691/214071      map_lookup [2]
+                0.00    0.00      52/2003        xor_expression [10]
+                0.00    0.00    1691/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      82/20321       match_merge [151]
+                0.00    0.00      52/10322       queue_remove [155]
+                                  30             or_expression1 [46]
+-----------------------------------------------
+                0.00    0.00       1/1           vm_create [44]
+[47]     1.0    0.00    0.00       1         vm_add_builtin [47]
+                0.00    0.00       1/4           load_fn [26]
+                0.00    0.00       1/4           create_module [104]
+                0.00    0.00       3/16451       memory_graph_set_field [7]
+                0.00    0.00       1/145         element_false [80]
+                0.00    0.00       1/7422        strings_intern [31]
+                0.00    0.00       1/7455        string_comparator [64]
+                0.00    0.00       2/2198        map_iterate <cycle 1> [178]
+                0.00    0.00       1/298         module_name [200]
+                0.00    0.00       1/4           module_refs [256]
+                0.00    0.00       1/4           module_classes [255]
+-----------------------------------------------
+                0.00    0.00       1/300         vm_create [44]
+                0.00    0.00       2/300         class_create [107]
+                0.00    0.00       4/300         class_init [90]
+                0.00    0.00     293/300         vm_new_block [22]
+[48]     1.0    0.00    0.00     300         create_obj [48]
+                0.00    0.00     300/669         create_obj_of_class [40]
+-----------------------------------------------
+                0.00    0.00    1716/1716        module_load [50]
+[49]     0.9    0.00    0.00    1716         module_instruction [49]
+                0.00    0.00     689/7800        set_insert [19]
+                0.00    0.00     728/214071      map_lookup [2]
+                0.00    0.00      56/11079       map_insert [14]
+                0.00    0.00      51/7422        strings_intern [31]
+                0.00    0.00      19/7455        string_comparator [64]
+                0.00    0.00    4592/10322       queue_remove [155]
+                0.00    0.00    4592/5429        token_delete [166]
+                0.00    0.00    1700/1700        op_type [184]
+                0.00    0.00     705/26436       set_lookup [149]
+                0.00    0.00     693/693         instruction [190]
+                0.00    0.00     654/654         instruction_id [193]
+                0.00    0.00     302/10056       token_to_val [156]
+                0.00    0.00     302/302         instruction_val [199]
+                0.00    0.00      51/51          string_copy_range [225]
+                0.00    0.00      51/51          instruction_str [224]
+                0.00    0.00      23/88711       queue_peek [148]
+                0.00    0.00      22/22          value_negate [226]
+                0.00    0.00      16/20          noop_instruction [231]
+                0.00    0.00       8/8           queue_remove_last [241]
+                0.00    0.00       8/4901        queue_add_front [167]
+                0.00    0.00       8/20          map_create [230]
+-----------------------------------------------
+                0.00    0.00       4/4           load_fn [26]
+[50]     0.9    0.00    0.00       4         module_load [50]
+                0.00    0.00    1716/1716        module_instruction [49]
+                0.00    0.00    1716/1720        expando_len [181]
+                0.00    0.00    1704/1704        expando_append [182]
+                0.00    0.00       4/4           expando__ [252]
+                0.00    0.00       4/20          noop_instruction [231]
+                0.00    0.00       4/5           queue_deep_delete [250]
+                0.00    0.00       4/4           queue_shallow_delete [258]
+-----------------------------------------------
+                0.00    0.00       6/2841        __fn__.4176 [128]
+                0.00    0.00      21/2841        __fn__.3937 [41]
+                0.00    0.00     309/2841        tuple_expression1 [60]
+                0.00    0.00     712/2841        tuple_expression [42]
+                0.00    0.00    1793/2841        multiplicative_expression [38]
+[51]     0.8    0.00    0.00    2841         multiplicative_expression1 [51]
+                0.00    0.00    1793/214071      map_lookup [2]
+                0.00    0.00    5379/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+-----------------------------------------------
+                                1793             additive_expression <cycle 3> [29]
+[52]     0.8    0.00    0.00    1793         additive_expression1 <cycle 3> [52]
+                0.00    0.00    1793/214071      map_lookup [2]
+                0.00    0.00    3544/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      96/10322       queue_remove [155]
+                0.00    0.00      96/20321       match_merge [151]
+                                  96             additive_expression <cycle 3> [29]
+-----------------------------------------------
+                                   6             relational_expression1 [53]
+                0.00    0.00    1691/1691        relational_expression [21]
+[53]     0.8    0.00    0.00    1691+6       relational_expression1 [53]
+                0.00    0.00    1697/214071      map_lookup [2]
+                0.00    0.00    6770/88757       parser_next__ [71]
+                0.00    0.00       6/2009        additive_expression <cycle 3> [29]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      12/20321       match_merge [151]
+                0.00    0.00       6/10322       queue_remove [155]
+                                   6             relational_expression1 [53]
+-----------------------------------------------
+                0.00    0.00       4/156         create_module [104]
+                0.00    0.00      10/156         class_fill [92]
+                0.00    0.00      40/156         create_function [66]
+                0.00    0.00     102/156         execute_str_param [63]
+[54]     0.7    0.00    0.00     156         string_create [54]
+                0.00    0.00     156/669         create_obj_of_class [40]
+                0.00    0.00     156/16451       memory_graph_set_field [7]
+                0.00    0.00     514/2996        array_enqueue [175]
+                0.00    0.00     156/6330        array_size [161]
+-----------------------------------------------
+                0.00    0.00    1691/1691        equality_expression [17]
+[55]     0.7    0.00    0.00    1691         equality_expression1 [55]
+                0.00    0.00    1691/214071      map_lookup [2]
+                0.00    0.00    3382/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+-----------------------------------------------
+                0.00    0.00    1691/1691        and_expression [13]
+[56]     0.7    0.00    0.00    1691         and_expression1 [56]
+                0.00    0.00    1691/214071      map_lookup [2]
+                0.00    0.00    1691/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+-----------------------------------------------
+                0.00    0.00    1691/1691        xor_expression [10]
+[57]     0.7    0.00    0.00    1691         xor_expression1 [57]
+                0.00    0.00    1691/214071      map_lookup [2]
+                0.00    0.00    1691/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+-----------------------------------------------
+                0.00    0.00       4/297         vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00     293/297         vm_new_block [22]
+[58]     0.7    0.00    0.00     297         memory_graph_array_push [58]
+                0.00    0.00     586/214071      map_lookup [2]
+                0.00    0.00     272/7800        set_insert [19]
+                0.00    0.00     297/22356       obj_set_field [12]
+                0.00    0.00     297/95652       obj_get_field [5]
+                0.00    0.00     586/26436       set_lookup [149]
+                0.00    0.00     297/297         array_push [202]
+                0.00    0.00     297/6330        array_size [161]
+                0.00    0.00     297/14895       create_int [154]
+-----------------------------------------------
+                                                 <spontaneous>
+[59]     0.7    0.00    0.00                 __fn__.5031 [59]
+                0.00    0.00     232/466         expression_statement [62]
+                0.00    0.00     404/214071      map_lookup [2]
+                0.00    0.00     112/166         statement_list [77]
+                0.00    0.00      58/1085        anon_function [45]
+                0.00    0.00      55/55          jump_statement [108]
+                0.00    0.00       3/11079       map_insert [14]
+                0.00    0.00     234/88757       parser_next__ [71]
+                0.00    0.00       2/10322       queue_remove [155]
+                0.00    0.00       2/2           class_definition [262]
+                0.00    0.00       2/20321       match_merge [151]
+-----------------------------------------------
+                                 309             tuple_expression1 [60]
+                0.00    0.00     567/567         tuple_expression [42]
+[60]     0.6    0.00    0.00     567+309     tuple_expression1 [60]
+                0.00    0.00    1185/214071      map_lookup [2]
+                0.00    0.00     309/2841        multiplicative_expression1 [51]
+                0.00    0.00     876/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00     618/20321       match_merge [151]
+                0.00    0.00     309/10322       queue_remove [155]
+                                 309             tuple_expression1 [60]
+-----------------------------------------------
+                0.00    0.00     117/117         execute_val_param [27]
+[61]     0.6    0.00    0.00     117         create_tuple [61]
+                0.00    0.00     117/669         create_obj_of_class [40]
+                0.00    0.00     117/16451       memory_graph_set_field [7]
+                0.00    0.00     117/117         tuple_create [214]
+-----------------------------------------------
+                0.00    0.00       3/466         __fn__.4518 [122]
+                0.00    0.00       3/466         __fn__.4098 [126]
+                0.00    0.00       5/466         __fn__.4685 [110]
+                0.00    0.00      54/466         statement_list [77]
+                0.00    0.00      55/466         statement_list1 [88]
+                0.00    0.00      56/466         anon_function [45]
+                0.00    0.00      58/466         __fn__.5059 [78]
+                0.00    0.00     232/466         __fn__.5031 [59]
+[62]     0.6    0.00    0.00     466         expression_statement [62]
+                0.00    0.00     232/712         tuple_expression [42]
+                0.00    0.00     232/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00     120/88757       parser_next__ [71]
+                0.00    0.00     120/20321       match_merge [151]
+                0.00    0.00      64/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00     102/102         execute <cycle 4> [6]
+[63]     0.5    0.00    0.00     102         execute_str_param [63]
+                0.00    0.00     102/156         string_create [54]
+                0.00    0.00      37/16451       memory_graph_set_field [7]
+                0.00    0.00      65/2198        obj_to_str <cycle 1> [102]
+                0.00    0.00      65/197         elt_to_str [209]
+-----------------------------------------------
+                0.00    0.00       1/7455        module_create_file [34]
+                0.00    0.00       1/7455        file_info [140]
+                0.00    0.00       1/7455        vm_add_builtin [47]
+                0.00    0.00       2/7455        module_create [39]
+                0.00    0.00      19/7455        module_instruction [49]
+                0.00    0.00      33/7455        strings_insert_constants [112]
+                0.00    0.00     639/7455        tokenize_line [30]
+                0.00    0.00    6759/7455        map_lookup [2]
+[64]     0.5    0.00    0.00    7455         string_comparator [64]
+                0.00    0.00     696/7800        set_insert [19]
+                0.00    0.00     696/696         debugf [189]
+-----------------------------------------------
+                0.00    0.00       4/673         create_obj_unsafe [120]
+                0.00    0.00     669/673         create_obj_of_class [40]
+[65]     0.5    0.00    0.00     673         memory_graph_new_node [65]
+                0.00    0.00     673/7800        set_insert [19]
+                0.00    0.00    2019/2034        map_init [180]
+                0.00    0.00    1346/1350        set_init [186]
+-----------------------------------------------
+                0.00    0.00       1/40          add_ref.3136 [113]
+                0.00    0.00       8/40          add_method.3159 [87]
+                0.00    0.00      15/40          create_method [75]
+                0.00    0.00      16/40          add_ref.3152 [76]
+[66]     0.5    0.00    0.00      40         create_function [66]
+                0.00    0.00      40/156         string_create [54]
+                0.00    0.00     120/16451       memory_graph_set_field [7]
+                0.00    0.00      40/669         create_obj_of_class [40]
+-----------------------------------------------
+                0.00    0.00       8/297         vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00     289/297         execute_no_param <cycle 4> [11]
+[67]     0.5    0.00    0.00     297         memory_graph_array_pop [67]
+                0.00    0.00     586/214071      map_lookup [2]
+                0.00    0.00     297/22356       obj_set_field [12]
+                0.00    0.00     297/95652       obj_get_field [5]
+                0.00    0.00     586/26436       set_lookup [149]
+                0.00    0.00     297/297         array_pop [201]
+                0.00    0.00     297/6330        array_size [161]
+                0.00    0.00     297/14895       create_int [154]
+-----------------------------------------------
+                0.00    0.00    1048/4817        __fn__.3937 [41]
+                0.00    0.00    1608/4817        __fn__.3015 [32]
+                0.00    0.00    2161/4817        __fn__.2961 [20]
+[68]     0.5    0.00    0.00    4817         assignment_tuple [68]
+                0.00    0.00    1048/214071      map_lookup [2]
+                0.00    0.00       4/65          function_argument_list [89]
+                0.00    0.00    1055/88757       parser_next__ [71]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      11/20321       match_merge [151]
+                0.00    0.00       5/10322       queue_remove [155]
+-----------------------------------------------
+                                 289             call_fn <cycle 4> [18]
+                0.00    0.01       1/1           main [3]
+[69]     0.4    0.00    0.00     290         vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00     596/95652       obj_get_field [5]
+                0.00    0.00       4/293         vm_new_block [22]
+                0.00    0.00      20/16451       memory_graph_set_field [7]
+                0.00    0.00       8/297         memory_graph_array_pop [67]
+                0.00    0.00       4/297         memory_graph_array_push [58]
+                0.00    0.00       4/146         element_true [79]
+                0.00    0.00     290/298         module_name [200]
+                0.00    0.00     290/290         is_true [203]
+                0.00    0.00       4/14895       create_int [154]
+                                7814             execute <cycle 4> [6]
+-----------------------------------------------
+                0.00    0.00     274/274         execute_val_param [27]
+[70]     0.4    0.00    0.00     274         memory_graph_tuple_add [70]
+                0.00    0.00     274/22356       obj_set_field [12]
+                0.00    0.00     274/95652       obj_get_field [5]
+                0.00    0.00     100/7800        set_insert [19]
+                0.00    0.00     100/214071      map_lookup [2]
+                0.00    0.00     274/274         tuple_add [204]
+                0.00    0.00     274/530         tuple_size [194]
+                0.00    0.00     274/14895       create_int [154]
+                0.00    0.00     100/26436       set_lookup [149]
+-----------------------------------------------
+                0.00    0.00       2/88757       __fn__.4991 [139]
+                0.00    0.00       2/88757       __fn__.4955 [134]
+                0.00    0.00       4/88757       class_statement [125]
+                0.00    0.00       5/88757       field_statement [130]
+                0.00    0.00       5/88757       function_definition [133]
+                0.00    0.00       6/88757       unary_expression [131]
+                0.00    0.00       6/88757       __fn__.4831 [127]
+                0.00    0.00       7/88757       __fn__.4518 [122]
+                0.00    0.00      10/88757       __fn__.4176 [128]
+                0.00    0.00      15/88757       __fn__.4685 [110]
+                0.00    0.00      89/88757       function_argument_list1 [96]
+                0.00    0.00     110/88757       jump_statement [108]
+                0.00    0.00     119/88757       __fn__.4098 [126]
+                0.00    0.00     120/88757       expression_statement [62]
+                0.00    0.00     234/88757       __fn__.5031 [59]
+                0.00    0.00     305/88757       __fn__.5059 [78]
+                0.00    0.00     548/88757       __fn__.4389 [94]
+                0.00    0.00     835/88757       __fn__.3621 [15]
+                0.00    0.00     876/88757       tuple_expression1 [60]
+                0.00    0.00    1055/88757       assignment_tuple [68]
+                0.00    0.00    1195/88757       anon_function [45]
+                0.00    0.00    1691/88757       and_expression1 [56]
+                0.00    0.00    1691/88757       xor_expression1 [57]
+                0.00    0.00    1691/88757       or_expression1 [46]
+                0.00    0.00    1891/88757       __fn__.3937 [41]
+                0.00    0.00    1972/88757       __fn__.3661 [24]
+                0.00    0.00    2105/88757       multiplicative_expression [38]
+                0.00    0.00    3152/88757       __fn__.3212 [43]
+                0.00    0.00    3382/88757       equality_expression1 [55]
+                0.00    0.00    3544/88757       additive_expression1 <cycle 3> [52]
+                0.00    0.00    3549/88757       __fn__.3015 [32]
+                0.00    0.00    3844/88757       __fn__.2912 [81]
+                0.00    0.00    3850/88757       __fn__.2896 [117]
+                0.00    0.00    5340/88757       __fn__.2863 [111]
+                0.00    0.00    5379/88757       multiplicative_expression1 [51]
+                0.00    0.00    6525/88757       __fn__.2961 [20]
+                0.00    0.00    6770/88757       relational_expression1 [53]
+                0.00    0.00    9654/88757       postfix_expression1 [37]
+                0.00    0.00   17179/88757       __fn__.2832 [95]
+[71]     0.3    0.00    0.00   88757         parser_next__ [71]
+                0.00    0.00     193/2005        tokenize_line [30]
+                0.00    0.00   88684/88711       queue_peek [148]
+-----------------------------------------------
+                                                 <spontaneous>
+[72]     0.3    0.00    0.00                 add_method.3144 [72]
+                0.00    0.00      15/15          create_method [75]
+                0.00    0.00      15/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                0.00    0.00     463/463         create_obj_of_class [40]
+[73]     0.3    0.00    0.00     463         inherits_from [73]
+                0.00    0.00     625/95652       obj_get_field [5]
+-----------------------------------------------
+                0.00    0.00     248/248         execute_id_param <cycle 4> [16]
+[74]     0.3    0.00    0.00     248         vm_object_lookup [74]
+                0.00    0.00     609/95652       obj_get_field [5]
+-----------------------------------------------
+                0.00    0.00      15/15          add_method.3144 [72]
+[75]     0.3    0.00    0.00      15         create_method [75]
+                0.00    0.00      15/40          create_function [66]
+                0.00    0.00      45/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                                                 <spontaneous>
+[76]     0.2    0.00    0.00                 add_ref.3152 [76]
+                0.00    0.00      16/40          create_function [66]
+                0.00    0.00      16/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                0.00    0.00      54/166         __fn__.4389 [94]
+                0.00    0.00     112/166         __fn__.5031 [59]
+[77]     0.2    0.00    0.00     166         statement_list [77]
+                0.00    0.00      54/54          statement_list1 [88]
+                0.00    0.00      54/466         expression_statement [62]
+                0.00    0.00     108/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      54/20321       match_merge [151]
+-----------------------------------------------
+                                                 <spontaneous>
+[78]     0.2    0.00    0.00                 __fn__.5059 [78]
+                0.00    0.00     301/214071      map_lookup [2]
+                0.00    0.00      58/466         expression_statement [62]
+                0.00    0.00       1/2           class_statement_list [118]
+                0.00    0.00       5/11079       map_insert [14]
+                0.00    0.00     305/88757       parser_next__ [71]
+                0.00    0.00      10/20321       match_merge [151]
+                0.00    0.00       6/10322       queue_remove [155]
+                0.00    0.00       1/5           compound_statement [247]
+-----------------------------------------------
+                0.00    0.00       1/146         operator_eq [119]
+                0.00    0.00       2/146         operator_neq [114]
+                0.00    0.00       2/146         operator_or [132]
+                0.00    0.00       4/146         operator_gt [115]
+                0.00    0.00       4/146         vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00       6/146         operator_gte [124]
+                0.00    0.00       7/146         execute_no_param <cycle 4> [11]
+                0.00    0.00      49/146         operator_lte [93]
+                0.00    0.00      71/146         operator_lt [85]
+[79]     0.2    0.00    0.00     146         element_true [79]
+                0.00    0.00     146/2177        vm_lookup [36]
+-----------------------------------------------
+                0.00    0.00       1/145         operator_gte [124]
+                0.00    0.00       1/145         vm_add_builtin [47]
+                0.00    0.00       3/145         vm_add_module [100]
+                0.00    0.00       7/145         operator_eq [119]
+                0.00    0.00       7/145         operator_gt [115]
+                0.00    0.00      10/145         operator_neq [114]
+                0.00    0.00      23/145         operator_lte [93]
+                0.00    0.00      28/145         operator_lt [85]
+                0.00    0.00      65/145         execute_no_param <cycle 4> [11]
+[80]     0.2    0.00    0.00     145         element_false [80]
+                0.00    0.00     145/2177        vm_lookup [36]
+-----------------------------------------------
+                                                 <spontaneous>
+[81]     0.2    0.00    0.00                 __fn__.2912 [81]
+                0.00    0.00      78/712         tuple_expression [42]
+                0.00    0.00    3844/88757       parser_next__ [71]
+                0.00    0.00     156/10322       queue_remove [155]
+                0.00    0.00     156/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00      29/29          execute_no_param <cycle 4> [11]
+[82]     0.2    0.00    0.00      29         string_add [82]
+                0.00    0.00      29/29          memory_graph_array_join [86]
+                0.00    0.00      29/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                                                 <spontaneous>
+[83]     0.2    0.00    0.00                 append_child_edges.2852 [83]
+                0.00    0.00     272/214071      map_lookup [2]
+                0.00    0.00      58/7800        set_insert [19]
+                0.00    0.00     272/26436       set_lookup [149]
+-----------------------------------------------
+                0.00    0.00       3/50          vm_create [44]
+                0.00    0.00       9/50          execute_val_param [27]
+                0.00    0.00       9/50          execute_no_param <cycle 4> [11]
+                0.00    0.00      29/50          memory_graph_array_join [86]
+[84]     0.2    0.00    0.00      50         create_array [84]
+                0.00    0.00      50/669         create_obj_of_class [40]
+-----------------------------------------------
+                0.00    0.00      99/99          execute_no_param <cycle 4> [11]
+[85]     0.1    0.00    0.00      99         operator_lt [85]
+                0.00    0.00      71/146         element_true [79]
+                0.00    0.00      28/145         element_false [80]
+-----------------------------------------------
+                0.00    0.00      29/29          string_add [82]
+[86]     0.1    0.00    0.00      29         memory_graph_array_join [86]
+                0.00    0.00      29/50          create_array [84]
+                0.00    0.00      29/95652       obj_get_field [5]
+                0.00    0.00      29/22356       obj_set_field [12]
+                0.00    0.00      58/1408        set_iterate [106]
+                0.00    0.00      58/58          array_append [222]
+                0.00    0.00      29/6330        array_size [161]
+                0.00    0.00      29/14895       create_int [154]
+-----------------------------------------------
+                                                 <spontaneous>
+[87]     0.1    0.00    0.00                 add_method.3159 [87]
+                0.00    0.00       8/40          create_function [66]
+                0.00    0.00       8/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                                   1             statement_list1 [88]
+                0.00    0.00      54/54          statement_list [77]
+[88]     0.1    0.00    0.00      54+1       statement_list1 [88]
+                0.00    0.00      55/466         expression_statement [62]
+                0.00    0.00     110/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00       1/20321       match_merge [151]
+                                   1             statement_list1 [88]
+-----------------------------------------------
+                0.00    0.00       4/65          assignment_tuple [68]
+                0.00    0.00       5/65          __fn__.4685 [110]
+                0.00    0.00      56/65          anon_function [45]
+[89]     0.1    0.00    0.00      65         function_argument_list [89]
+                0.00    0.00      50/50          function_argument_list1 [96]
+                0.00    0.00     130/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      65/6810        string_literal [159]
+                0.00    0.00      50/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       1/1           vm_create [44]
+[90]     0.1    0.00    0.00       1         class_init [90]
+                0.00    0.00       8/10          class_fill [92]
+                0.00    0.00       9/16451       memory_graph_set_field [7]
+                0.00    0.00       4/300         create_obj [48]
+                0.00    0.00       4/4           create_obj_unsafe [120]
+                0.00    0.00       2/154         create_none [211]
+-----------------------------------------------
+                0.00    0.00      82/82          execute_no_param <cycle 4> [11]
+[91]     0.1    0.00    0.00      82         memory_graph_array_set [91]
+                0.00    0.00      82/22356       obj_set_field [12]
+                0.00    0.00      82/95652       obj_get_field [5]
+                0.00    0.00      24/7800        set_insert [19]
+                0.00    0.00      24/214071      map_lookup [2]
+                0.00    0.00     164/6330        array_size [161]
+                0.00    0.00      82/82          array_set [217]
+                0.00    0.00      82/14895       create_int [154]
+                0.00    0.00      59/439         array_get [195]
+                0.00    0.00      24/26436       set_lookup [149]
+-----------------------------------------------
+                0.00    0.00       2/10          class_create [107]
+                0.00    0.00       8/10          class_init [90]
+[92]     0.1    0.00    0.00      10         class_fill [92]
+                0.00    0.00      10/156         string_create [54]
+                0.00    0.00      30/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                0.00    0.00      72/72          execute_no_param <cycle 4> [11]
+[93]     0.1    0.00    0.00      72         operator_lte [93]
+                0.00    0.00      49/146         element_true [79]
+                0.00    0.00      23/145         element_false [80]
+-----------------------------------------------
+                                                 <spontaneous>
+[94]     0.1    0.00    0.00                 __fn__.4389 [94]
+                0.00    0.00      54/166         statement_list [77]
+                0.00    0.00     548/88757       parser_next__ [71]
+                0.00    0.00     378/20321       match_merge [151]
+                0.00    0.00     179/10322       queue_remove [155]
+-----------------------------------------------
+                                                 <spontaneous>
+[95]     0.1    0.00    0.00                 __fn__.2832 [95]
+                0.00    0.00   17179/88757       parser_next__ [71]
+                0.00    0.00    1630/10322       queue_remove [155]
+-----------------------------------------------
+                                  39             function_argument_list1 [96]
+                0.00    0.00      50/50          function_argument_list [89]
+[96]     0.1    0.00    0.00      50+39      function_argument_list1 [96]
+                0.00    0.00     128/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      89/88757       parser_next__ [71]
+                0.00    0.00      78/20321       match_merge [151]
+                0.00    0.00      39/10322       queue_remove [155]
+                0.00    0.00      39/6810        string_literal [159]
+                                  39             function_argument_list1 [96]
+-----------------------------------------------
+                0.00    0.00       1/1           parse_file [98]
+[97]     0.1    0.00    0.00       1         file_level_statement_list [97]
+                0.00    0.00       1/1           file_level_statement_list1 [99]
+                0.00    0.00       2/11079       map_insert [14]
+                0.00    0.00       2/214071      map_lookup [2]
+                0.00    0.00       1/62          primary_expression_no_constants [221]
+                0.00    0.00       1/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       1/1           load_fn [26]
+[98]     0.1    0.00    0.00       1         parse_file [98]
+                0.00    0.00       1/1           file_level_statement_list [97]
+                0.00    0.00       1/9           queue_init [235]
+                0.00    0.00       1/1           map_create_default [267]
+                0.00    0.00       1/5           queue_deep_delete [250]
+                0.00    0.00       1/21          map_delete [229]
+-----------------------------------------------
+                                  60             file_level_statement_list1 [99]
+                0.00    0.00       1/1           file_level_statement_list [97]
+[99]     0.1    0.00    0.00       1+60      file_level_statement_list1 [99]
+                0.00    0.00     122/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00      61/62          primary_expression_no_constants [221]
+                0.00    0.00      60/20321       match_merge [151]
+                                  60             file_level_statement_list1 [99]
+-----------------------------------------------
+                0.00    0.00       3/3           main [3]
+[100]    0.0    0.00    0.00       3         vm_add_module [100]
+                0.00    0.00       3/4           create_module [104]
+                0.00    0.00       9/16451       memory_graph_set_field [7]
+                0.00    0.00       3/145         element_false [80]
+                0.00    0.00       6/2198        map_iterate <cycle 1> [178]
+                0.00    0.00       3/298         module_name [200]
+                0.00    0.00       3/4           module_refs [256]
+                0.00    0.00       3/4           module_classes [255]
+-----------------------------------------------
+[101]    0.0    0.00    0.00    2198+79      <cycle 1 as a whole> [101]
+                0.00    0.00     104             obj_to_str <cycle 1> [102]
+                0.00    0.00    2105             map_iterate <cycle 1> [178]
+                0.00    0.00      56             tuple_print <cycle 1> [223]
+                0.00    0.00      12             array_print <cycle 1> [233]
+-----------------------------------------------
+                                   2             tuple_print <cycle 1> [223]
+                                   6             array_print <cycle 1> [233]
+                0.00    0.00      31/2198        execute_no_param <cycle 4> [11]
+                0.00    0.00      65/2198        execute_str_param [63]
+[102]    0.0    0.00    0.00     104         obj_to_str <cycle 1> [102]
+                0.00    0.00     104/214071      map_lookup [2]
+                0.00    0.00     310/6330        array_size [161]
+                0.00    0.00     229/439         array_get [195]
+                                  12             array_print <cycle 1> [233]
+                                   8             tuple_print <cycle 1> [223]
+                                   3             map_iterate <cycle 1> [178]
+-----------------------------------------------
+                                                 <spontaneous>
+[103]    0.0    0.00    0.00                 delete_node_and_obj.2746 [103]
+                0.00    0.00    1348/1408        set_iterate [106]
+                0.00    0.00     674/674         obj_delete_ptr [116]
+                0.00    0.00    1348/2034        map_finalize [179]
+                0.00    0.00    1348/1351        set_finalize [185]
+                0.00    0.00     674/674         set_remove [192]
+                0.00    0.00     206/206         array_delete [208]
+                0.00    0.00     117/117         tuple_delete [215]
+-----------------------------------------------
+                0.00    0.00       1/4           vm_add_builtin [47]
+                0.00    0.00       3/4           vm_add_module [100]
+[104]    0.0    0.00    0.00       4         create_module [104]
+                0.00    0.00       4/156         string_create [54]
+                0.00    0.00       4/669         create_obj_of_class [40]
+                0.00    0.00       4/16451       memory_graph_set_field [7]
+                0.00    0.00       4/298         module_name [200]
+-----------------------------------------------
+                                                 <spontaneous>
+[105]    0.0    0.00    0.00                 add_class.3155 [105]
+                0.00    0.00       2/2           class_create [107]
+                0.00    0.00       2/16451       memory_graph_set_field [7]
+                0.00    0.00       2/2198        map_iterate <cycle 1> [178]
+-----------------------------------------------
+                0.00    0.00       1/1408        alloc_finalize [142]
+                0.00    0.00       1/1408        memory_graph_delete [143]
+                0.00    0.00      58/1408        memory_graph_array_join [86]
+                0.00    0.00    1348/1408        delete_node_and_obj.2746 [103]
+[106]    0.0    0.00    0.00    1408         set_iterate [106]
+                0.00    0.00    1408/2198        map_iterate <cycle 1> [178]
+-----------------------------------------------
+                0.00    0.00       2/2           add_class.3155 [105]
+[107]    0.0    0.00    0.00       2         class_create [107]
+                0.00    0.00       2/10          class_fill [92]
+                0.00    0.00       2/300         create_obj [48]
+                0.00    0.00       2/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                0.00    0.00      55/55          __fn__.5031 [59]
+[108]    0.0    0.00    0.00      55         jump_statement [108]
+                0.00    0.00      55/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00     110/88757       parser_next__ [71]
+-----------------------------------------------
+                                                 <spontaneous>
+[109]    0.0    0.00    0.00                 add_class.3140 [109]
+                0.00    0.00      12/16451       memory_graph_set_field [7]
+                0.00    0.00       6/95652       obj_get_field [5]
+                0.00    0.00       6/2198        map_iterate <cycle 1> [178]
+-----------------------------------------------
+                                                 <spontaneous>
+[110]    0.0    0.00    0.00                 __fn__.4685 [110]
+                0.00    0.00       5/65          function_argument_list [89]
+                0.00    0.00       5/466         expression_statement [62]
+                0.00    0.00      10/214071      map_lookup [2]
+                0.00    0.00      15/88757       parser_next__ [71]
+                0.00    0.00      25/20321       match_merge [151]
+                0.00    0.00      10/10322       queue_remove [155]
+                0.00    0.00       5/6810        string_literal [159]
+-----------------------------------------------
+                                                 <spontaneous>
+[111]    0.0    0.00    0.00                 __fn__.2863 [111]
+                0.00    0.00    5340/88757       parser_next__ [71]
+                0.00    0.00     991/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[112]    0.0    0.00    0.00       1         strings_insert_constants [112]
+                0.00    0.00      33/214071      map_lookup [2]
+                0.00    0.00      33/7455        string_comparator [64]
+                0.00    0.00      33/26436       set_lookup [149]
+-----------------------------------------------
+                                                 <spontaneous>
+[113]    0.0    0.00    0.00                 add_ref.3136 [113]
+                0.00    0.00       1/40          create_function [66]
+                0.00    0.00       2/16451       memory_graph_set_field [7]
+-----------------------------------------------
+                0.00    0.00      12/12          execute_no_param <cycle 4> [11]
+[114]    0.0    0.00    0.00      12         operator_neq [114]
+                0.00    0.00      10/145         element_false [80]
+                0.00    0.00       2/146         element_true [79]
+-----------------------------------------------
+                0.00    0.00      11/11          execute_no_param <cycle 4> [11]
+[115]    0.0    0.00    0.00      11         operator_gt [115]
+                0.00    0.00       7/145         element_false [80]
+                0.00    0.00       4/146         element_true [79]
+-----------------------------------------------
+                0.00    0.00     674/674         delete_node_and_obj.2746 [103]
+[116]    0.0    0.00    0.00     674         obj_delete_ptr [116]
+                0.00    0.00     674/2198        map_iterate <cycle 1> [178]
+                0.00    0.00     674/2034        map_finalize [179]
+-----------------------------------------------
+                                                 <spontaneous>
+[117]    0.0    0.00    0.00                 __fn__.2896 [117]
+                0.00    0.00    3850/88757       parser_next__ [71]
+                0.00    0.00      84/10322       queue_remove [155]
+                0.00    0.00      81/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       1/2           __fn__.4831 [127]
+                0.00    0.00       1/2           __fn__.5059 [78]
+[118]    0.0    0.00    0.00       2         class_statement_list [118]
+                0.00    0.00       1/1           class_statement_list1 [121]
+                0.00    0.00       1/5           class_statement [125]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00       1/214071      map_lookup [2]
+                0.00    0.00       1/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       8/8           execute_no_param <cycle 4> [11]
+[119]    0.0    0.00    0.00       8         operator_eq [119]
+                0.00    0.00       7/145         element_false [80]
+                0.00    0.00       1/146         element_true [79]
+-----------------------------------------------
+                0.00    0.00       4/4           class_init [90]
+[120]    0.0    0.00    0.00       4         create_obj_unsafe [120]
+                0.00    0.00       4/16451       memory_graph_set_field [7]
+                0.00    0.00       4/673         memory_graph_new_node [65]
+-----------------------------------------------
+                                   3             class_statement_list1 [121]
+                0.00    0.00       1/1           class_statement_list [118]
+[121]    0.0    0.00    0.00       1+3       class_statement_list1 [121]
+                0.00    0.00       4/5           class_statement [125]
+                0.00    0.00       4/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00       3/20321       match_merge [151]
+                                   3             class_statement_list1 [121]
+-----------------------------------------------
+                                                 <spontaneous>
+[122]    0.0    0.00    0.00                 __fn__.4518 [122]
+                0.00    0.00       2/712         tuple_expression [42]
+                0.00    0.00       3/466         expression_statement [62]
+                0.00    0.00       3/214071      map_lookup [2]
+                0.00    0.00       7/88757       parser_next__ [71]
+                0.00    0.00      10/20321       match_merge [151]
+                0.00    0.00       2/10322       queue_remove [155]
+-----------------------------------------------
+                                   1             execute_id_param <cycle 4> [16]
+                                   1             execute_no_param <cycle 4> [11]
+[123]    0.0    0.00    0.00       2         call_new <cycle 4> [123]
+                0.00    0.00       2/669         create_obj_of_class [40]
+                0.00    0.00       1/16451       memory_graph_set_field [7]
+                0.00    0.00       2/95652       obj_get_field [5]
+                                   1             call_fn <cycle 4> [18]
+-----------------------------------------------
+                0.00    0.00       7/7           execute_no_param <cycle 4> [11]
+[124]    0.0    0.00    0.00       7         operator_gte [124]
+                0.00    0.00       6/146         element_true [79]
+                0.00    0.00       1/145         element_false [80]
+-----------------------------------------------
+                0.00    0.00       1/5           class_statement_list [118]
+                0.00    0.00       4/5           class_statement_list1 [121]
+[125]    0.0    0.00    0.00       5         class_statement [125]
+                0.00    0.00       5/5           field_statement [130]
+                0.00    0.00       5/5           function_definition [133]
+                0.00    0.00       5/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00       4/88757       parser_next__ [71]
+                0.00    0.00       4/20321       match_merge [151]
+-----------------------------------------------
+                                                 <spontaneous>
+[126]    0.0    0.00    0.00                 __fn__.4098 [126]
+                0.00    0.00       3/466         expression_statement [62]
+                0.00    0.00       1/712         tuple_expression [42]
+                0.00    0.00       3/214071      map_lookup [2]
+                0.00    0.00     119/88757       parser_next__ [71]
+                0.00    0.00      10/20321       match_merge [151]
+                0.00    0.00       3/10322       queue_remove [155]
+                0.00    0.00       2/2           assignment_expression [261]
+-----------------------------------------------
+                                                 <spontaneous>
+[127]    0.0    0.00    0.00                 __fn__.4831 [127]
+                0.00    0.00       1/2           class_statement_list [118]
+                0.00    0.00       1/214071      map_lookup [2]
+                0.00    0.00       6/88757       parser_next__ [71]
+                0.00    0.00       7/20321       match_merge [151]
+                0.00    0.00       4/10322       queue_remove [155]
+                0.00    0.00       1/6810        string_literal [159]
+-----------------------------------------------
+                                                 <spontaneous>
+[128]    0.0    0.00    0.00                 __fn__.4176 [128]
+                0.00    0.00       6/214071      map_lookup [2]
+                0.00    0.00       6/2841        multiplicative_expression1 [51]
+                0.00    0.00      10/88757       parser_next__ [71]
+                0.00    0.00      14/20321       match_merge [151]
+                0.00    0.00       5/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[129]    0.0    0.00    0.00       1         vm_set_module [129]
+                0.00    0.00       2/16451       memory_graph_set_field [7]
+                0.00    0.00       1/95652       obj_get_field [5]
+                0.00    0.00       1/14895       create_int [154]
+-----------------------------------------------
+                0.00    0.00       5/5           class_statement [125]
+[130]    0.0    0.00    0.00       5         field_statement [130]
+                0.00    0.00       5/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00       5/88757       parser_next__ [71]
+-----------------------------------------------
+                0.00    0.00       6/6           multiplicative_expression [38]
+[131]    0.0    0.00    0.00       6         unary_expression [131]
+                0.00    0.00       6/214071      map_lookup [2]
+                0.00    0.00       6/88757       parser_next__ [71]
+                0.00    0.00       6/3152        postfix_expression [173]
+-----------------------------------------------
+                0.00    0.00       2/2           execute_no_param <cycle 4> [11]
+[132]    0.0    0.00    0.00       2         operator_or [132]
+                0.00    0.00       2/146         element_true [79]
+-----------------------------------------------
+                0.00    0.00       5/5           class_statement [125]
+[133]    0.0    0.00    0.00       5         function_definition [133]
+                0.00    0.00       5/214071      map_lookup [2]
+                0.00    0.00       5/88757       parser_next__ [71]
+                0.00    0.00       4/10322       queue_remove [155]
+                0.00    0.00       4/5           compound_statement [247]
+                0.00    0.00       4/20321       match_merge [151]
+-----------------------------------------------
+                                                 <spontaneous>
+[134]    0.0    0.00    0.00                 __fn__.4955 [134]
+                0.00    0.00       2/214071      map_lookup [2]
+                0.00    0.00       1/11079       map_insert [14]
+                0.00    0.00       2/88757       parser_next__ [71]
+                0.00    0.00       2/6810        string_literal [159]
+                0.00    0.00       2/20321       match_merge [151]
+-----------------------------------------------
+                0.00    0.00       1/1           vm_create [44]
+[135]    0.0    0.00    0.00       1         memory_graph_create_root_element [135]
+                0.00    0.00       2/7800        set_insert [19]
+                0.00    0.00       3/2034        map_init [180]
+                0.00    0.00       2/1350        set_init [186]
+-----------------------------------------------
+                0.00    0.00       3/3           module_create [39]
+[136]    0.0    0.00    0.00       3         file_info_set_name [136]
+                0.00    0.00       3/7422        strings_intern [31]
+-----------------------------------------------
+                0.00    0.00       1/1           execute_no_param <cycle 4> [11]
+[137]    0.0    0.00    0.00       1         element_not [137]
+                0.00    0.00       1/2177        vm_lookup [36]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[138]    0.0    0.00    0.00       1         vm_delete [138]
+                0.00    0.00       1/7422        strings_intern [31]
+                0.00    0.00       1/95652       obj_get_field [5]
+                0.00    0.00       1/1           memory_graph_delete [143]
+                0.00    0.00       1/4           module_delete [141]
+-----------------------------------------------
+                                                 <spontaneous>
+[139]    0.0    0.00    0.00                 __fn__.4991 [139]
+                0.00    0.00       2/214071      map_lookup [2]
+                0.00    0.00       2/88757       parser_next__ [71]
+                0.00    0.00       2/6810        string_literal [159]
+                0.00    0.00       2/20321       match_merge [151]
+                0.00    0.00       2/10322       queue_remove [155]
+-----------------------------------------------
+                0.00    0.00       1/1           load_fn [26]
+[140]    0.0    0.00    0.00       1         file_info [140]
+                0.00    0.00       1/7422        strings_intern [31]
+                0.00    0.00       1/7455        string_comparator [64]
+                0.00    0.00       1/5           file_fn [248]
+-----------------------------------------------
+                0.00    0.00       1/4           vm_delete [138]
+                0.00    0.00       3/4           main [3]
+[141]    0.0    0.00    0.00       4         module_delete [141]
+                0.00    0.00       4/2198        map_iterate <cycle 1> [178]
+                0.00    0.00    1704/9518        expando_get [157]
+                0.00    0.00    1704/1704        instruction_delete [183]
+                0.00    0.00      12/21          map_delete [229]
+                0.00    0.00       8/9           set_delete [237]
+                0.00    0.00       4/5           file_info_delete [249]
+                0.00    0.00       4/1720        expando_len [181]
+                0.00    0.00       4/4           expando_delete [253]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[142]    0.0    0.00    0.00       1         alloc_finalize [142]
+                0.00    0.00       1/1408        set_iterate [106]
+                0.00    0.00       1/9           set_delete [237]
+-----------------------------------------------
+                0.00    0.00       1/1           vm_delete [138]
+[143]    0.0    0.00    0.00       1         memory_graph_delete [143]
+                0.00    0.00       1/1408        set_iterate [106]
+                0.00    0.00       2/2034        map_finalize [179]
+                0.00    0.00       2/1351        set_finalize [185]
+-----------------------------------------------
+[144]    0.0    0.00    0.00       1+287     <cycle 2 as a whole> [144]
+                0.00    0.00     152+386         codegen <cycle 2> [212]
+                0.00    0.00      82             codegen_postfix1 <cycle 2> [218]
+                0.00    0.00      11+13          codegen_tuple <cycle 2> [234]
+                0.00    0.00      21             codegen_assignment <cycle 2> [228]
+                0.00    0.00       8             codegen_anon_function <cycle 2> [238]
+                0.00    0.00       5             codegen_function <cycle 2> [246]
+                0.00    0.00       3             codegen_assignment_ext <cycle 2> [259]
+                0.00    0.00       3             codegen_if <cycle 2> [260]
+                0.00    0.00       2             codegen_for <cycle 2> [263]
+                0.00    0.00       1             codegen_class <cycle 2> [266]
+-----------------------------------------------
+                0.00    0.00     674/193657      map_remove [191]
+                0.00    0.00    4643/193657      map_insert [14]
+                0.00    0.00  188340/193657      map_lookup [2]
+[146]    0.0    0.00    0.00  193657         default_hasher [146]
+-----------------------------------------------
+                0.00    0.00     544/181877      map_insert_helper [153]
+                0.00    0.00     674/181877      map_remove [191]
+                0.00    0.00  180659/181877      map_lookup [2]
+[147]    0.0    0.00    0.00  181877         default_comparator [147]
+-----------------------------------------------
+                0.00    0.00       4/88711       module_create_file [34]
+                0.00    0.00      23/88711       module_instruction [49]
+                0.00    0.00   88684/88711       parser_next__ [71]
+[148]    0.0    0.00    0.00   88711         queue_peek [148]
+-----------------------------------------------
+                0.00    0.00      24/26436       memory_graph_array_set [91]
+                0.00    0.00      33/26436       strings_insert_constants [112]
+                0.00    0.00     100/26436       memory_graph_tuple_add [70]
+                0.00    0.00     272/26436       append_child_edges.2852 [83]
+                0.00    0.00     586/26436       memory_graph_array_push [58]
+                0.00    0.00     586/26436       memory_graph_array_pop [67]
+                0.00    0.00     705/26436       module_instruction [49]
+                0.00    0.00    1922/26436       memory_graph_array_dequeue [33]
+                0.00    0.00    1934/26436       memory_graph_array_enqueue [28]
+                0.00    0.00    7422/26436       strings_intern [31]
+                0.00    0.00   12852/26436       memory_graph_set_field [7]
+[149]    0.0    0.00    0.00   26436         set_lookup [149]
+-----------------------------------------------
+                0.00    0.00    5740/24016       map_insert [14]
+                0.00    0.00   18276/24016       map_lookup [2]
+[150]    0.0    0.00    0.00   24016         node_edge_hasher [150]
+-----------------------------------------------
+                0.00    0.00       1/20321       statement_list1 [88]
+                0.00    0.00       1/20321       class_statement_list [118]
+                0.00    0.00       1/20321       file_level_statement_list [97]
+                0.00    0.00       2/20321       __fn__.4991 [139]
+                0.00    0.00       2/20321       __fn__.4955 [134]
+                0.00    0.00       2/20321       __fn__.5031 [59]
+                0.00    0.00       3/20321       class_statement_list1 [121]
+                0.00    0.00       4/20321       function_definition [133]
+                0.00    0.00       4/20321       class_statement [125]
+                0.00    0.00       7/20321       __fn__.4831 [127]
+                0.00    0.00      10/20321       __fn__.4518 [122]
+                0.00    0.00      10/20321       __fn__.4098 [126]
+                0.00    0.00      10/20321       __fn__.5059 [78]
+                0.00    0.00      11/20321       assignment_tuple [68]
+                0.00    0.00      12/20321       relational_expression1 [53]
+                0.00    0.00      14/20321       __fn__.4176 [128]
+                0.00    0.00      18/20321       __fn__.3015 [32]
+                0.00    0.00      25/20321       __fn__.4685 [110]
+                0.00    0.00      30/20321       __fn__.3661 [24]
+                0.00    0.00      50/20321       function_argument_list [89]
+                0.00    0.00      54/20321       statement_list [77]
+                0.00    0.00      60/20321       file_level_statement_list1 [99]
+                0.00    0.00      78/20321       function_argument_list1 [96]
+                0.00    0.00      81/20321       __fn__.2896 [117]
+                0.00    0.00      82/20321       or_expression1 [46]
+                0.00    0.00      96/20321       additive_expression1 <cycle 3> [52]
+                0.00    0.00     120/20321       expression_statement [62]
+                0.00    0.00     139/20321       __fn__.2961 [20]
+                0.00    0.00     156/20321       __fn__.2912 [81]
+                0.00    0.00     280/20321       anon_function [45]
+                0.00    0.00     378/20321       __fn__.4389 [94]
+                0.00    0.00     567/20321       tuple_expression [42]
+                0.00    0.00     618/20321       tuple_expression1 [60]
+                0.00    0.00     838/20321       __fn__.3621 [15]
+                0.00    0.00     865/20321       __fn__.3937 [41]
+                0.00    0.00    1634/20321       __fn__.3182 [23]
+                0.00    0.00    1661/20321       or_expression [9]
+                0.00    0.00    1691/20321       relational_expression [21]
+                0.00    0.00    1691/20321       equality_expression [17]
+                0.00    0.00    1691/20321       and_expression [13]
+                0.00    0.00    1691/20321       xor_expression [10]
+                0.00    0.00    1793/20321       additive_expression <cycle 3> [29]
+                0.00    0.00    1799/20321       multiplicative_expression [38]
+                0.00    0.00    2041/20321       postfix_expression1 [37]
+[151]    0.0    0.00    0.00   20321         match_merge [151]
+                0.00    0.00    2216/2216        match_rollback [177]
+                0.00    0.00      87/88          expression_tree_delete [216]
+-----------------------------------------------
+                0.00    0.00    6491/19027       map_iterate <cycle 1> [178]
+                0.00    0.00   12536/19027       map_lookup [2]
+[152]    0.0    0.00    0.00   19027         node_edge_comparator [152]
+-----------------------------------------------
+                0.00    0.00    2307/15693       insert_in_new_table.2457 [397]
+                0.00    0.00    2307/15693       resize_table [245]
+                0.00    0.00   11079/15693       map_insert [14]
+[153]    0.0    0.00    0.00   15693         map_insert_helper [153]
+                0.00    0.00     544/181877      default_comparator [147]
+-----------------------------------------------
+                0.00    0.00       1/14895       vm_set_module [129]
+                0.00    0.00       1/14895       vm_create [44]
+                0.00    0.00       4/14895       operator_mult [257]
+                0.00    0.00       4/14895       vm_maybe_initialize_and_execute <cycle 4> [69]
+                0.00    0.00      29/14895       memory_graph_array_join [86]
+                0.00    0.00      82/14895       memory_graph_array_set [91]
+                0.00    0.00     142/14895       operator_sub [213]
+                0.00    0.00     151/14895       operator_add [210]
+                0.00    0.00     274/14895       memory_graph_tuple_add [70]
+                0.00    0.00     289/14895       call_fn <cycle 4> [18]
+                0.00    0.00     293/14895       vm_new_block [22]
+                0.00    0.00     297/14895       memory_graph_array_push [58]
+                0.00    0.00     297/14895       memory_graph_array_pop [67]
+                0.00    0.00    2444/14895       memory_graph_array_dequeue [33]
+                0.00    0.00    2482/14895       memory_graph_array_enqueue [28]
+                0.00    0.00    8105/14895       vm_shift_ip [8]
+[154]    0.0    0.00    0.00   14895         create_int [154]
+-----------------------------------------------
+                0.00    0.00       2/10322       __fn__.4991 [139]
+                0.00    0.00       2/10322       __fn__.5031 [59]
+                0.00    0.00       2/10322       __fn__.4518 [122]
+                0.00    0.00       3/10322       __fn__.3621 [15]
+                0.00    0.00       3/10322       __fn__.4098 [126]
+                0.00    0.00       4/10322       function_definition [133]
+                0.00    0.00       4/10322       __fn__.4831 [127]
+                0.00    0.00       5/10322       assignment_tuple [68]
+                0.00    0.00       5/10322       __fn__.4176 [128]
+                0.00    0.00       6/10322       multiplicative_expression [38]
+                0.00    0.00       6/10322       relational_expression1 [53]
+                0.00    0.00       6/10322       __fn__.5059 [78]
+                0.00    0.00       6/10322       module_create_file [34]
+                0.00    0.00       9/10322       __fn__.3661 [24]
+                0.00    0.00      10/10322       __fn__.4685 [110]
+                0.00    0.00      21/10322       __fn__.3937 [41]
+                0.00    0.00      39/10322       function_argument_list1 [96]
+                0.00    0.00      52/10322       or_expression1 [46]
+                0.00    0.00      64/10322       expression_statement [62]
+                0.00    0.00      84/10322       __fn__.2896 [117]
+                0.00    0.00      96/10322       additive_expression1 <cycle 3> [52]
+                0.00    0.00      97/10322       __fn__.2961 [20]
+                0.00    0.00     156/10322       __fn__.2912 [81]
+                0.00    0.00     168/10322       anon_function [45]
+                0.00    0.00     179/10322       __fn__.4389 [94]
+                0.00    0.00     309/10322       tuple_expression1 [60]
+                0.00    0.00     423/10322       __fn__.3015 [32]
+                0.00    0.00     991/10322       __fn__.2863 [111]
+                0.00    0.00    1348/10322       postfix_expression1 [37]
+                0.00    0.00    1630/10322       __fn__.2832 [95]
+                0.00    0.00    4592/10322       module_instruction [49]
+[155]    0.0    0.00    0.00   10322         queue_remove [155]
+-----------------------------------------------
+                0.00    0.00     302/10056       module_instruction [49]
+                0.00    0.00    9754/10056       map_iterate <cycle 1> [178]
+[156]    0.0    0.00    0.00   10056         token_to_val [156]
+-----------------------------------------------
+                0.00    0.00    1704/9518        module_delete [141]
+                0.00    0.00    7814/9518        module_ins [158]
+[157]    0.0    0.00    0.00    9518         expando_get [157]
+-----------------------------------------------
+                0.00    0.00    7814/7814        execute <cycle 4> [6]
+[158]    0.0    0.00    0.00    7814         module_ins [158]
+                0.00    0.00    7814/9518        expando_get [157]
+-----------------------------------------------
+                0.00    0.00       1/6810        __fn__.4831 [127]
+                0.00    0.00       2/6810        __fn__.4991 [139]
+                0.00    0.00       2/6810        __fn__.4955 [134]
+                0.00    0.00       3/6810        __fn__.3621 [15]
+                0.00    0.00       5/6810        __fn__.4685 [110]
+                0.00    0.00      39/6810        function_argument_list1 [96]
+                0.00    0.00      65/6810        function_argument_list [89]
+                0.00    0.00     389/6810        postfix_expression1 [37]
+                0.00    0.00    3152/6810        __fn__.2961 [20]
+                0.00    0.00    3152/6810        __fn__.3015 [32]
+[159]    0.0    0.00    0.00    6810         string_literal [159]
+-----------------------------------------------
+                0.00    0.00    6491/6491        map_iterate <cycle 1> [178]
+[160]    0.0    0.00    0.00    6491         serialize_module [160]
+-----------------------------------------------
+                0.00    0.00      29/6330        memory_graph_array_join [86]
+                0.00    0.00     151/6330        execute_no_param <cycle 4> [11]
+                0.00    0.00     156/6330        string_create [54]
+                0.00    0.00     164/6330        memory_graph_array_set [91]
+                0.00    0.00     297/6330        memory_graph_array_push [58]
+                0.00    0.00     297/6330        memory_graph_array_pop [67]
+                0.00    0.00     310/6330        obj_to_str <cycle 1> [102]
+                0.00    0.00    2444/6330        memory_graph_array_dequeue [33]
+                0.00    0.00    2482/6330        memory_graph_array_enqueue [28]
+[161]    0.0    0.00    0.00    6330         array_size [161]
+-----------------------------------------------
+                0.00    0.00    5688/5688        tokenize_line [30]
+[162]    0.0    0.00    0.00    5688         queue_last [162]
+-----------------------------------------------
+                0.00    0.00    5541/5541        tokenize_line [30]
+[163]    0.0    0.00    0.00    5541         read_word [163]
+-----------------------------------------------
+                0.00    0.00    5541/5541        tokenize_line [30]
+[164]    0.0    0.00    0.00    5541         resolve_type [164]
+                0.00    0.00     366/371         ends_with [196]
+                0.00    0.00     365/365         contains_char [197]
+-----------------------------------------------
+                0.00    0.00    5429/5429        tokenize_line [30]
+[165]    0.0    0.00    0.00    5429         queue_add [165]
+-----------------------------------------------
+                0.00    0.00       6/5429        module_create_file [34]
+                0.00    0.00     831/5429        expression_tree_delete [216]
+                0.00    0.00    4592/5429        module_instruction [49]
+[166]    0.0    0.00    0.00    5429         token_delete [166]
+-----------------------------------------------
+                0.00    0.00       8/4901        module_instruction [49]
+                0.00    0.00    4893/4901        match_rollback [177]
+[167]    0.0    0.00    0.00    4901         queue_add_front [167]
+-----------------------------------------------
+                0.00    0.00    1605/3766        __fn__.3015 [32]
+                0.00    0.00    2161/3766        __fn__.2961 [20]
+[168]    0.0    0.00    0.00    3766         length_expression [168]
+-----------------------------------------------
+                0.00    0.00       1/3208        load_fn [26]
+                0.00    0.00    3207/3208        map_iterate <cycle 1> [178]
+[169]    0.0    0.00    0.00    3208         codegen_file [169]
+                0.00    0.00       1/1           codegen <cycle 2> [212]
+                0.00    0.00       1/63          write_ins_int [220]
+-----------------------------------------------
+                0.00    0.00    3152/3152        __fn__.3182 [23]
+[170]    0.0    0.00    0.00    3152         array_declaration [170]
+-----------------------------------------------
+                0.00    0.00    3152/3152        __fn__.2961 [20]
+[171]    0.0    0.00    0.00    3152         identifier [171]
+-----------------------------------------------
+                0.00    0.00    1518/3152        __fn__.3182 [23]
+                0.00    0.00    1634/3152        postfix_expression1 [37]
+[172]    0.0    0.00    0.00    3152         module_statement [172]
+-----------------------------------------------
+                0.00    0.00       6/3152        unary_expression [131]
+                0.00    0.00    1047/3152        __fn__.3937 [41]
+                0.00    0.00    2099/3152        multiplicative_expression [38]
+[173]    0.0    0.00    0.00    3152         postfix_expression [173]
+-----------------------------------------------
+                0.00    0.00    3152/3152        __fn__.3212 [43]
+[174]    0.0    0.00    0.00    3152         primary_expression [174]
+-----------------------------------------------
+                0.00    0.00     514/2996        string_create [54]
+                0.00    0.00    2482/2996        memory_graph_array_enqueue [28]
+[175]    0.0    0.00    0.00    2996         array_enqueue [175]
+-----------------------------------------------
+                0.00    0.00    2444/2444        memory_graph_array_dequeue [33]
+[176]    0.0    0.00    0.00    2444         array_dequeue [176]
+-----------------------------------------------
+                                1250             match_rollback [177]
+                0.00    0.00    2216/2216        match_merge [151]
+[177]    0.0    0.00    0.00    2216+1250    match_rollback [177]
+                0.00    0.00    4893/4901        queue_add_front [167]
+                                1250             match_rollback [177]
+-----------------------------------------------
+                                   3             obj_to_str <cycle 1> [102]
+                0.00    0.00       2/2198        add_class.3155 [105]
+                0.00    0.00       2/2198        vm_add_builtin [47]
+                0.00    0.00       4/2198        module_delete [141]
+                0.00    0.00       6/2198        add_class.3140 [109]
+                0.00    0.00       6/2198        vm_add_module [100]
+                0.00    0.00     674/2198        obj_delete_ptr [116]
+                0.00    0.00    1408/2198        set_iterate [106]
+[178]    0.0    0.00    0.00    2105         map_iterate <cycle 1> [178]
+                0.00    0.00    9754/10056       token_to_val [156]
+                0.00    0.00    6491/19027       node_edge_comparator [152]
+                0.00    0.00    6491/6491        serialize_module [160]
+                0.00    0.00    3207/3208        codegen_file [169]
+                0.00    0.00       8/21          map_delete [229]
+                0.00    0.00       8/8           memory_graph_print [239]
+                                  48             tuple_print <cycle 1> [223]
+-----------------------------------------------
+                0.00    0.00       1/2034        strings_finalize [270]
+                0.00    0.00       2/2034        memory_graph_delete [143]
+                0.00    0.00       9/2034        set_delete [237]
+                0.00    0.00     674/2034        obj_delete_ptr [116]
+                0.00    0.00    1348/2034        delete_node_and_obj.2746 [103]
+[179]    0.0    0.00    0.00    2034         map_finalize [179]
+-----------------------------------------------
+                0.00    0.00       1/2034        memory_graph_create [268]
+                0.00    0.00       1/2034        set_init_default [269]
+                0.00    0.00       1/2034        strings_init [271]
+                0.00    0.00       3/2034        memory_graph_create_root_element [135]
+                0.00    0.00       9/2034        set_create [236]
+                0.00    0.00    2019/2034        memory_graph_new_node [65]
+[180]    0.0    0.00    0.00    2034         map_init [180]
+-----------------------------------------------
+                0.00    0.00       4/1720        module_delete [141]
+                0.00    0.00    1716/1720        module_load [50]
+[181]    0.0    0.00    0.00    1720         expando_len [181]
+-----------------------------------------------
+                0.00    0.00    1704/1704        module_load [50]
+[182]    0.0    0.00    0.00    1704         expando_append [182]
+-----------------------------------------------
+                0.00    0.00    1704/1704        module_delete [141]
+[183]    0.0    0.00    0.00    1704         instruction_delete [183]
+-----------------------------------------------
+                0.00    0.00    1700/1700        module_instruction [49]
+[184]    0.0    0.00    0.00    1700         op_type [184]
+-----------------------------------------------
+                0.00    0.00       1/1351        strings_finalize [270]
+                0.00    0.00       2/1351        memory_graph_delete [143]
+                0.00    0.00    1348/1351        delete_node_and_obj.2746 [103]
+[185]    0.0    0.00    0.00    1351         set_finalize [185]
+-----------------------------------------------
+                0.00    0.00       1/1350        memory_graph_create [268]
+                0.00    0.00       1/1350        strings_init [271]
+                0.00    0.00       2/1350        memory_graph_create_root_element [135]
+                0.00    0.00    1346/1350        memory_graph_new_node [65]
+[186]    0.0    0.00    0.00    1350         set_init [186]
+-----------------------------------------------
+                0.00    0.00    1278/1278        execute_val_param [27]
+[187]    0.0    0.00    0.00    1278         val_to_elt [187]
+-----------------------------------------------
+                0.00    0.00       6/977         __fn__.3661 [24]
+                0.00    0.00     971/977         anon_function [45]
+[188]    0.0    0.00    0.00     977         is_expression [188]
+-----------------------------------------------
+                0.00    0.00     696/696         string_comparator [64]
+[189]    0.0    0.00    0.00     696         debugf [189]
+-----------------------------------------------
+                0.00    0.00     693/693         module_instruction [49]
+[190]    0.0    0.00    0.00     693         instruction [190]
+-----------------------------------------------
+                0.00    0.00     674/674         set_remove [192]
+[191]    0.0    0.00    0.00     674         map_remove [191]
+                0.00    0.00     674/193657      default_hasher [146]
+                0.00    0.00     674/181877      default_comparator [147]
+-----------------------------------------------
+                0.00    0.00     674/674         delete_node_and_obj.2746 [103]
+[192]    0.0    0.00    0.00     674         set_remove [192]
+                0.00    0.00     674/674         map_remove [191]
+-----------------------------------------------
+                0.00    0.00     654/654         module_instruction [49]
+[193]    0.0    0.00    0.00     654         instruction_id [193]
+-----------------------------------------------
+                0.00    0.00     256/530         execute_val_param [27]
+                0.00    0.00     274/530         memory_graph_tuple_add [70]
+[194]    0.0    0.00    0.00     530         tuple_size [194]
+-----------------------------------------------
+                0.00    0.00      59/439         memory_graph_array_set [91]
+                0.00    0.00     151/439         execute_no_param <cycle 4> [11]
+                0.00    0.00     229/439         obj_to_str <cycle 1> [102]
+[195]    0.0    0.00    0.00     439         array_get [195]
+-----------------------------------------------
+                0.00    0.00       5/371         load_fn [26]
+                0.00    0.00     366/371         resolve_type [164]
+[196]    0.0    0.00    0.00     371         ends_with [196]
+-----------------------------------------------
+                0.00    0.00     365/365         resolve_type [164]
+[197]    0.0    0.00    0.00     365         contains_char [197]
+-----------------------------------------------
+                0.00    0.00       2/319         codegen_assignment_ext <cycle 2> [259]
+                0.00    0.00       2/319         codegen_function <cycle 2> [246]
+                0.00    0.00       2/319         codegen_anon_function <cycle 2> [238]
+                0.00    0.00       4/319         codegen_import [264]
+                0.00    0.00       7/319         codegen_function_args [244]
+                0.00    0.00      17/319         codegen_assignment <cycle 2> [228]
+                0.00    0.00      73/319         codegen_postfix1 <cycle 2> [218]
+                0.00    0.00     212/319         codegen <cycle 2> [212]
+[198]    0.0    0.00    0.00     319         write_ins [198]
+-----------------------------------------------
+                0.00    0.00     302/302         module_instruction [49]
+[199]    0.0    0.00    0.00     302         instruction_val [199]
+-----------------------------------------------
+                0.00    0.00       1/298         vm_add_builtin [47]
+                0.00    0.00       3/298         vm_add_module [100]
+                0.00    0.00       4/298         create_module [104]
+                0.00    0.00     290/298         vm_maybe_initialize_and_execute <cycle 4> [69]
+[200]    0.0    0.00    0.00     298         module_name [200]
+-----------------------------------------------
+                0.00    0.00     297/297         memory_graph_array_pop [67]
+[201]    0.0    0.00    0.00     297         array_pop [201]
+-----------------------------------------------
+                0.00    0.00     297/297         memory_graph_array_push [58]
+[202]    0.0    0.00    0.00     297         array_push [202]
+-----------------------------------------------
+                0.00    0.00     290/290         vm_maybe_initialize_and_execute <cycle 4> [69]
+[203]    0.0    0.00    0.00     290         is_true [203]
+-----------------------------------------------
+                0.00    0.00     274/274         memory_graph_tuple_add [70]
+[204]    0.0    0.00    0.00     274         tuple_add [204]
+-----------------------------------------------
+                0.00    0.00     256/256         execute_val_param [27]
+[205]    0.0    0.00    0.00     256         tuple_get [205]
+-----------------------------------------------
+                0.00    0.00       2/227         codegen_assignment_ext <cycle 2> [259]
+                0.00    0.00       3/227         codegen_assignment <cycle 2> [228]
+                0.00    0.00       5/227         codegen_function <cycle 2> [246]
+                0.00    0.00       8/227         codegen_function_args [244]
+                0.00    0.00       8/227         codegen_anon_function <cycle 2> [238]
+                0.00    0.00      24/227         codegen_tuple <cycle 2> [234]
+                0.00    0.00      77/227         codegen_postfix1 <cycle 2> [218]
+                0.00    0.00     100/227         codegen <cycle 2> [212]
+[206]    0.0    0.00    0.00     227         write_ins_no_arg [206]
+-----------------------------------------------
+                0.00    0.00     206/206         create_obj_of_class [40]
+[207]    0.0    0.00    0.00     206         array_create [207]
+-----------------------------------------------
+                0.00    0.00     206/206         delete_node_and_obj.2746 [103]
+[208]    0.0    0.00    0.00     206         array_delete [208]
+-----------------------------------------------
+                0.00    0.00      18/197         tuple_print <cycle 1> [223]
+                0.00    0.00      49/197         array_print <cycle 1> [233]
+                0.00    0.00      65/197         execute_str_param [63]
+                0.00    0.00      65/197         execute_no_param <cycle 4> [11]
+[209]    0.0    0.00    0.00     197         elt_to_str [209]
+-----------------------------------------------
+                0.00    0.00     155/155         execute_no_param <cycle 4> [11]
+[210]    0.0    0.00    0.00     155         operator_add [210]
+                0.00    0.00     151/14895       create_int [154]
+                0.00    0.00       4/17          create_float [232]
+-----------------------------------------------
+                0.00    0.00       2/154         class_init [90]
+                0.00    0.00       3/154         vm_create [44]
+                0.00    0.00     149/154         vm_lookup [36]
+[211]    0.0    0.00    0.00     154         create_none [211]
+-----------------------------------------------
+                                 386             codegen <cycle 2> [212]
+                                   1             codegen_assignment_ext <cycle 2> [259]
+                                   1             codegen_class <cycle 2> [266]
+                                   5             codegen_function <cycle 2> [246]
+                                   8             codegen_for <cycle 2> [263]
+                                   8             codegen_if <cycle 2> [260]
+                                  13             codegen_anon_function <cycle 2> [238]
+                                  24             codegen_tuple <cycle 2> [234]
+                                  25             codegen_assignment <cycle 2> [228]
+                                  66             codegen_postfix1 <cycle 2> [218]
+                0.00    0.00       1/1           codegen_file [169]
+[212]    0.0    0.00    0.00     152+386     codegen <cycle 2> [212]
+                0.00    0.00     212/319         write_ins [198]
+                0.00    0.00     100/227         write_ins_no_arg [206]
+                0.00    0.00      33/63          write_ins_int [220]
+                0.00    0.00       6/6           codegen_function_args [244]
+                0.00    0.00       2/2           codegen_import [264]
+                0.00    0.00       1/21          append [227]
+                                  82             codegen_postfix1 <cycle 2> [218]
+                                  21             codegen_assignment <cycle 2> [228]
+                                  11             codegen_tuple <cycle 2> [234]
+                                   8             codegen_anon_function <cycle 2> [238]
+                                   5             codegen_function <cycle 2> [246]
+                                   3             codegen_if <cycle 2> [260]
+                                   2             codegen_for <cycle 2> [263]
+                                   1             codegen_class <cycle 2> [266]
+                                 386             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00     147/147         execute_no_param <cycle 4> [11]
+[213]    0.0    0.00    0.00     147         operator_sub [213]
+                0.00    0.00     142/14895       create_int [154]
+                0.00    0.00       5/17          create_float [232]
+-----------------------------------------------
+                0.00    0.00     117/117         create_tuple [61]
+[214]    0.0    0.00    0.00     117         tuple_create [214]
+-----------------------------------------------
+                0.00    0.00     117/117         delete_node_and_obj.2746 [103]
+[215]    0.0    0.00    0.00     117         tuple_delete [215]
+-----------------------------------------------
+                                 372             expression_tree_delete [216]
+                0.00    0.00       1/88          load_fn [26]
+                0.00    0.00      87/88          match_merge [151]
+[216]    0.0    0.00    0.00      88+372     expression_tree_delete [216]
+                0.00    0.00     831/5429        token_delete [166]
+                                 372             expression_tree_delete [216]
+-----------------------------------------------
+                0.00    0.00      82/82          memory_graph_array_set [91]
+[217]    0.0    0.00    0.00      82         array_set [217]
+-----------------------------------------------
+                                  82             codegen <cycle 2> [212]
+[218]    0.0    0.00    0.00      82         codegen_postfix1 <cycle 2> [218]
+                0.00    0.00      77/227         write_ins_no_arg [206]
+                0.00    0.00      73/319         write_ins [198]
+                                  66             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00      78/78          tokenize_line [30]
+[219]    0.0    0.00    0.00      78         read_string [219]
+-----------------------------------------------
+                0.00    0.00       1/63          codegen_file [169]
+                0.00    0.00       4/63          codegen_for <cycle 2> [263]
+                0.00    0.00       5/63          codegen_function <cycle 2> [246]
+                0.00    0.00       5/63          codegen_if <cycle 2> [260]
+                0.00    0.00       7/63          codegen_function_args [244]
+                0.00    0.00       8/63          codegen_anon_function <cycle 2> [238]
+                0.00    0.00      33/63          codegen <cycle 2> [212]
+[220]    0.0    0.00    0.00      63         write_ins_int [220]
+-----------------------------------------------
+                0.00    0.00       1/62          file_level_statement_list [97]
+                0.00    0.00      61/62          file_level_statement_list1 [99]
+[221]    0.0    0.00    0.00      62         primary_expression_no_constants [221]
+-----------------------------------------------
+                0.00    0.00      58/58          memory_graph_array_join [86]
+[222]    0.0    0.00    0.00      58         array_append [222]
+-----------------------------------------------
+                                   8             obj_to_str <cycle 1> [102]
+                                  48             map_iterate <cycle 1> [178]
+[223]    0.0    0.00    0.00      56         tuple_print <cycle 1> [223]
+                0.00    0.00      18/197         elt_to_str [209]
+                                   2             obj_to_str <cycle 1> [102]
+-----------------------------------------------
+                0.00    0.00      51/51          module_instruction [49]
+[224]    0.0    0.00    0.00      51         instruction_str [224]
+-----------------------------------------------
+                0.00    0.00      51/51          module_instruction [49]
+[225]    0.0    0.00    0.00      51         string_copy_range [225]
+-----------------------------------------------
+                0.00    0.00      22/22          module_instruction [49]
+[226]    0.0    0.00    0.00      22         value_negate [226]
+-----------------------------------------------
+                0.00    0.00       1/21          codegen <cycle 2> [212]
+                0.00    0.00       2/21          codegen_for <cycle 2> [263]
+                0.00    0.00       5/21          codegen_function <cycle 2> [246]
+                0.00    0.00       5/21          codegen_if <cycle 2> [260]
+                0.00    0.00       8/21          codegen_anon_function <cycle 2> [238]
+[227]    0.0    0.00    0.00      21         append [227]
+-----------------------------------------------
+                                  21             codegen <cycle 2> [212]
+[228]    0.0    0.00    0.00      21         codegen_assignment <cycle 2> [228]
+                0.00    0.00      17/319         write_ins [198]
+                0.00    0.00       3/227         write_ins_no_arg [206]
+                                  25             codegen <cycle 2> [212]
+                                   3             codegen_assignment_ext <cycle 2> [259]
+-----------------------------------------------
+                0.00    0.00       1/21          parse_file [98]
+                0.00    0.00       8/21          map_iterate <cycle 1> [178]
+                0.00    0.00      12/21          module_delete [141]
+[229]    0.0    0.00    0.00      21         map_delete [229]
+-----------------------------------------------
+                0.00    0.00       8/20          module_instruction [49]
+                0.00    0.00      12/20          module_create_file [34]
+[230]    0.0    0.00    0.00      20         map_create [230]
+-----------------------------------------------
+                0.00    0.00       4/20          module_load [50]
+                0.00    0.00      16/20          module_instruction [49]
+[231]    0.0    0.00    0.00      20         noop_instruction [231]
+-----------------------------------------------
+                0.00    0.00       4/17          operator_add [210]
+                0.00    0.00       5/17          operator_sub [213]
+                0.00    0.00       8/17          operator_div [240]
+[232]    0.0    0.00    0.00      17         create_float [232]
+-----------------------------------------------
+                                  12             obj_to_str <cycle 1> [102]
+[233]    0.0    0.00    0.00      12         array_print <cycle 1> [233]
+                0.00    0.00      49/197         elt_to_str [209]
+                                   6             obj_to_str <cycle 1> [102]
+-----------------------------------------------
+                                  13             codegen_tuple <cycle 2> [234]
+                                  11             codegen <cycle 2> [212]
+[234]    0.0    0.00    0.00      11+13      codegen_tuple <cycle 2> [234]
+                0.00    0.00      24/227         write_ins_no_arg [206]
+                                  24             codegen <cycle 2> [212]
+                                  13             codegen_tuple <cycle 2> [234]
+-----------------------------------------------
+                0.00    0.00       1/9           parse_file [98]
+                0.00    0.00       8/9           module_create_file [34]
+[235]    0.0    0.00    0.00       9         queue_init [235]
+-----------------------------------------------
+                0.00    0.00       1/9           alloc_init [265]
+                0.00    0.00       8/9           module_create_file [34]
+[236]    0.0    0.00    0.00       9         set_create [236]
+                0.00    0.00       9/2034        map_init [180]
+-----------------------------------------------
+                0.00    0.00       1/9           alloc_finalize [142]
+                0.00    0.00       8/9           module_delete [141]
+[237]    0.0    0.00    0.00       9         set_delete [237]
+                0.00    0.00       9/2034        map_finalize [179]
+-----------------------------------------------
+                                   8             codegen <cycle 2> [212]
+[238]    0.0    0.00    0.00       8         codegen_anon_function <cycle 2> [238]
+                0.00    0.00       8/8           write_anon_label [242]
+                0.00    0.00       8/227         write_ins_no_arg [206]
+                0.00    0.00       8/63          write_ins_int [220]
+                0.00    0.00       8/21          append [227]
+                0.00    0.00       8/8           write_ins_anon [243]
+                0.00    0.00       2/319         write_ins [198]
+                                  13             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00       8/8           map_iterate <cycle 1> [178]
+[239]    0.0    0.00    0.00       8         memory_graph_print [239]
+-----------------------------------------------
+                0.00    0.00       8/8           execute_no_param <cycle 4> [11]
+[240]    0.0    0.00    0.00       8         operator_div [240]
+                0.00    0.00       8/17          create_float [232]
+-----------------------------------------------
+                0.00    0.00       8/8           module_instruction [49]
+[241]    0.0    0.00    0.00       8         queue_remove_last [241]
+-----------------------------------------------
+                0.00    0.00       8/8           codegen_anon_function <cycle 2> [238]
+[242]    0.0    0.00    0.00       8         write_anon_label [242]
+-----------------------------------------------
+                0.00    0.00       8/8           codegen_anon_function <cycle 2> [238]
+[243]    0.0    0.00    0.00       8         write_ins_anon [243]
+-----------------------------------------------
+                0.00    0.00       6/6           codegen <cycle 2> [212]
+[244]    0.0    0.00    0.00       6         codegen_function_args [244]
+                0.00    0.00       8/227         write_ins_no_arg [206]
+                0.00    0.00       7/63          write_ins_int [220]
+                0.00    0.00       7/319         write_ins [198]
+-----------------------------------------------
+                0.00    0.00       6/6           map_insert [14]
+[245]    0.0    0.00    0.00       6         resize_table [245]
+                0.00    0.00    2307/15693       map_insert_helper [153]
+-----------------------------------------------
+                                   5             codegen <cycle 2> [212]
+[246]    0.0    0.00    0.00       5         codegen_function <cycle 2> [246]
+                0.00    0.00       5/5           write_label [251]
+                0.00    0.00       5/227         write_ins_no_arg [206]
+                0.00    0.00       5/63          write_ins_int [220]
+                0.00    0.00       5/21          append [227]
+                0.00    0.00       2/319         write_ins [198]
+                                   5             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00       1/5           __fn__.5059 [78]
+                0.00    0.00       4/5           function_definition [133]
+[247]    0.0    0.00    0.00       5         compound_statement [247]
+-----------------------------------------------
+                0.00    0.00       1/5           load_fn [26]
+                0.00    0.00       1/5           file_info [140]
+                0.00    0.00       3/5           module_create [39]
+[248]    0.0    0.00    0.00       5         file_fn [248]
+-----------------------------------------------
+                0.00    0.00       1/5           load_fn [26]
+                0.00    0.00       4/5           module_delete [141]
+[249]    0.0    0.00    0.00       5         file_info_delete [249]
+-----------------------------------------------
+                0.00    0.00       1/5           parse_file [98]
+                0.00    0.00       4/5           module_load [50]
+[250]    0.0    0.00    0.00       5         queue_deep_delete [250]
+-----------------------------------------------
+                0.00    0.00       5/5           codegen_function <cycle 2> [246]
+[251]    0.0    0.00    0.00       5         write_label [251]
+-----------------------------------------------
+                0.00    0.00       4/4           module_load [50]
+[252]    0.0    0.00    0.00       4         expando__ [252]
+-----------------------------------------------
+                0.00    0.00       4/4           module_delete [141]
+[253]    0.0    0.00    0.00       4         expando_delete [253]
+-----------------------------------------------
+                0.00    0.00       4/4           module_create_file [34]
+[254]    0.0    0.00    0.00       4         file_info_file [254]
+-----------------------------------------------
+                0.00    0.00       1/4           vm_add_builtin [47]
+                0.00    0.00       3/4           vm_add_module [100]
+[255]    0.0    0.00    0.00       4         module_classes [255]
+-----------------------------------------------
+                0.00    0.00       1/4           vm_add_builtin [47]
+                0.00    0.00       3/4           vm_add_module [100]
+[256]    0.0    0.00    0.00       4         module_refs [256]
+-----------------------------------------------
+                0.00    0.00       4/4           execute_no_param <cycle 4> [11]
+[257]    0.0    0.00    0.00       4         operator_mult [257]
+                0.00    0.00       4/14895       create_int [154]
+-----------------------------------------------
+                0.00    0.00       4/4           module_load [50]
+[258]    0.0    0.00    0.00       4         queue_shallow_delete [258]
+-----------------------------------------------
+                                   3             codegen_assignment <cycle 2> [228]
+[259]    0.0    0.00    0.00       3         codegen_assignment_ext <cycle 2> [259]
+                0.00    0.00       2/227         write_ins_no_arg [206]
+                0.00    0.00       2/319         write_ins [198]
+                                   1             codegen <cycle 2> [212]
+-----------------------------------------------
+                                   3             codegen <cycle 2> [212]
+[260]    0.0    0.00    0.00       3         codegen_if <cycle 2> [260]
+                0.00    0.00       5/63          write_ins_int [220]
+                0.00    0.00       5/21          append [227]
+                                   8             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00       2/2           __fn__.4098 [126]
+[261]    0.0    0.00    0.00       2         assignment_expression [261]
+-----------------------------------------------
+                0.00    0.00       2/2           __fn__.5031 [59]
+[262]    0.0    0.00    0.00       2         class_definition [262]
+-----------------------------------------------
+                                   2             codegen <cycle 2> [212]
+[263]    0.0    0.00    0.00       2         codegen_for <cycle 2> [263]
+                0.00    0.00       4/63          write_ins_int [220]
+                0.00    0.00       2/21          append [227]
+                                   8             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00       2/2           codegen <cycle 2> [212]
+[264]    0.0    0.00    0.00       2         codegen_import [264]
+                0.00    0.00       4/319         write_ins [198]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[265]    0.0    0.00    0.00       1         alloc_init [265]
+                0.00    0.00       1/9           set_create [236]
+-----------------------------------------------
+                                   1             codegen <cycle 2> [212]
+[266]    0.0    0.00    0.00       1         codegen_class <cycle 2> [266]
+                0.00    0.00       1/1           write_class [272]
+                0.00    0.00       1/1           write_endclass [273]
+                                   1             codegen <cycle 2> [212]
+-----------------------------------------------
+                0.00    0.00       1/1           parse_file [98]
+[267]    0.0    0.00    0.00       1         map_create_default [267]
+-----------------------------------------------
+                0.00    0.00       1/1           vm_create [44]
+[268]    0.0    0.00    0.00       1         memory_graph_create [268]
+                0.00    0.00       1/1           set_init_default [269]
+                0.00    0.00       1/2034        map_init [180]
+                0.00    0.00       1/1350        set_init [186]
+-----------------------------------------------
+                0.00    0.00       1/1           memory_graph_create [268]
+[269]    0.0    0.00    0.00       1         set_init_default [269]
+                0.00    0.00       1/2034        map_init [180]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[270]    0.0    0.00    0.00       1         strings_finalize [270]
+                0.00    0.00       1/2034        map_finalize [179]
+                0.00    0.00       1/1351        set_finalize [185]
+-----------------------------------------------
+                0.00    0.00       1/1           main [3]
+[271]    0.0    0.00    0.00       1         strings_init [271]
+                0.00    0.00       1/2034        map_init [180]
+                0.00    0.00       1/1350        set_init [186]
+-----------------------------------------------
+                0.00    0.00       1/1           codegen_class <cycle 2> [266]
+[272]    0.0    0.00    0.00       1         write_class [272]
+-----------------------------------------------
+                0.00    0.00       1/1           codegen_class <cycle 2> [266]
+[273]    0.0    0.00    0.00       1         write_endclass [273]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+
+Index by function name
+
+  [29] additive_expression   [140] file_info             [173] postfix_expression
+  [52] additive_expression1  [249] file_info_delete       [37] postfix_expression1
+ [142] alloc_finalize        [254] file_info_file        [174] primary_expression
+ [265] alloc_init            [136] file_info_set_name    [221] primary_expression_no_constants
+  [13] and_expression         [97] file_level_statement_list [165] queue_add
+  [56] and_expression1        [99] file_level_statement_list1 [167] queue_add_front
+  [45] anon_function          [89] function_argument_list [250] queue_deep_delete
+ [227] append                 [96] function_argument_list1 [235] queue_init
+ [222] array_append          [133] function_definition   [162] queue_last
+ [207] array_create          [171] identifier            [148] queue_peek
+ [170] array_declaration      [73] inherits_from         [155] queue_remove
+ [208] array_delete          [190] instruction           [241] queue_remove_last
+ [176] array_dequeue         [183] instruction_delete    [258] queue_shallow_delete
+ [175] array_enqueue         [193] instruction_id        [219] read_string
+ [195] array_get             [224] instruction_str       [163] read_word
+ [201] array_pop             [199] instruction_val        [21] relational_expression
+ [233] array_print           [188] is_expression          [53] relational_expression1
+ [202] array_push            [203] is_true               [245] resize_table
+ [217] array_set             [108] jump_statement        [164] resolve_type
+ [161] array_size            [168] length_expression     [160] serialize_module
+ [261] assignment_expression  [26] load_fn               [236] set_create
+  [68] assignment_tuple      [230] map_create            [237] set_delete
+  [18] call_fn               [267] map_create_default    [185] set_finalize
+ [123] call_new              [229] map_delete            [186] set_init
+ [107] class_create          [179] map_finalize          [269] set_init_default
+ [262] class_definition      [180] map_init               [19] set_insert
+  [92] class_fill             [14] map_insert            [106] set_iterate
+  [90] class_init            [153] map_insert_helper     [149] set_lookup
+ [125] class_statement       [178] map_iterate           [192] set_remove
+ [118] class_statement_list    [2] map_lookup             [77] statement_list
+ [121] class_statement_list1 [191] map_remove             [88] statement_list1
+ [212] codegen               [151] match_merge            [82] string_add
+ [238] codegen_anon_function [177] match_rollback         [64] string_comparator
+ [228] codegen_assignment     [33] memory_graph_array_dequeue [225] string_copy_range
+ [259] codegen_assignment_ext [28] memory_graph_array_enqueue [54] string_create
+ [266] codegen_class          [86] memory_graph_array_join [1] string_hasher
+ [169] codegen_file           [67] memory_graph_array_pop [159] string_literal
+ [263] codegen_for            [58] memory_graph_array_push [270] strings_finalize
+ [246] codegen_function       [91] memory_graph_array_set [271] strings_init
+ [244] codegen_function_args [268] memory_graph_create   [112] strings_insert_constants
+ [260] codegen_if            [135] memory_graph_create_root_element [31] strings_intern
+ [264] codegen_import        [143] memory_graph_delete   [166] token_delete
+ [218] codegen_postfix1       [65] memory_graph_new_node [156] token_to_val
+ [234] codegen_tuple         [239] memory_graph_print     [35] tokenize
+ [247] compound_statement      [7] memory_graph_set_field [30] tokenize_line
+ [197] contains_char          [70] memory_graph_tuple_add [204] tuple_add
+  [84] create_array          [255] module_classes        [214] tuple_create
+ [232] create_float           [39] module_create         [215] tuple_delete
+  [66] create_function        [34] module_create_file     [42] tuple_expression
+ [154] create_int            [141] module_delete          [60] tuple_expression1
+  [75] create_method         [158] module_ins            [205] tuple_get
+ [104] create_module          [49] module_instruction    [223] tuple_print
+ [211] create_none            [50] module_load           [194] tuple_size
+  [48] create_obj            [200] module_name           [131] unary_expression
+  [40] create_obj_of_class   [256] module_refs           [187] val_to_elt
+ [120] create_obj_unsafe     [172] module_statement      [226] value_negate
+  [61] create_tuple           [38] multiplicative_expression [47] vm_add_builtin
+ [189] debugf                 [51] multiplicative_expression1 [100] vm_add_module
+ [147] default_comparator    [152] node_edge_comparator   [44] vm_create
+ [146] default_hasher        [150] node_edge_hasher      [138] vm_delete
+  [80] element_false         [231] noop_instruction       [36] vm_lookup
+ [137] element_not           [116] obj_delete_ptr         [69] vm_maybe_initialize_and_execute
+  [79] element_true            [5] obj_get_field          [22] vm_new_block
+ [209] elt_to_str             [12] obj_set_field          [74] vm_object_lookup
+ [196] ends_with             [102] obj_to_str            [129] vm_set_module
+  [17] equality_expression   [184] op_type                 [8] vm_shift_ip
+  [55] equality_expression1  [210] operator_add          [242] write_anon_label
+   [6] execute               [240] operator_div          [272] write_class
+  [16] execute_id_param      [119] operator_eq           [273] write_endclass
+  [11] execute_no_param      [115] operator_gt           [198] write_ins
+  [63] execute_str_param     [124] operator_gte          [243] write_ins_anon
+  [27] execute_val_param      [85] operator_lt           [220] write_ins_int
+ [252] expando__              [93] operator_lte          [206] write_ins_no_arg
+ [182] expando_append        [257] operator_mult         [251] write_label
+ [253] expando_delete        [114] operator_neq           [10] xor_expression
+ [157] expando_get           [132] operator_or            [57] xor_expression1
+ [181] expando_len           [213] operator_sub          [101] <cycle 1>
+  [62] expression_statement    [9] or_expression         [144] <cycle 2>
+ [216] expression_tree_delete [46] or_expression1         [25] <cycle 3>
+ [130] field_statement        [98] parse_file              [4] <cycle 4>
+ [248] file_fn                [71] parser_next__
