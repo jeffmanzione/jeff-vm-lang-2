@@ -110,7 +110,7 @@ Token *token_create(TokenType type, int line, int col, const char text[]) {
 
 void token_delete(Token *token) {
   ASSERT_NOT_NULL(token);
-//  DEALLOC(token);
+  ARENA_DEALLOC(Token, token);
 }
 
 Token *token_copy(Token *tok) {

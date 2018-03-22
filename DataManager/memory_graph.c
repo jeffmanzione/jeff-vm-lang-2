@@ -106,7 +106,7 @@ void node_delete(MemoryGraph *graph, Node *node) {
 
   obj_delete_ptr(&node->obj);
   set_remove(&graph->nodes, node);
-//  DEALLOC(node);
+  ARENA_DEALLOC(Node, node);
 }
 
 void memory_graph_delete(MemoryGraph *graph) {
@@ -255,7 +255,7 @@ void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
     // Don't traverse edges which no longer are present
     if (child_edge->ref_count < 1) {
       set_remove(&node->children, child_edge);
-      DEALLOC(child_edge);
+      ARENA_DEALLOC(NodeEdge, child_edge);
       return;
     }
     traverse_subtree(graph, marked, child_edge->node);

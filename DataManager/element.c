@@ -170,6 +170,10 @@ Element obj_get_field(Element elt, const char field_name[]) {
 }
 
 void obj_delete_ptr(Object *obj) {
+  void dealloc_elts(Pair *kv) {
+    ARENA_DEALLOC(Element, kv->value);
+  }
+  map_iterate(&obj->fields, dealloc_elts);
   map_finalize(&obj->fields);
 
   if (ARRAY == obj->type) {

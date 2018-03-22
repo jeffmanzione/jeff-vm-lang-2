@@ -30,7 +30,7 @@ typedef struct {
   Subarena *last;
   size_t alloc_sz;
   void *next, *end;
-//  void *last_freed;
+  void *last_freed;
 #ifdef DEBUG
   uint32_t requests, removes;
 #endif
@@ -45,7 +45,7 @@ ARENA_DEFINE(Token);
 void arena_init(Arena *arena, size_t sz);
 void arena_finalize(Arena *arena);
 void *arena_alloc(Arena *arena);
-//void arena_dealloc(Arena *arena, void *ptr);
+void arena_dealloc(Arena *arena, void *ptr);
 
 
 void arenas_init();
