@@ -91,22 +91,23 @@ Node *node_create(MemoryGraph *graph) {
   return node;
 }
 
-void node_delete(MemoryGraph *graph, Node *node) {
+void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
   ASSERT_NOT_NULL(graph);
   ASSERT_NOT_NULL(node);
-
-//  void delete_node_ref(void *ptr) {
-//    ASSERT_NOT_NULL(ptr);
-//    DEALLOC(ptr); // Dealloc NodeEdge
-//  }
-//  set_iterate(&node->children, delete_node_ref);
+  if (free_mem) {
+    void delete_node_edge(void *ptr) {
+      ARENA_DEALLOC(NodeEdge, (NodeEdge* ) ptr);
+    }
+    set_iterate(&node->children, delete_node_edge);
+    set_iterate(&node->children, delete_node_edge);
+  }
   set_finalize(&node->children);
-//  set_iterate(&node->parents, delete_node_ref);
   set_finalize(&node->parents);
-
-  obj_delete_ptr(&node->obj);
+  obj_delete_ptr(&node->obj, /*free_mem=*/free_mem);
   set_remove(&graph->nodes, node);
-  ARENA_DEALLOC(Node, node);
+  if (free_mem) {
+    ARENA_DEALLOC(Node, node);
+  }
 }
 
 void memory_graph_delete(MemoryGraph *graph) {
@@ -127,7 +128,7 @@ void memory_graph_delete(MemoryGraph *graph) {
       children_count += set_size(set);
     }
 #endif
-    node_delete(graph, node);
+    node_delete(graph, node, /*free_mem=*/false);
   }
   // Do not adjust order of deletes
   set_finalize(&graph->roots);
@@ -230,7 +231,6 @@ void memory_graph_set_field(MemoryGraph *graph, const Element parent,
   ASSERT(OBJECT == parent.type);
   ASSERT_NOT_NULL(parent.obj);
   Element existing = obj_get_field(parent, field_name);
-
   // If the field is already set to an object, remove the edge to the old child
   // node.
   if (OBJECT == existing.type) {
@@ -280,7 +280,7 @@ void memory_graph_free_space(MemoryGraph *graph) {
     if (set_lookup(marked, node)) {
       return;
     }
-    node_delete(graph, node);
+    node_delete(graph, node, /*free_mem=*/true);
     ASSERT_NULL(set_lookup(&graph->nodes, node));
   }
   set_iterate(&graph->nodes, delete_node_if_not_marked);

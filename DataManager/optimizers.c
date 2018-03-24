@@ -7,6 +7,7 @@
 
 #include "instruction.h"
 #include "error.h" // Keep
+#include "ops.h" // Keep
 #include "optimizer.h"
 #include "tape.h"
 
@@ -103,7 +104,7 @@ void optimizer_ResPush2(OptimizeHelper *oh, const Tape * const tape, int start,
     const InsContainer *second = tape_get(tape, i);
     if (RES == first->ins.op && NO_PARAM == first->ins.param
         && PUSH == second->ins.op && NO_PARAM == second->ins.param
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i-1))) {
+        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
       o_Remove(oh, i);
       o_SetOp(oh, i - 1, PEEK);
     }
@@ -114,3 +115,32 @@ void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
     int start, int end) {
 
 }
+
+//void optimizer_Increment(OptimizeHelper *oh, const Tape * const tape, int start,
+//    int end) {
+////  push  a
+////  push  1
+////  add
+////  set   a
+//  int i;
+//  for (i = start + 3; i < end; i++) {
+//    const InsContainer *first = tape_get(tape, i - 3);
+//    const InsContainer *second = tape_get(tape, i - 2);
+//    const InsContainer *third = tape_get(tape, i - 1);
+//    const InsContainer *fourth = tape_get(tape, i);
+//    if (PUSH == first->ins.op && ID_PARAM == first->ins.param
+//        && PUSH == second->ins.op && VAL_PARAM == second->ins.param
+//        && 1 == VAL_OF(second->ins.val)
+//        && (ADD == third->ins.op || SUB == third->ins.op)
+//        && SET == fourth->ins.op && ID_PARAM == fourth->ins.param
+//        && NULL == map_lookup(&oh->i_gotos, (void *) (i))
+//        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))
+//        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 2))
+//        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 3))) {
+//      o_Remove(oh, i);
+//      o_Remove(oh, i - 1);
+//      o_Remove(oh, i - 2);
+//      o_SetOp(oh, i - 3, ADD == third->ins.op ? INC : DEC);
+//    }
+//  }
+//}

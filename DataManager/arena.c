@@ -101,6 +101,7 @@ void *arena_alloc(Arena *arena) {
   ASSERT_NOT_NULL(arena);
   // Use up spacee that was already freed.
   if (NULL != arena->last_freed) {
+    DEBUGF("REUSING FREED SPACE");
     void *free_spot = arena->last_freed;
     arena->last_freed = ((Descriptor *) free_spot)->prev_freed;
     return free_spot + descriptor_sz;
@@ -120,7 +121,7 @@ void *arena_alloc(Arena *arena) {
 
 void arena_dealloc(Arena *arena, void *ptr) {
 #ifdef DEBUG
-  arena->removes--;
+  arena->removes++;
 #endif
   ASSERT(NOT_NULL(arena), NOT_NULL(ptr));
   Descriptor *d = (Descriptor *) (ptr - descriptor_sz);

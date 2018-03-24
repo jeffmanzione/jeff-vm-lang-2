@@ -28,7 +28,6 @@
 #define OP_NO_ARG_FMT "  %s\n"
 
 void tape_init(Tape *tape) {
-//  DEBUGF("NEW TAPE");
   tape->ins = expando(InsContainer, DEFAULT_TAPE_SIZE);
   tape->module_name = NULL;
   map_init_default(&tape->refs);
@@ -106,7 +105,6 @@ int tape_ins_neg(Tape *tape, Op op, Token *token) {
 }
 
 int tape_ins_text(Tape *tape, Op op, const char text[], Token *token) {
-//  DEBUGF("tape_ins_text");
   InsContainer c = insc_create(token);
   c.ins = instruction_id(op, text);
   ASSERT(NOT_NULL(token));
@@ -114,14 +112,12 @@ int tape_ins_text(Tape *tape, Op op, const char text[], Token *token) {
 }
 
 int tape_ins_int(Tape *tape, Op op, int val, Token *token) {
-//  DEBUGF("tape_ins_int");
   InsContainer c = insc_create(token);
   c.ins = instruction_val(op, create_int(val).val);
   return tape_insc(tape, &c);
 }
 
 int tape_ins_no_arg(Tape *tape, Op op, Token *token) {
-//  DEBUGF("tape_ins_no_arg");
   InsContainer c = insc_create(token);
   c.ins = instruction(op);
   ASSERT(NOT_NULL(token));
@@ -142,13 +138,11 @@ void insert_label(Tape * const tape, const char key[]) {
 }
 
 int tape_label(Tape *tape, Token *token) {
-//  DEBUGF("tape_label");
   insert_label(tape, token->text);
   return 0;
 }
 
 int tape_anon_label(Tape *tape, Token *token) {
-//  DEBUGF("tape_anon_label");
   size_t needed = snprintf(NULL, 0, "$anon_%d_%d", token->line, token->col) + 1;
   char *buffer = ALLOC_ARRAY2(char, needed);
   snprintf(buffer, needed, "$anon_%d_%d", token->line, token->col);
@@ -160,7 +154,6 @@ int tape_anon_label(Tape *tape, Token *token) {
 }
 
 int tape_ins_anon(Tape *tape, Op op, Token *token) {
-//  DEBUGF("tape_ins_anon");
   size_t needed = snprintf(NULL, 0, "$anon_%d_%d", token->line, token->col) + 1;
   char *buffer = ALLOC_ARRAY2(char, needed);
   snprintf(buffer, needed, "$anon_%d_%d", token->line, token->col);
@@ -173,13 +166,11 @@ int tape_ins_anon(Tape *tape, Op op, Token *token) {
 }
 
 int tape_module(Tape *tape, Token *token) {
-//  DEBUGF("tape_module");
   tape->module_name = token->text;
   return 0;
 }
 
 int tape_class(Tape *tape, Token *token) {
-//  DEBUGF("tape_class(%s)", token->text);
   map_insert(&tape->class_starts, token->text, (void *) expando_len(tape->ins));
   map_insert(&tape->classes, token->text, map_create_default());
   queue_add_front(&tape->class_prefs, token->text);
@@ -187,7 +178,6 @@ int tape_class(Tape *tape, Token *token) {
 }
 
 int tape_endclass(Tape *tape, Token *token) {
-//  DEBUGF("tape_endclass");
   char *cn = (char *) queue_remove(&tape->class_prefs);
   map_insert(&tape->class_ends, cn, (void *) expando_len(tape->ins));
   return 0;
@@ -205,7 +195,6 @@ const InsContainer *tape_get(const Tape *tape, int i) {
 
 // Destroys tail.
 void tape_append(Tape *head, Tape *tail) {
-//  DEBUGF("TAPE APPEND");
   ASSERT(NOT_NULL(head), NOT_NULL(tail));
   int i, cur_len = expando_len(head->ins), tail_len = expando_len(tail->ins);
   for (i = 0; i < tail_len; i++) {
@@ -244,8 +233,6 @@ size_t tape_len(const Tape * const tape) {
 }
 
 void insc_to_str(const InsContainer *c, FILE *file) {
-//  printf("insc_to_str (%d %d)\n", c->ins.op, c->ins.param);fflush(stdout);
-
   fprintf(file, "  %-6s", instructions[(int) c->ins.op]);
   switch (c->ins.param) {
   case ID_PARAM:
@@ -289,8 +276,8 @@ void tape_populate_mappings(const Tape *tape, Map *i_to_refs,
   map_iterate(&tape->classes, class_refs_index);
 }
 
-void tape_clear_mappings(Map *i_to_refs,
-    Map *i_to_class_starts, Map *i_to_class_ends) {
+void tape_clear_mappings(Map *i_to_refs, Map *i_to_class_starts,
+    Map *i_to_class_ends) {
   map_finalize(i_to_refs);
   map_finalize(i_to_class_starts);
   map_finalize(i_to_class_ends);
@@ -304,7 +291,6 @@ void tape_write(const Tape * const tape, FILE *file) {
   if (tape->module_name && 0 != strcmp("$", tape->module_name)) {
     fprintf(file, "module %s\n", tape->module_name);
   }
-//  printf("BBBB\n"); fflush(stdout);
   uint32_t i;
   for (i = 0; i < tape_len(tape); i++) {
     char *text = NULL;
@@ -373,6 +359,7 @@ void tape_read_ins(Tape * const tape, Queue *tokens) {
 }
 
 void tape_read(Tape * const tape, Queue *tokens) {
+  ASSERT(NOT_NULL(tape), NOT_NULL(tokens));
   if (0 == strcmp(MODULE_KEYWORD, ((Token *) queue_peek(tokens))->text)) {
     queue_remove(tokens);
     Token *module_name = (Token *) queue_remove(tokens);
@@ -380,10 +367,23 @@ void tape_read(Tape * const tape, Queue *tokens) {
   } else {
     tape->module_name = strings_intern("$");
   }
-
   while (queue_size(tokens) > 0) {
     tape_read_ins(tape, tokens);
   }
+}
+
+void tape_read_binary(Tape * const tape, FILE *file) {
+  ASSERT(NOT_NULL(tape), NOT_NULL(file));
+}
+
+void tape_write_binary(const Tape * const tape, FILE *file) {
+  ASSERT(NOT_NULL(tape), NOT_NULL(file));
+  Map strings;
+  map_init_default(&strings);
+
+
+
+  map_finalize(&strings);
 }
 
 const Map *tape_classes(const Tape * const tape) {

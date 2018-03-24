@@ -258,7 +258,7 @@ Element vm_peekstack(VM *vm) {
   Array *array = vm->stack.obj->array;
   ASSERT_NOT_NULL(array);
   ASSERT(!array_is_empty(array));
-  return array_get(array, array_size(array)-1);
+  return array_get(array, array_size(array) - 1);
 }
 
 void vm_new_block(VM *vm, Element parent, Element new_this) {
@@ -434,8 +434,7 @@ bool execute_no_param(VM *vm, Ins ins) {
     elt = vm_popstack(vm);
     ASSERT(elt.type == OBJECT && elt.obj->type == ARRAY);
     index = vm_get_resval(vm);
-    ASSERT(index.type == VALUE, index.val.type == INT)
-    ;
+    ASSERT(index.type == VALUE, index.val.type == INT);
     if (index.val.int_val < 0
         || index.val.int_val >= array_size(elt.obj->array)) {
       vm_throw_error(vm, ins,
@@ -591,6 +590,46 @@ bool execute_id_param(VM *vm, Ins ins) {
     break;
   case GTSH:
     vm_pushstack(vm, vm_object_get(vm, ins.str));
+    break;
+  case INC:
+    new_res_val = vm_object_get(vm, ins.str);
+    if (VALUE != new_res_val.type) {
+      vm_throw_error(vm, ins,
+          "Cannot increment '%s' because it is not a value-type.", ins.str);
+    }
+    switch (new_res_val.val.type) {
+    case INT:
+      new_res_val.val.int_val++;
+      break;
+    case FLOAT:
+      new_res_val.val.float_val++;
+      break;
+    case CHAR:
+      new_res_val.val.char_val++;
+      break;
+    }
+    memory_graph_set_field(vm->graph, block, ins.str, new_res_val);
+    vm_set_resval(vm, new_res_val);
+    break;
+  case DEC:
+    new_res_val = vm_object_get(vm, ins.str);
+    if (VALUE != new_res_val.type) {
+      vm_throw_error(vm, ins,
+          "Cannot increment '%s' because it is not a value-type.", ins.str);
+    }
+    switch (new_res_val.val.type) {
+    case INT:
+      new_res_val.val.int_val--;
+      break;
+    case FLOAT:
+      new_res_val.val.float_val--;
+      break;
+    case CHAR:
+      new_res_val.val.char_val--;
+      break;
+    }
+    memory_graph_set_field(vm->graph, block, ins.str, new_res_val);
+    vm_set_resval(vm, new_res_val);
     break;
   case CALL:
     obj = vm_popstack(vm);

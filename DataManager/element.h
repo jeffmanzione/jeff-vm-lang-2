@@ -82,8 +82,7 @@ Element val_to_elt(Value val);
 Value value_negate(Value val);
 void obj_set_field(Element elt, const char field_name[], Element field_val);
 Element obj_get_field(Element elt, const char field_name[]);
-void obj_delete(Element elt);
-void obj_delete_ptr(Object *obj);
+void obj_delete_ptr(Object *obj, bool free_mem);
 
 // Will fail if there is a cycle
 void obj_to_str(Object *obj, FILE *file);

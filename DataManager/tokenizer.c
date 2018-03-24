@@ -258,10 +258,10 @@ TokenType resolve_type(const char word[], int word_len, int *in_comment) {
       type = RBRAC;
       break;
     case '+':
-      type = word[1] == '+' ? INC : PLUS;
+      type = word[1] == '+' ? INCREMENT : PLUS;
       break;
     case '-':
-      type = word[1] == '>' ? RARROW : (word[1] == '-' ? DEC : MINUS);
+      type = word[1] == '>' ? RARROW : (word[1] == '-' ? DECREMENT : MINUS);
       break;
     case '*':
       type = STAR;

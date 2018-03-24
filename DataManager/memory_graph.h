@@ -16,28 +16,24 @@
 
 typedef struct MemoryGraph_ MemoryGraph;
 
-//typedef struct Node_ Node;
-
+// Needed in header for arenas.
 typedef struct NodeID_ {
   uint32_t int_id;
 } NodeID;
-
+// Needed in header for arenas.
 typedef struct Node_ {
   NodeID id;
   Object obj;
   Set parents;
   Set children;
 } Node;
-
+// Needed in header for arenas.
 typedef struct {
   Node *node;
   uint32_t ref_count;
 } NodeEdge;
 
 
-typedef enum {
-  A_PUSH, A_POP, A_DEQ, A_ENQ, A_INS, A_REM, A_SET
-} ArrayActionType;
 
 // Creates a memory graph
 MemoryGraph *memory_graph_create();

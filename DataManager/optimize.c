@@ -31,6 +31,7 @@ void optimize_init() {
   register_optimizer("JmpRes", optimizer_JmpRes);
   register_optimizer("PushRes", optimizer_PushRes);
   register_optimizer("ResPush2", optimizer_ResPush2);
+//  register_optimizer("Increment", optimizer_Increment);
 }
 
 void optimize_finalize() {

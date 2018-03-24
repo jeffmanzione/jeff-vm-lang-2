@@ -23,5 +23,7 @@ void optimizer_PushRes(OptimizeHelper *oh, const Tape * const tape, int start,
     int end);
 void optimizer_ResPush2(OptimizeHelper *oh, const Tape * const tape, int start,
     int end);
+//void optimizer_Increment(OptimizeHelper *oh, const Tape * const tape, int start,
+//    int end);
 
 #endif /* OPTIMIZERS_H_ */

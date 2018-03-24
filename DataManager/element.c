@@ -169,11 +169,13 @@ Element obj_get_field(Element elt, const char field_name[]) {
   return obj_get_field_helper(elt.obj, field_name);
 }
 
-void obj_delete_ptr(Object *obj) {
-  void dealloc_elts(Pair *kv) {
-    ARENA_DEALLOC(Element, kv->value);
+void obj_delete_ptr(Object *obj, bool free_mem) {
+  if (free_mem) {
+    void dealloc_elts(Pair *kv) {
+      ARENA_DEALLOC(Element, kv->value);
+    }
+    map_iterate(&obj->fields, dealloc_elts);
   }
-  map_iterate(&obj->fields, dealloc_elts);
   map_finalize(&obj->fields);
 
   if (ARRAY == obj->type) {
@@ -181,13 +183,6 @@ void obj_delete_ptr(Object *obj) {
   } else if (TUPLE == obj->type) {
     tuple_delete(obj->tuple);
   }
-}
-
-// shallow object delete
-void obj_delete(Element elt) {
-  ASSERT(elt.type == OBJECT);
-  ASSERT_NOT_NULL(elt.obj);
-  obj_delete_ptr(elt.obj);
 }
 
 void val_to_str(Value val, FILE *file) {

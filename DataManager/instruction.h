@@ -43,6 +43,8 @@ typedef enum {
   MULT,
   DIV,
   MOD,
+  INC,
+  DEC,
   CALL,
   TUPL,
   DUP,

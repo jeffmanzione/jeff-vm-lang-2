@@ -68,8 +68,8 @@ typedef enum {
   // Specials
   LARROW,
   RARROW,
-  INC,
-  DEC,
+  INCREMENT,
+  DECREMENT,
   LTHANEQ,
   GTHANEQ,
   EQUIV,
