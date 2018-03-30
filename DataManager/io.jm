@@ -1,19 +1,19 @@
 module io
-	exit 0
+    exit 0
 @print
     push
     dup
     push Object
     is
-	if   2
-	res
-	jmp  1
-	call to_s
-	prnt
-	ret
+    if   2
+    res
+    jmp  1
+    call to_s
+    prnt
+    ret
 
 @println
-	push print
-	call
-	prnt '\n'
-	ret
+    push print
+    call
+    prnt '\n'
+    ret
