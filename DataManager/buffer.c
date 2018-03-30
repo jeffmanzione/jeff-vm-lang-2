@@ -13,14 +13,7 @@
 #include "error.h"
 #include "memory.h"
 
-struct Buffer_ {
-  FILE *file;
-  unsigned char *buff;
-  size_t pos, buff_size;
-};
-
-Buffer *buffer_create(FILE *file, size_t size) {
-  Buffer *buffer = ALLOC(Buffer);
+WBuffer *buffer_init(WBuffer * const buffer, FILE *file, size_t size) {
   buffer->file = file;
   buffer->pos = 0;
   buffer->buff_size = size;
@@ -28,7 +21,7 @@ Buffer *buffer_create(FILE *file, size_t size) {
   return buffer;
 }
 
-void buffer_flush(Buffer * const buffer) {
+void buffer_flush(WBuffer * const buffer) {
 //  DEBUGF("FLUSHING");
   ASSERT(NOT_NULL(buffer));
   S_ASSERT(
@@ -38,14 +31,13 @@ void buffer_flush(Buffer * const buffer) {
   buffer->pos = 0;
 }
 
-void buffer_delete(Buffer * const buffer) {
+void buffer_finalize(WBuffer * const buffer) {
   ASSERT(NOT_NULL(buffer));
   buffer_flush(buffer);
   DEALLOC(buffer->buff);
-  DEALLOC(buffer);
 }
 
-void buffer_write(Buffer * const buffer, const char *start, int num_bytes) {
+void buffer_write(WBuffer * const buffer, const char *start, int num_bytes) {
 //  DEBUGF("buffer_write(buffer,...,%d)", num_bytes);
   ASSERT(NOT_NULL(buffer), NOT_NULL(start), num_bytes >= 0);
   int i = 0;

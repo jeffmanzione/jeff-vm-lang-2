@@ -58,6 +58,8 @@ void insc_to_str(const InsContainer *c, FILE *file);
 void tape_append(Tape *head, Tape *tail);
 void tape_read(Tape * const tape, Queue *tokens);
 void tape_write(const Tape * const tape, FILE *file);
+void tape_read_binary(Tape * const tape, FILE *file);
+void tape_write_binary(const Tape * const tape, FILE *file);
 
 const Map *tape_classes(const Tape * const tape);
 const Map *tape_refs(const Tape * const tape);
@@ -65,7 +67,7 @@ const char *tape_modulename(const Tape * tape);
 
 void tape_populate_mappings(const Tape *tape, Map *i_to_refs,
     Map *i_to_class_starts, Map *i_to_class_ends);
-void tape_clear_mappings(Map *i_to_refs,
-    Map *i_to_class_starts, Map *i_to_class_ends);
+void tape_clear_mappings(Map *i_to_refs, Map *i_to_class_starts,
+    Map *i_to_class_ends);
 
 #endif /* TAPE_H_ */

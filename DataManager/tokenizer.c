@@ -86,7 +86,7 @@ void file_info_append(FileInfo *fi, char line_text[]) {
 
 }
 
-const LineInfo *file_info_lookup(FileInfo *fi, int line_num) {
+const LineInfo *file_info_lookup(const FileInfo *fi, int line_num) {
   if (line_num < 1 || line_num > fi->num_lines) {
     return NULL;
   }

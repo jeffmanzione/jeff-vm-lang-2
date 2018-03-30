@@ -34,6 +34,7 @@ const Map *module_refs(const Module *m);
 const Map *module_classes(const Module *m);
 int32_t module_ref(const Module *m, const char ref_name[]);
 uint32_t module_size(const Module *m);
+const Tape *module_tape(const Module *m);
 void module_delete(Module *module);
 
 #endif /* MODULE_H_ */

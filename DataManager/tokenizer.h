@@ -107,7 +107,7 @@ FileInfo *file_info(const char fn[]);
 FileInfo *file_info_file(FILE *tmp_file);
 void file_info_set_name(FileInfo *fi, const char fn[]);
 void file_info_append(FileInfo *fi, char line_text[]);
-const LineInfo *file_info_lookup(FileInfo *fi, int line_num);
+const LineInfo *file_info_lookup(const FileInfo *fi, int line_num);
 void file_info_delete(FileInfo *fi);
 
 typedef struct {

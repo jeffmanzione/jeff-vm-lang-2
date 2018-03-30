@@ -2,10 +2,8 @@
 /Release Profiled/
 /Release/
 /builtin.jc
-/builtin.jl
 /builtin.jm
 /gprof.txt
-/io.jm
 /lang.jl
 /lang.jm
 /main.jc
@@ -22,3 +20,6 @@
 /testing.jl
 /hello.jc
 /hello.jm
+/main.jb
+/builtin.jb
+/math.jb

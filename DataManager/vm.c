@@ -29,7 +29,7 @@
 #ifdef DEBUG
 #define BUILTIN_SRC "builtin.jl"
 #else
-#define BUILTIN_SRC "builtin.jm"
+#define BUILTIN_SRC "builtin.jb"
 #endif
 
 void vm_to_string(const VM *vm, Element elt, FILE *target);
@@ -67,14 +67,16 @@ void vm_throw_error(const VM *vm, Ins ins, const char fmt[], ...) {
   fflush(stdout);
   const Module *module = vm_get_module(vm).obj->module;
   const Token *tok = module_insc(module, vm_get_ip(vm))->token;
-  const LineInfo *li = file_info_lookup(module_fileinfo(module), tok->line);
+  const FileInfo *fi = module_fileinfo(module);
+  const LineInfo *li = (NULL == fi) ? NULL : file_info_lookup(fi, tok->line);
   fprintf(stderr, "Error in '%s' at line %d: ", module_filename(module),
       tok->line);
   va_list ap;
   va_start(ap, fmt);
   vfprintf(stderr, fmt, ap);
   va_end(ap);
-  fprintf(stderr, "\nLine(%d): %s\n", tok->line, li->line_text);
+  fprintf(stderr, "\nLine(%d): %s\n", tok->line,
+      (NULL == li) ? "No LineInfo" : li->line_text);
   int i = -1;
   Array *saved_array = obj_get_field(vm->root, SAVED_BLOCKS).obj->array;
   Element current_block = obj_get_field(vm->root, CURRENT_BLOCK);
@@ -434,7 +436,8 @@ bool execute_no_param(VM *vm, Ins ins) {
     elt = vm_popstack(vm);
     ASSERT(elt.type == OBJECT && elt.obj->type == ARRAY);
     index = vm_get_resval(vm);
-    ASSERT(index.type == VALUE, index.val.type == INT);
+    ASSERT(index.type == VALUE, index.val.type == INT)
+    ;
     if (index.val.int_val < 0
         || index.val.int_val >= array_size(elt.obj->array)) {
       vm_throw_error(vm, ins,

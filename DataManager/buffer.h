@@ -11,11 +11,15 @@
 #include <stddef.h>
 #include <stdio.h>
 
-typedef struct Buffer_ Buffer;
+typedef struct {
+  FILE *file;
+  unsigned char *buff;
+  size_t pos, buff_size;
+} WBuffer;
 
-Buffer *buffer_create(FILE *file, size_t size);
-void buffer_delete(Buffer * const buffer);
-void buffer_flush(Buffer * const buffer);
-void buffer_write(Buffer * const buffer, const char *start, int num_bytes);
+WBuffer *buffer_init(WBuffer * const buffer, FILE *file, size_t size);
+void buffer_finalize(WBuffer * const buffer);
+void buffer_flush(WBuffer * const buffer);
+void buffer_write(WBuffer * const buffer, const char *start, int num_bytes);
 
 #endif /* BUFFER_H_ */

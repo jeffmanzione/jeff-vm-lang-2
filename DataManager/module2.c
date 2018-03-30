@@ -64,7 +64,9 @@ Module *module_create_tape(FileInfo *fi, Tape *tape) {
 void module_set_filename(Module *m, const char fn[]) {
   ASSERT(NOT_NULL(m), NOT_NULL(fn));
   m->fn = strings_intern(fn);
-  file_info_set_name(m->fi, fn);
+  if (NULL != m->fi) {
+    file_info_set_name(m->fi, fn);
+  }
 }
 
 const char *module_filename(const Module const *m) {
@@ -132,10 +134,16 @@ uint32_t module_size(const Module *m) {
   return tape_len(m->tape);
 }
 
+const Tape *module_tape(const Module *m) {
+  return m->tape;
+}
+
 void module_delete(Module *m) {
   ASSERT_NOT_NULL(m);
   // Delete file and assert no more tokens
-  file_info_delete(m->fi);
+  if (NULL != m->fi) {
+    file_info_delete(m->fi);
+  }
   tape_delete(m->tape);
   DEALLOC(m);
 }

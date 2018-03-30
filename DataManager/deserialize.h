@@ -9,11 +9,16 @@
 #define DESERIALIZE_H_
 
 #include <stdint.h>
+#include <stdio.h>
 
-#include "buffer.h"
-#include "instruction.h"
+#include "expando.h"
+#include "tape.h"
 
-int32_t deserialize_ins(Buffer * const buffer, const Ins * const ins);
-int deserialize_module(FILE * const file, Module * const module);
+#define deserialize_type(file, type, p) deserialize_bytes(file, sizeof(type), ((char *)p), sizeof(type))
+
+int deserialize_bytes(FILE *file, uint32_t num_bytes, char *buffer,
+    uint32_t buffer_sz);
+int deserialize_string(FILE *file, char *buffer, uint32_t buffer_sz);
+int deserialize_ins(FILE *file, const Expando* const strings, InsContainer *c);
 
 #endif /* DESERIALIZE_H_ */

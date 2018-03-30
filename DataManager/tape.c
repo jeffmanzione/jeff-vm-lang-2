@@ -10,13 +10,17 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "arena.h"
+#include "buffer.h"
+#include "deserialize.h"
 #include "element.h"
 #include "error.h"
 #include "memory.h"
+#include "serialize.h"
 #include "strings.h"
 
 #define DEFAULT_TAPE_SIZE 1024
+
+#define MAX_STIRNG_SZ 1024
 
 #define MODULE_KEYWORD "module"
 #define CLASS_KEYWORD "class"
@@ -374,16 +378,143 @@ void tape_read(Tape * const tape, Queue *tokens) {
 
 void tape_read_binary(Tape * const tape, FILE *file) {
   ASSERT(NOT_NULL(tape), NOT_NULL(file));
+  Expando *strings = expando(char *, DEFAULT_EXPANDO_SIZE);
+
+  uint16_t num_strings;
+  deserialize_type(file, uint16_t, &num_strings);
+  int i;
+  char buf[MAX_STIRNG_SZ];
+  for (i = 0; i < num_strings; i++) {
+    deserialize_string(file, buf, MAX_STIRNG_SZ);
+    char *str = strings_intern(buf);
+    expando_append(strings, &str);
+  }
+  tape->module_name = *((char**) expando_get(strings, 0));
+  uint16_t num_refs;
+  deserialize_type(file, uint16_t, &num_refs);
+  for (i = 0; i < num_refs; i++) {
+    uint16_t ref_name_index, ref_index;
+    deserialize_type(file, uint16_t, &ref_name_index);
+    deserialize_type(file, uint16_t, &ref_index);
+    char *ref_name = *((char**) expando_get(strings, (uint32_t) ref_name_index));
+    map_insert(&tape->refs, ref_name, (void *) (int) ref_index);
+  }
+  uint16_t num_classes;
+  deserialize_type(file, uint16_t, &num_classes);
+  for (i = 0; i < num_classes; i++) {
+    uint16_t class_name_index, class_start, class_end, num_methods;
+    deserialize_type(file, uint16_t, &class_name_index);
+    deserialize_type(file, uint16_t, &class_start);
+    deserialize_type(file, uint16_t, &class_end);
+    deserialize_type(file, uint16_t, &num_methods);
+    char *class_name = *((char**) expando_get(strings,
+        (uint32_t) class_name_index));
+    map_insert(&tape->class_starts, class_name, (void *) (int) class_start);
+    map_insert(&tape->class_ends, class_name, (void *) (int) class_end);
+    Map* methods = map_create_default();
+    map_insert(&tape->classes, class_name, methods);
+    int j;
+    for (j = 0; j < num_methods; j++) {
+      uint16_t method_name_index, method_index;
+      deserialize_type(file, uint16_t, &method_name_index);
+      char *method_name = *((char**) expando_get(strings,
+          (uint32_t) method_name_index));
+      deserialize_type(file, uint16_t, &method_index);
+      map_insert(methods, method_name, (void *) (int) method_index);
+    }
+  }
+  uint16_t num_ins;
+  deserialize_type(file, uint16_t, &num_ins);
+  for (i = 0; i < num_ins; i++) {
+    InsContainer c;
+    deserialize_ins(file, strings, &c);
+    expando_append(tape->ins, &c);
+  }
+  expando_delete(strings);
 }
 
 void tape_write_binary(const Tape * const tape, FILE *file) {
   ASSERT(NOT_NULL(tape), NOT_NULL(file));
-  Map strings;
-  map_init_default(&strings);
+  Expando *strings = expando(char *, DEFAULT_EXPANDO_SIZE);
+  Map string_index;
+  map_init_default(&string_index);
+  void insert_string(const char str[]) {
+    if (map_lookup(&string_index, str)) {
+      return;
+    }
+    map_insert(&string_index, str,
+        (void *) (uint32_t) expando_append(strings, &str));
+  }
+  void map_insert_string(Pair *kv) {
+    insert_string(kv->key);
+  }
+  insert_string(tape->module_name);
+  void map_insert_class(Pair *kv) {
+    insert_string(kv->key);
+    map_iterate(kv->value, map_insert_string);
+  }
+  map_iterate(&tape->classes, map_insert_class);
+  map_iterate(&tape->refs, map_insert_string);
+  int i;
+  for (i = 0; i < tape_len(tape); i++) {
+    const InsContainer *c = tape_get(tape, i);
+    if (ID_PARAM == c->ins.param) {
+      insert_string(c->ins.id);
+    } else if (STR_PARAM == c->ins.param) {
+      insert_string(c->ins.str);
+    }
+  }
+  WBuffer buffer;
+  buffer_init(&buffer, file, 512);
+  uint16_t num_strings = (uint16_t) map_size(&string_index);
+  serialize_type(&buffer, uint16_t, num_strings);
+  for (i = 0; i < expando_len(strings); i++) {
+    serialize_str(&buffer, *((char **) expando_get(strings, i)));
+  }
+  uint16_t num_refs = (uint16_t) map_size(&tape->refs);
+  serialize_type(&buffer, uint16_t, num_refs);
+  void add_ref(Pair *kv) {
+    uint16_t ref_name_index = (uint16_t) (int) map_lookup(&string_index,
+        kv->key);
+    uint16_t ref_index = (uint16_t) (int) kv->value;
+    serialize_type(&buffer, uint16_t, ref_name_index);
+    serialize_type(&buffer, uint16_t, ref_index);
+  }
+  map_iterate(&tape->refs, add_ref);
+  uint16_t num_classes = (uint16_t) map_size(&tape->classes);
+  serialize_type(&buffer, uint16_t, num_classes);
+  void add_class(Pair *kv) {
+    uint16_t class_name_index = (uint16_t) (int) map_lookup(&string_index,
+        kv->key);
+    uint16_t class_start = (uint16_t) (int) map_lookup(&tape->class_starts,
+        kv->key);
+    uint16_t class_end = (uint16_t) (int) map_lookup(&tape->class_ends,
+        kv->key);
+    uint16_t num_methods = (uint16_t) (int) map_size((Map *) kv->value);
+    serialize_type(&buffer, uint16_t, class_name_index);
+    serialize_type(&buffer, uint16_t, class_start);
+    serialize_type(&buffer, uint16_t, class_end);
+    serialize_type(&buffer, uint16_t, num_methods);
+    void add_methods(Pair *kv2) {
+      uint16_t method_name_index = (uint16_t) (int) map_lookup(&string_index,
+          kv2->key);
+      uint16_t method_index = (uint16_t) (int) kv2->value;
+      serialize_type(&buffer, uint16_t, method_name_index);
+      serialize_type(&buffer, uint16_t, method_index);
+    }
+    map_iterate(kv->value, add_methods);
+  }
+  map_iterate(&tape->classes, add_class);
 
-
-
-  map_finalize(&strings);
+  uint16_t num_ins = (uint16_t) tape_len(tape);
+  serialize_type(&buffer, uint16_t, num_ins);
+  for (i = 0; i < num_ins; i++) {
+    const InsContainer *c = tape_get(tape, i);
+    serialize_ins(&buffer, c, &string_index);
+  }
+  buffer_finalize(&buffer);
+  map_finalize(&string_index);
+  expando_delete(strings);
 }
 
 const Map *tape_classes(const Tape * const tape) {

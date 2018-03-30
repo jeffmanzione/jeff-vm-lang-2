@@ -25,9 +25,9 @@ int main() {
   optimize_init();
 
 //  alloc_set_verbose(true);
-  Module *mainm = load_fn("main.jl");
-  Module *io = load_fn("io.jm");
-  Module *math = load_fn("math.jm");
+  Module *mainm = load_fn("main.jb");
+  Module *io = load_fn("io.jb");
+  Module *math = load_fn("math.jb");
 //  Module *hello = load_fn("hello.jl");
   VM *vm = vm_create();
   vm_add_module(vm, io);
