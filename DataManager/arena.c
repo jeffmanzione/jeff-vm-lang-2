@@ -14,13 +14,11 @@
 #include "error.h"
 #include "memory.h"
 #include "memory_graph.h"
-#include "tape.h"
 #include "tokenizer.h"
 
 ARENA_DECLARE(Element);
 ARENA_DECLARE(Node);
 ARENA_DECLARE(NodeEdge);
-ARENA_DECLARE(InsContainer);
 ARENA_DECLARE(Token);
 
 #define DEFAULT_ELTS_IN_CHUNK 128
@@ -41,7 +39,6 @@ void arenas_init() {
   ARENA_INIT(Element);
   ARENA_INIT(Node);
   ARENA_INIT(NodeEdge);
-  ARENA_INIT(InsContainer);
   ARENA_INIT(Token);
 }
 
@@ -49,7 +46,6 @@ void arenas_finalize() {
   ARENA_FINALIZE(Element);
   ARENA_FINALIZE(Node);
   ARENA_FINALIZE(NodeEdge);
-  ARENA_FINALIZE(InsContainer);
   ARENA_FINALIZE(Token);
 }
 

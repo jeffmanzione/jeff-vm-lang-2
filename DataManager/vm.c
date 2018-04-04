@@ -7,9 +7,11 @@
 
 #include "vm.h"
 
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "array.h"
 #include "class.h"
@@ -23,6 +25,7 @@
 #include "ops.h"
 #include "shared.h"
 #include "strings.h"
+#include "tape.h"
 #include "tokenizer.h"
 #include "tuple.h"
 
@@ -33,6 +36,7 @@
 #endif
 
 void vm_to_string(const VM *vm, Element elt, FILE *target);
+void execute_tget(VM *vm, Ins ins, Element tuple, int64_t index);
 
 Element current_block(const VM *vm) {
   return obj_get_field(vm->root, CURRENT_BLOCK);
@@ -66,17 +70,38 @@ Element vm_get_module(const VM *vm) {
 void vm_throw_error(const VM *vm, Ins ins, const char fmt[], ...) {
   fflush(stdout);
   const Module *module = vm_get_module(vm).obj->module;
-  const Token *tok = module_insc(module, vm_get_ip(vm))->token;
+  const InsContainer *c = module_insc(module, vm_get_ip(vm));
+  const Token *tok = c->token;
   const FileInfo *fi = module_fileinfo(module);
-  const LineInfo *li = (NULL == fi) ? NULL : file_info_lookup(fi, tok->line);
-  fprintf(stderr, "Error in '%s' at line %d: ", module_filename(module),
-      tok->line);
+  const LineInfo *li =
+      (NULL == fi || NULL == tok) ? NULL : file_info_lookup(fi, tok->line);
+  const char *module_fn = module_filename(module);
+  fprintf(stderr, "Error in '%s' at line %d: ",
+      (NULL == module_fn) ? "?" : module_fn, (NULL == tok) ? -1 : tok->line);
+  fflush(stderr);
   va_list ap;
   va_start(ap, fmt);
   vfprintf(stderr, fmt, ap);
+  fflush(stderr);
   va_end(ap);
-  fprintf(stderr, "\nLine(%d): %s\n", tok->line,
-      (NULL == li) ? "No LineInfo" : li->line_text);
+  fprintf(stderr, "\n");
+  if (NULL != fi && NULL != li && NULL != tok) {
+    int num_line_digits = (int) (log10(file_info_len(fi)) + 1);
+    fprintf(stderr, "%*d:%s", num_line_digits, tok->line,
+        (NULL == li) ? "No LineInfo" : li->line_text);
+    if ('\n' != li->line_text[strlen(li->line_text) - 1]) {
+      fprintf(stderr, "\n");
+    }
+    int i;
+    for (i = 0; i < tok->col + num_line_digits; i++) {
+      fprintf(stderr, " ");
+    }
+    for (i = 0; i < tok->len; i++) {
+      fprintf(stderr, "^");
+    }
+    fprintf(stderr, "\n");
+    fflush(stderr);
+  }
   int i = -1;
   Array *saved_array = obj_get_field(vm->root, SAVED_BLOCKS).obj->array;
   Element current_block = obj_get_field(vm->root, CURRENT_BLOCK);
@@ -89,17 +114,29 @@ void vm_throw_error(const VM *vm, Ins ins, const char fmt[], ...) {
     if (NONE != caller.type) {
       if (ISTYPE(caller, class_method)) {
         fprintf(stderr, ".");
+        fflush(stderr);
         vm_to_string(vm,
             obj_get_field(obj_get_field(caller, PARENT_CLASS), NAME_KEY),
             stderr);
+        fflush(stderr);
 
       }
       fprintf(stderr, ".");
+      fflush(stderr);
       vm_to_string(vm, obj_get_field(caller, NAME_KEY), stderr);
     }
     fprintf(stderr, "(");
-    vm_to_string(vm, obj_get_field(current_block, IP_FIELD), stderr);
-    fprintf(stderr, ")\n");
+    fflush(stderr);
+    const char *fn = module_filename(module.obj->module);
+    fprintf(stderr, "%s:", (NULL == fn) ? "?" : fn);
+    fflush(stderr);
+
+    uint32_t ip = obj_get_field(current_block, IP_FIELD).val.int_val;
+    const InsContainer *ci = module_insc(module.obj->module, ip);
+    const Token *toki = ci->token;
+    fprintf(stderr, "%d)\n", (NULL == toki) ? -1 : toki->line);
+    fflush(stderr);
+//    vm_to_string(vm, obj_get_field(current_block, IP_FIELD), stderr);
     if (++i >= array_size(saved_array) - 1) {
       break;
     }
@@ -263,7 +300,7 @@ Element vm_peekstack(VM *vm) {
   return array_get(array, array_size(array) - 1);
 }
 
-void vm_new_block(VM *vm, Element parent, Element new_this) {
+Element vm_new_block(VM *vm, Element parent, Element new_this) {
   ASSERT_NOT_NULL(vm);
   ASSERT(OBJECT == new_this.type);
   ASSERT_NOT_NULL(new_this.obj);
@@ -275,11 +312,13 @@ void vm_new_block(VM *vm, Element parent, Element new_this) {
 
   Element module = vm_get_module(vm);
   uint32_t ip = vm_get_ip(vm);
-
+//  Element resval = vm_get_resval(vm);
   memory_graph_set_field(vm->graph, vm->root, CURRENT_BLOCK, new_block);
   memory_graph_set_field(vm->graph, new_block, PARENT, parent);
   memory_graph_set_field(vm->graph, new_block, THIS, new_this);
+//  memory_graph_set_field(vm->graph, new_block, RESULT_VAL, resval);
   vm_set_module(vm, module, ip);
+  return new_block;
 }
 
 void vm_back(VM *vm) {
@@ -354,12 +393,6 @@ const Element vm_get_old_resvals(VM *vm) {
 
 void call_fn(VM *vm, Element obj, Element func) {
   if (func.type != OBJECT || func.obj->type != FUNCTION) {
-    printf(">> ");
-    elt_to_str(obj, stdout);
-    printf("\n>> ");
-    elt_to_str(func, stdout);
-    printf("\n");
-    fflush(stdout);
     vm_throw_error(vm, vm_current_ins(vm),
         "Attempted to call something not a function of Class.");
   }
@@ -367,9 +400,8 @@ void call_fn(VM *vm, Element obj, Element func) {
   ASSERT(OBJECT == parent.type, MODULE == parent.obj->type);
   vm_maybe_initialize_and_execute(vm, parent.obj->module);
 
-  vm_new_block(vm, parent, obj);
-  memory_graph_set_field(vm->graph, obj_get_field(vm->root, CURRENT_BLOCK),
-      CALLER_KEY, func);
+  Element new_block = vm_new_block(vm, parent, obj);
+  memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
 //DEBUGF("new_line=%d", obj_get_field(elt, INS_INDEX).val.int_val);
   vm_set_module(vm, parent, obj_get_field(func, INS_INDEX).val.int_val - 1);
 }
@@ -378,8 +410,7 @@ void call_new(VM *vm, Element class) {
   ASSERT(ISCLASS(class));
   Element new_obj = create_obj_of_class(vm->graph, class);
   Element new_func = obj_get_field(class, NEW_KEY);
-  if (NONE != new_func.type && new_func.type == OBJECT
-      && new_func.obj->type == FUNCTION) {
+  if (new_func.type == OBJECT && new_func.obj->type == FUNCTION) {
     call_fn(vm, new_obj, new_func);
   } else {
     vm_set_resval(vm, new_obj);
@@ -434,10 +465,17 @@ bool execute_no_param(VM *vm, Ins ins) {
     return true;
   case AIDX:
     elt = vm_popstack(vm);
-    ASSERT(elt.type == OBJECT && elt.obj->type == ARRAY);
     index = vm_get_resval(vm);
-    ASSERT(index.type == VALUE, index.val.type == INT)
-    ;
+    if (index.type != VALUE || index.val.type != INT) {
+      vm_throw_error(vm, ins, "Array indexing with something not an int.");
+    }
+    if (elt.type == OBJECT && elt.obj->type == TUPLE) {
+      execute_tget(vm, ins, elt, index.val.int_val);
+      return true;
+    }
+    if (elt.type != OBJECT || elt.obj->type != ARRAY) {
+      vm_throw_error(vm, ins, "Array indexing on something not an Array.");
+    }
     if (index.val.int_val < 0
         || index.val.int_val >= array_size(elt.obj->array)) {
       vm_throw_error(vm, ins,
@@ -534,8 +572,13 @@ bool execute_no_param(VM *vm, Ins ins) {
     ASSERT(rhs.type == OBJECT, rhs.obj->type == OBJ,
         class_class.obj == obj_get_field(rhs, CLASS_KEY).obj)
     ;
-    if (lhs.type != OBJECT
-        || (lhs.obj->type != OBJ && lhs.obj->type != FUNCTION)) {
+//    fflush(stdout);
+//    elt_to_str(rhs, stderr);
+//    fprintf(stderr, "\n");
+//    elt_to_str(lhs, stderr);
+//    fprintf(stderr, "\n");
+//    fflush(stderr);
+    if (lhs.type != OBJECT) {
       res = element_false(vm);
       break;
     }
@@ -681,6 +724,18 @@ bool execute_id_param(VM *vm, Ins ins) {
   return true;
 }
 
+void execute_tget(VM *vm, Ins ins, Element tuple, int64_t index) {
+  if (tuple.type != OBJECT || tuple.obj->type != TUPLE) {
+    vm_throw_error(vm, ins, "Attempted to index something not a tuple.");
+  }
+  if (index < 0 || index >= tuple_size(tuple.obj->tuple)) {
+    vm_throw_error(vm, ins,
+        "Tuple Index out of bounds. Index=%d, Tuple.len=%d.", index,
+        tuple_size(tuple.obj->tuple));
+  }
+  vm_set_resval(vm, tuple_get(tuple.obj->tuple, index));
+}
+
 bool execute_val_param(VM *vm, Ins ins) {
   Element elt = val_to_elt(ins.val);
   Element tuple, array;
@@ -705,18 +760,12 @@ bool execute_val_param(VM *vm, Ins ins) {
     }
     break;
   case TGET:
-    ASSERT(elt.type == VALUE, elt.val.type == INT)
-    ;
-    Element tuple = vm_get_resval(vm);
-    ASSERT(tuple.type == OBJECT, tuple.obj->type == TUPLE)
-    ;
-    if (elt.val.int_val < 0
-        || elt.val.int_val >= tuple_size(tuple.obj->tuple)) {
+    if (elt.type != VALUE || elt.val.type != INT) {
       vm_throw_error(vm, ins,
-          "Tuple Index out of bounds. Index=%d, Tuple.len=%d.", elt.val.int_val,
-          tuple_size(tuple.obj->tuple));
+          "Attempted to index a tuple with something not an int.");
     }
-    vm_set_resval(vm, tuple_get(tuple.obj->tuple, elt.val.int_val));
+    tuple = vm_get_resval(vm);
+    execute_tget(vm, ins, tuple, elt.val.int_val);
     break;
   case JMP:
     ASSERT(elt.type == VALUE, elt.val.type == INT)

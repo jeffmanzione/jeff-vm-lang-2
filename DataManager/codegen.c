@@ -329,10 +329,8 @@ int codegen_postfix1(ExpressionTree *tree, Tape *tape) {
   if (is_leaf(tree)) {
     ERROR("Improperly handled postfix. Did not expect leaf");
   }
-
   ExpressionTree *ext = tree->first;
   ExpressionTree *tail = tree->second;
-
   switch (ext->token->type) {
   case (PERIOD):
     if (is_leaf(tail)) {
@@ -386,7 +384,7 @@ int codegen_postfix1(ExpressionTree *tree, Tape *tape) {
     num_lines += tape_ins_no_arg(tape, AIDX, ext->token);
 
     if (NULL != tail->second && !is_leaf(tail->second)) {
-      num_lines += codegen(tail->second, tape);
+      num_lines += codegen(tail->second->second, tape);
     }
     break;
   default:

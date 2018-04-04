@@ -39,7 +39,6 @@ typedef struct {
 ARENA_DEFINE(Element);
 ARENA_DEFINE(Node);
 ARENA_DEFINE(NodeEdge);
-ARENA_DEFINE(InsContainer);
 ARENA_DEFINE(Token);
 
 void arena_init(Arena *arena, size_t sz);

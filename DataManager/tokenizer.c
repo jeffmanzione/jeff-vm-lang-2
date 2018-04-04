@@ -76,14 +76,15 @@ void file_info_delete(FileInfo *fi) {
   DEALLOC(fi);
 }
 
-void file_info_append(FileInfo *fi, char line_text[]) {
+LineInfo* file_info_append(FileInfo *fi, char line_text[]) {
   int num_lines = fi->num_lines;
-  fi->lines[fi->num_lines++] = line_info(fi, line_text, num_lines);
+  LineInfo *li = fi->lines[fi->num_lines++] = line_info(fi, line_text,
+      num_lines);
   if (fi->num_lines >= fi->array_len) {
     fi->array_len += DEFAULT_NUM_LINES;
     fi->lines = REALLOC(fi->lines, LineInfo *, fi->array_len);
   }
-
+  return li;
 }
 
 const LineInfo *file_info_lookup(const FileInfo *fi, int line_num) {
@@ -91,6 +92,14 @@ const LineInfo *file_info_lookup(const FileInfo *fi, int line_num) {
     return NULL;
   }
   return fi->lines[line_num - 1];
+}
+
+int file_info_len(const FileInfo *fi) {
+  return fi->num_lines;
+}
+
+const char *file_info_name(const FileInfo *fi) {
+  return fi->name;
 }
 
 void token_fill(Token *tok, TokenType type, int line, int col,

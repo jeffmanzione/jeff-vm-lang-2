@@ -53,9 +53,9 @@ void expression_tree_to_str(ExpressionTree exp, Parser *parser, FILE *file) {
 }
 
 void expression_tree_delete(ExpressionTree exp) {
-  if (exp.token != NULL) {
-    token_delete(exp.token);
-  }
+//  if (exp.token != NULL) {
+//    token_delete(exp.token);
+//  }
   if (exp.first != NULL) {
     expression_tree_delete(*exp.first);
     DEALLOC(exp.first);

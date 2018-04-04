@@ -36,7 +36,7 @@ const Element vm_get_resval(VM *vm);
 Element vm_lookup(VM *vm, const char name[]);
 
 // Creates a block with the specified obj as the parent
-void vm_new_block(VM *vm, Element parent, Element new_this);
+Element vm_new_block(VM *vm, Element parent, Element new_this);
 // goes back one block
 void vm_back(VM *vm);
 

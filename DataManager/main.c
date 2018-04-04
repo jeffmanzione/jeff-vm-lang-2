@@ -25,7 +25,7 @@ int main() {
   optimize_init();
 
 //  alloc_set_verbose(true);
-  Module *mainm = load_fn("main.jb");
+  Module *mainm = load_fn("main.jl");
   Module *io = load_fn("io.jb");
   Module *math = load_fn("math.jb");
 //  Module *hello = load_fn("hello.jl");
@@ -41,12 +41,6 @@ int main() {
 //  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));
 //  memory_graph_print(vm_get_graph(vm), stdout);
 
-//  FILE_OP_FN("test.out", "wb", (FILE *file) {
-//    Buffer *buf = buffer_create(file, 128);
-//    serialize_module(buf, math);
-//    buffer_delete(buf);
-//  });
-
   module_delete(mainm);
   module_delete(io);
   module_delete(math);
@@ -58,7 +52,6 @@ int main() {
   strings_finalize();
   arenas_finalize();
 
-//  printf("HERE?\n");fflush(stdout);
   alloc_finalize();
 #ifdef DEBUG
   printf("Maps: %d\nMap inserts: %d\nMap insert compares: %d\n"

@@ -350,16 +350,31 @@ void tape_read_ins(Tape * const tape, Queue *tokens) {
     return;
   }
   Op op = op_type(first->text);
-  Token *next = (Token *) queue_remove(tokens);
-  if (ENDLINE == next->type) {
+  Token *next = (Token *) queue_peek(tokens);
+  if (ENDLINE == next->type || POUND == next->type) {
     tape_ins_no_arg(tape, op, first);
-    return;
-  }
-  if (MINUS == next->type) {
+  } else if (MINUS == next->type) {
+    queue_remove(tokens);
     tape_ins_neg(tape, op, queue_remove(tokens));
+  } else {
+    queue_remove(tokens);
+    tape_ins(tape, op, next);
+  }
+  next = (Token *) queue_peek(tokens);
+  if (NULL == next || POUND != next->type) {
     return;
   }
-  tape_ins(tape, op, next);
+  queue_remove(tokens);
+  Token *line, *col;
+  line = queue_remove(tokens);
+  if (NULL == line) {
+    ERROR("Invalid index line.");
+  }
+  col = queue_remove(tokens);
+  if (NULL == col) {
+    ERROR("Invalid index col.");
+  }
+
 }
 
 void tape_read(Tape * const tape, Queue *tokens) {
@@ -427,6 +442,7 @@ void tape_read_binary(Tape * const tape, FILE *file) {
   deserialize_type(file, uint16_t, &num_ins);
   for (i = 0; i < num_ins; i++) {
     InsContainer c;
+    c.token = NULL;
     deserialize_ins(file, strings, &c);
     expando_append(tape->ins, &c);
   }

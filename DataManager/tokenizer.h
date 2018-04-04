@@ -95,21 +95,6 @@ typedef enum {
   MODULE_T,
 } TokenType;
 
-typedef struct LineInfo_ {
-  char *line_text;
-  int line_num;
-//FileInfo *parent;
-} LineInfo;
-
-typedef struct FileInfo_ FileInfo;
-
-FileInfo *file_info(const char fn[]);
-FileInfo *file_info_file(FILE *tmp_file);
-void file_info_set_name(FileInfo *fi, const char fn[]);
-void file_info_append(FileInfo *fi, char line_text[]);
-const LineInfo *file_info_lookup(const FileInfo *fi, int line_num);
-void file_info_delete(FileInfo *fi);
-
 typedef struct {
   TokenType type;
   int col, line;
@@ -117,9 +102,26 @@ typedef struct {
   const char *text;
 } Token;
 
+typedef struct LineInfo_ {
+  char *line_text;
+  Token *tokens; // Sparse array of tokens corresponding to words
+  int line_num;
+} LineInfo;
+
+typedef struct FileInfo_ FileInfo;
+
+FileInfo *file_info(const char fn[]);
+FileInfo *file_info_file(FILE *tmp_file);
+void file_info_set_name(FileInfo *fi, const char fn[]);
+LineInfo *file_info_append(FileInfo *fi, char line_text[]);
+const LineInfo *file_info_lookup(const FileInfo *fi, int line_num);
+int file_info_len(const FileInfo *fi);
+const char *file_info_name(const FileInfo *fi);
+void file_info_delete(FileInfo *fi);
+
 void tokenize(FileInfo *fi, Queue *queue, bool escape_characters);
 bool tokenize_line(int *line, FileInfo *fi, Queue *queue,
-    bool escape_characters);
+bool escape_characters);
 void token_fill(Token *tok, TokenType type, int line, int col,
     const char text[]);
 Token *token_create(TokenType type, int line, int col, const char text[]);

@@ -392,25 +392,20 @@ void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,
 
 void memory_graph_print(const MemoryGraph *graph, FILE *file) {
   ASSERT_NOT_NULL(graph);
-
   void print_node_id(void *ptr) {
     ASSERT_NOT_NULL(ptr);
     fprintf(file, "%u ", ((Node *) ptr)->id.int_id);
   }
-
   fprintf(file, "roots={ ");
   set_iterate(&graph->roots, print_node_id);
   fprintf(file, "}\n");
-
   void print_node_id2(void *ptr) {
     ASSERT_NOT_NULL(ptr);
     fprintf(file, "%u ", ((Node *) ptr)->id.int_id);
   }
-
   fprintf(file, "nodes(%d)={ ", set_size(&graph->nodes));
   set_iterate(&graph->nodes, print_node_id2);
   fprintf(file, "}\n");
-
   void print_edges_for_child(void *ptr) {
     ASSERT_NOT_NULL(ptr);
     Node *parent = (Node *) ptr;
@@ -425,7 +420,6 @@ void memory_graph_print(const MemoryGraph *graph, FILE *file) {
     }
     set_iterate(children, print_edge);
   }
-
   fprintf(file, "edges={ ");
   set_iterate(&graph->nodes, print_edges_for_child);
   fprintf(file, "}\n\n");

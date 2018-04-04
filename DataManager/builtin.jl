@@ -18,16 +18,63 @@ class Class {
 }
 
 class Function {
-  def to_s() self.class.name + '(' + self.$module.name + '.' + self.name + ')'
+  def to_s() self.class.name.copy().append('(').extend(self.$module.name).append('.').extend(self.name).append(')')
 }
 
 class Module {
   def to_s() 'Module(' + self.name + ')'
 }
 
+class Tuple {
+  def to_s() {
+    str = '('
+    if self.len > 0 {
+      if (self[0] is Object) {
+        str.extend(self[0].to_s())
+      } else str.append(self[0])
+    }
+    for i=1, i<self.len, i=i+1 {
+      str.append(',')
+      if (self[i] is Object) {
+        str.extend(self[i].to_s())
+      } else str.append(self[i])
+    }
+    str.append(')')
+  }
+}
+
 class Array {
+ def copy() {
+    cpy = Array()
+    for i=0, i<|self|, i=i+1 {
+      cpy.append(self[i])
+    }
+    cpy
+  }
   def append(elt) {
     self[self.len] = elt
+    return self
+  }
+  def extend(arr) {
+    for i=0, i<arr.len, i=i+1 {
+      self.append(arr[i])
+    }
+    return self
+  }
+  def to_s() {
+    str = '['
+    if self.len > 0 {
+      if (self[0] is Object) {
+        str.extend(self[0].to_s())
+      } else str.append(self[0])
+    }
+    for i=1, i<self.len, i=i+1 {
+      str.append(',')
+      if (self[i] is Object) {
+        str.extend(self[i].to_s())
+      } else str.append(self[i])
+    }
+    str.append(']')
   }
   def map(f) {
     arr = []
@@ -86,7 +133,6 @@ class Array {
     }
     True
   }
-
   def partition(c, l, h) {
     x = self[h]
     i = l - 1
@@ -103,7 +149,6 @@ class Array {
     self[h] = tmp
     i+1
   }
-  
   def qsort(c, l, h) {
     if c(l, h) < 0 {
       p = self.partition(c, l, h)
@@ -122,6 +167,13 @@ class String {
     for i=0, i < |array|, i=i+1
       self.append(array[i])
   }
+  def copy() {
+    cpy = ''
+    for i=0, i<|self|, i=i+1 {
+      cpy.append(self[i])
+    }
+    cpy
+  }
   def join(array) {
     if array.len == 0 {
       return ''
@@ -132,4 +184,7 @@ class String {
     }
     a
   }
-}
+  def to_s() {
+    self
+  }
+ }
