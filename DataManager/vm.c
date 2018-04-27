@@ -142,7 +142,6 @@ void vm_throw_error(const VM *vm, Ins ins, const char fmt[], ...) {
     }
     current_block = array_get(saved_array, i);
   }
-
   fflush(stderr);
   exit(1);
 }

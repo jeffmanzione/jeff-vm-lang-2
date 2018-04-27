@@ -31,6 +31,7 @@ void optimize_init() {
   register_optimizer("JmpRes", optimizer_JmpRes);
   register_optimizer("PushRes", optimizer_PushRes);
   register_optimizer("ResPush2", optimizer_ResPush2);
+  register_optimizer("RetRet", optimizer_RetRet);
 //  register_optimizer("Increment", optimizer_Increment);
 }
 
@@ -63,9 +64,6 @@ void oh_init(OptimizeHelper *oh, const Tape *tape) {
 
 void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
   const Tape *t = oh->tape;
-//  printf("Num Instructions: %d\n", tape_len(t)); fflush(stdout);
-//  printf("Num adjustments %d %d\n", map_size(&oh->i_to_adj),
-//      expando_len(oh->adjustments)); fflush(stdout);
   Token tok;
   token_fill(&tok, WORD, 0, 0, tape_modulename(t));
   tape_module(new_tape, &tok);
@@ -100,7 +98,6 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
         tape_insc(new_tape, tape_get(t, j));
       }
     }
-
     Adjustment *a = map_lookup(&oh->i_to_adj, (void *) i);
     if (NULL != a && REMOVE == a->type) {
       int new_index_val = new_len - 1;

@@ -111,6 +111,21 @@ void optimizer_ResPush2(OptimizeHelper *oh, const Tape * const tape, int start,
   }
 }
 
+void optimizer_RetRet(OptimizeHelper *oh, const Tape * const tape, int start,
+    int end) {
+  int i;
+  for (i = start + 1; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 1);
+    const InsContainer *second = tape_get(tape, i);
+    if (RET == first->ins.op && NO_PARAM == first->ins.param
+        && RET == second->ins.op && NO_PARAM == second->ins.param
+        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+      o_Remove(oh, i);
+    }
+  }
+}
+
+
 void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
     int start, int end) {
 
