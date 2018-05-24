@@ -80,6 +80,7 @@ typedef enum {
   THEN,
   ELSE,
   DEF,
+  NEW,
   FIELD,
   CLASS,
   WHILE,

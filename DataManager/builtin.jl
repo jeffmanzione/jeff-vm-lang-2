@@ -178,9 +178,9 @@ class String {
     if array.len == 0 {
       return ''
     }
-    a = array[0]
+    a = array[0].copy()
     for i=1, i<array.len, i=i+1 {
-      a = a + self + array[i]
+      a.extend(self).extend(array[i])
     }
     a
   }

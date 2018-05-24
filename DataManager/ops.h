@@ -47,6 +47,7 @@
       return create_int(APPLY(lhe.val, rhe.val, op));      \
     return create_char(APPLY(lhe.val, rhe.val,  op));      \
   }
+
 #define OPFUNC_BOOLTYPE(op, name)                          \
   OPDEF_BOOLTYPE(name) {                                   \
     if (lhe.type == OBJECT || lhe.type == NONE             \

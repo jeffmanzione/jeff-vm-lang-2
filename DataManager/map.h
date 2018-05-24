@@ -11,10 +11,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifndef NEW_MAP
-#include "set.h"
-#endif
-
 #include "shared.h"
 
 #define DEFAULT_MAP_SZ 511
@@ -32,8 +28,6 @@ typedef struct Pair_ {
   void *value;
 } Pair;
 
-#ifdef NEW_MAP
-
 typedef struct MEntry_ MEntry;
 struct MEntry_ {
   Pair pair;
@@ -48,15 +42,6 @@ typedef struct Map_ {
   uint32_t table_sz, num_entries, entries_thresh;
   MEntry *table, *last;
 } Map;
-
-#else
-
-typedef struct Map_ {
-  Set kv_set;
-  Hasher hash;
-  Comparator compare;
-}Map;
-#endif
 
 typedef void (*PairAction)(Pair *kv);
 

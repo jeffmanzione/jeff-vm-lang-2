@@ -77,6 +77,12 @@ DefineExpression(statement_list1);
 DefineExpression(file_level_statement);
 DefineExpression(file_level_statement_list);
 DefineExpression(file_level_statement_list1);
+DefineExpression(class_constructor_list);
+DefineExpression(class_constructor_list1);
+DefineExpression(class_new_statement);
+DefineExpression(parent_class_list);
+DefineExpression(parent_class_list1);
+DefineExpression(class_constructors);
 
 
 #endif /* EXPRESSION_H_ */

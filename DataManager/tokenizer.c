@@ -16,7 +16,7 @@
 #include "shared.h"
 #include "strings.h"
 
-char *keyword_to_type[] = { "if", "then", "else", "def", "field", "class",
+char *keyword_to_type[] = { "if", "then", "else", "def", "new", "field", "class",
     "while", "for", "break", "return", "as", "is",
 //    "Nil", "True", "False",
     "import", "module" };

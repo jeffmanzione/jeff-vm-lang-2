@@ -17,8 +17,6 @@
  *      Author: Jeff
  */
 
-#ifdef NEW_MAP
-
 #include "set.h"
 
 #include <string.h>
@@ -85,4 +83,3 @@ void set_iterate(const Set *set, Action action) {
   map_iterate(&set->map, value_action);
 }
 
-#endif

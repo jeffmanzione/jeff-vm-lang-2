@@ -27,11 +27,11 @@ int main() {
 //  alloc_set_verbose(true);
   Module *mainm = load_fn("main.jl");
   Module *io = load_fn("io.jb");
-  Module *math = load_fn("math.jb");
+//  Module *math = load_fn("math.jl");
 //  Module *hello = load_fn("hello.jl");
   VM *vm = vm_create();
   vm_add_module(vm, io);
-  vm_add_module(vm, math);
+//  vm_add_module(vm, math);
 //  vm_add_module(vm, hello);
   Element main_element = vm_add_module(vm, mainm);
   vm_set_module(vm, main_element, 0);
@@ -43,7 +43,7 @@ int main() {
 
   module_delete(mainm);
   module_delete(io);
-  module_delete(math);
+//  module_delete(math);
 //  module_delete(hello);
 
   vm_delete(vm);

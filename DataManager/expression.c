@@ -487,11 +487,34 @@ ImplExpression(function_definition,
 ImplExpression(field_statement,
     And(TypeLn(FIELD), function_argument_list));
 
+// class_constructor_list
+//    identifier ( argument_list )
+//    identifier ( argument_list ) , class_constructor_list
+ImplExpression(class_constructor_list1,
+    Or(And(TypeLn(COMMA), Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), class_constructor_list1),
+       Epsilon));
+ImplExpression(class_constructor_list,
+    And(Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN),
+    		class_constructor_list1));
+
+// class_constructors
+//    : class_constructor_list
+ImplExpression(class_constructors,
+		And(TypeLn(COLON), class_constructor_list));
+
+// class_new_statement
+//    def new ( argument_list ) class_constructors statement
+//    def new ( argument_list ) statement
+ImplExpression(class_new_statement,
+		And(TypeLn(DEF), TypeLn(NEW), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN),
+				Opt(class_constructors), statement));
+
 // class_statement
+//    class_new_statement
 //    function_definition
 //    field_statement
 ImplExpression(class_statement,
-    Ln(Or(field_statement, function_definition)));
+    Ln(Or(class_new_statement, field_statement, function_definition)));
 
 // class_statement_list
 //    class_statement
@@ -502,10 +525,25 @@ ImplExpression(class_statement_list1,
 ImplExpression(class_statement_list,
     And(class_statement, class_statement_list1));
 
-// function_definition
+// parent_class_list
+//    identifier
+//    identifier , paret_class_list
+ImplExpression(parent_class_list1,
+		Or(And(TypeLn(COMMA), Ln(identifier), parent_class_list1),
+	       Epsilon));
+ImplExpression(parent_class_list,
+		And(Ln(identifier), parent_class_list1));
+
+// parent_classes
+//    : parent_class_list
+ImplExpression(parent_classes,
+		And(TypeLn(COLON), parent_class_list));
+
+// class_definition
 //    class identifier statement
+//    class identifier parent_classes statement
 ImplExpression(class_definition,
-      And(Type(CLASS), Ln(identifier),
+      And(Type(CLASS), Ln(identifier), Opt(parent_classes),
           Or(And(TypeLn(LBRCE), Ln(class_statement_list), TypeLn(RBRCE)),
              Ln(class_statement))));
 

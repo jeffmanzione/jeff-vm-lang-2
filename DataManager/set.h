@@ -11,30 +11,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef NEW_MAP
 #include "map.h"
-#else
-#include "queue.h"
-#endif
-
 #include "shared.h"
 
 #define DEFAULT_TABLE_SZ DEFAULT_MAP_SZ
 
-#ifdef NEW_MAP
 typedef struct Set_ {
   Map map;
 } Set;
-#else
-/* Struct for containing the set components */
-typedef struct Set_ {
-  Hasher hasher;
-  Comparator comparator;
-  Queue *queue;
-  uint32_t table_size;
-  uint32_t size;
-}Set;
-#endif
+
 /*
  * Creates a new set.
  * Returns a pointer to a newly allocated Set
