@@ -23,3 +23,7 @@
 /main.jb
 /builtin.jb
 /math.jb
+.project
+.cproject
+/.tracecompass
+/.settings
