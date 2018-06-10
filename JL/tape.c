@@ -237,6 +237,10 @@ size_t tape_len(const Tape * const tape) {
 }
 
 void insc_to_str(const InsContainer *c, FILE *file) {
+  if (c->ins.param == NO_PARAM) {
+    fprintf(file, "  %s", instructions[(int) c->ins.op]);
+    return;
+  }
   fprintf(file, "  %-6s", instructions[(int) c->ins.op]);
   switch (c->ins.param) {
   case ID_PARAM:

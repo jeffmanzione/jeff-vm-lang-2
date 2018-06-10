@@ -20,8 +20,10 @@ Element class_string;
 
 Element class_tuple;
 Element class_function;
+Element class_external_function;
 Element class_method;
 Element class_module;
+Element class_error;
 
 void class_init(VM *vm) {
   // Create dummy objects that are needed for VM construction first since we
@@ -38,13 +40,18 @@ void class_init(VM *vm) {
 
   class_tuple = create_obj(vm->graph);
   class_function = create_obj(vm->graph);
+  class_external_function = create_obj(vm->graph);
   class_method = create_obj(vm->graph);
   class_module = create_obj(vm->graph);
+  class_error = create_obj(vm->graph);
   // Time to fill them
   class_fill(vm, class_tuple, TUPLE_NAME, class_object);
   class_fill(vm, class_function, FUNCTION_NAME, class_object);
+  class_fill(vm, class_external_function, EXTERNAL_FUNCTION_NAME,
+      class_function);
   class_fill(vm, class_method, METHOD_NAME, class_function);
   class_fill(vm, class_module, MODULE_NAME, class_object);
+  class_fill(vm, class_error, ERROR_NAME, class_object);
 }
 
 void class_fill(VM *vm, Element class, const char class_name[],

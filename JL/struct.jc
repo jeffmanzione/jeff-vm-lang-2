@@ -1,0 +1,261 @@
+module struct
+  rmdl  io
+  mdst  io
+
+class Map
+  jmp   19
+
+@new
+  set   sz
+  res   sz
+  push
+  res   self
+  fld   sz
+  anew
+  push
+  res   self
+  fld   table
+  res   None
+  push
+  res   self
+  get   table
+  push
+  res   self
+  get   sz
+  aset
+  res   self
+  ret
+  jmp   116
+
+@put
+  push
+  tget  0
+  set   k
+  res
+  tget  1
+  set   v
+  res   hash
+  push
+  res   k
+  call
+  set   hval
+  res   hval
+  push
+  res   self
+  get   sz
+  push
+  mod
+  set   pos
+  res   self
+  get   table
+  push
+  res   pos
+  aidx
+  not
+  ifn   15
+  res   v
+  push
+  res   k
+  push
+  tupl  2
+  push
+  anew  1
+  push
+  res   self
+  get   table
+  push
+  res   pos
+  aset
+  res   None
+  ret
+  res   self
+  get   table
+  push
+  res   pos
+  aidx
+  set   entries
+  res   io
+  push
+  res   entries
+  push
+  res   '>>>'
+  push
+  tupl  2
+  call  println
+  res   0
+  set   i
+  res   i
+  push
+  res   entries
+  get   len
+  push
+  lt
+  ifn   42
+  res   eq
+  push
+  res   entries
+  push
+  res   i
+  aidx
+  push
+  res   0
+  aidx
+  push
+  res   k
+  push
+  tupl  2
+  call
+  ifn   20
+  res   entries
+  push
+  res   i
+  aidx
+  push
+  res   1
+  aidx
+  set   old_v
+  res   v
+  push
+  res   k
+  push
+  tupl  2
+  push
+  res   entries
+  push
+  res   i
+  aset
+  res   old_v
+  ret
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -48
+  res   entries
+  push
+  res   v
+  push
+  res   k
+  push
+  tupl  2
+  call  append
+  res   None
+  ret
+  ret
+  jmp   70
+
+@get
+  set   k
+  res   hash
+  push
+  res   k
+  call
+  set   hval
+  res   hval
+  push
+  res   self
+  get   sz
+  push
+  mod
+  set   pos
+  res   self
+  get   table
+  push
+  res   pos
+  aidx
+  not
+  ifn   2
+  res   None
+  ret
+  res   self
+  get   table
+  push
+  res   pos
+  aidx
+  set   entries
+  res   0
+  set   i
+  res   i
+  push
+  res   entries
+  get   len
+  push
+  lt
+  ifn   30
+  res   eq
+  push
+  res   entries
+  push
+  res   i
+  aidx
+  push
+  res   0
+  aidx
+  push
+  res   k
+  push
+  tupl  2
+  call
+  ifn   8
+  res   entries
+  push
+  res   i
+  aidx
+  push
+  res   1
+  aidx
+  ret
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -36
+  res   None
+  ret
+  ret
+endclass
+
+class Set
+  jmp   10
+
+@new
+  set   sz
+  res   Map
+  push
+  res   sz
+  call
+  push
+  res   self
+  fld   map
+  res   self
+  ret
+  jmp   11
+
+@insert
+  set   k
+  res   self
+  get   map
+  push
+  res   k
+  push
+  res   k
+  push
+  tupl  2
+  call  put
+  ret
+  jmp   7
+
+@contains
+  set   k
+  res   self
+  get   map
+  push
+  res   k
+  call  get
+  ret
+endclass
+  exit  0

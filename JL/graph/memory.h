@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef DEBUG
 #define ALLOC_ARRAY(type, count) (type *) alloc__(/*type=*/sizeof(type), /*count=*/(count), (__LINE__), (__func__), (__FILE__), (#type))

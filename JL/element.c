@@ -13,9 +13,11 @@
 #include "arena/arena.h"
 #include "arena/strings.h"
 #include "class.h"
+#include "codegen/tokenizer.h"
 #include "datastructure/array.h"
 #include "datastructure/tuple.h"
 #include "error.h"
+#include "external/external.h"
 #include "graph/memory_graph.h"
 #include "module.h"
 #include "vm.h"
@@ -46,10 +48,18 @@ Element create_char(int8_t val) {
 
 Element create_obj_of_class_unsafe(MemoryGraph *graph, Element class) {
   Element to_return = memory_graph_new_node(graph);
+  to_return.obj->is_external = false;
   memory_graph_set_field(graph, to_return, CLASS_KEY, class);
   memory_graph_set_field(graph, to_return, ADDRESS_KEY,
       create_int((int32_t) to_return.obj));
   return to_return;
+}
+
+Element create_external_obj(VM *vm, Element class) {
+  Element elt = create_obj_of_class(vm->graph, class);
+  elt.obj->is_external = true;
+  elt.obj->external_data = externaldata_create(vm, elt, class);
+  return elt;
 }
 
 Element create_obj_of_class(MemoryGraph *graph, Element class) {
@@ -81,8 +91,14 @@ Element string_create(VM *vm, const char *str) {
   if (NULL != str) {
     int i;
     for (i = 0; i < strlen(str); i++) {
-      array_enqueue(elt.obj->array, create_char(str[i]));
-      //memory_graph_array_enqueue(vm->graph, elt, create_char(str[i]));
+      char c = str[i];
+      if (c == '\\') {
+        ++i;
+        c = char_unesc(str[i]);
+      }
+      // Does not need to use memory_graph_array_enqueue because it is just
+      // appending chars.
+      array_enqueue(elt.obj->array, create_char(c));
     }
     memory_graph_set_field(vm->graph, elt, LENGTH_KEY,
         create_int(array_size(elt.obj->array)));
@@ -119,6 +135,16 @@ Element create_function(VM *vm, Element module, uint32_t ins, const char name[])
   elt.obj->type = FUNCTION;
   memory_graph_set_field(vm->graph, elt, NAME_KEY, string_create(vm, name));
   memory_graph_set_field(vm->graph, elt, INS_INDEX, create_int(ins));
+  memory_graph_set_field(vm->graph, elt, PARENT_MODULE, module);
+  return elt;
+}
+
+Element create_external_function(VM *vm, Element module, const char name[],
+    ExternalFunction external_fn) {
+  Element elt = create_obj_of_class(vm->graph, class_external_function);
+  elt.obj->type = EXTERNAL_FUNCTION;
+  elt.obj->external_fn = external_fn;
+  memory_graph_set_field(vm->graph, elt, NAME_KEY, string_create(vm, name));
   memory_graph_set_field(vm->graph, elt, PARENT_MODULE, module);
   return elt;
 }
@@ -172,6 +198,14 @@ Element obj_get_field(Element elt, const char field_name[]) {
 }
 
 void obj_delete_ptr(Object *obj, bool free_mem) {
+  if (obj->is_external) {
+    ASSERT(NOT_NULL(obj->external_data),
+        NOT_NULL(obj->external_data->deconstructor),
+        NOT_NULL(externaldata_vm(obj->external_data)));
+    obj->external_data->deconstructor(externaldata_vm(obj->external_data),
+        obj->external_data, create_none());
+    externaldata_delete(obj->external_data);
+  }
   if (free_mem) {
     void dealloc_elts(Pair *kv) {
       ARENA_DEALLOC(Element, kv->value);
@@ -213,6 +247,15 @@ Value value_negate(Value val) {
     ERROR("Unable to value_negate(val)");
   }
   return val;
+}
+
+char *string_to_cstr(Array *arr) {
+  char *str = ALLOC_ARRAY(char, array_size(arr) + 1);
+  int i;
+  for (i = 0; i < array_size(arr); i++) {
+    str[i] = array_get(arr, i).val.char_val;
+  }
+  return str;
 }
 
 void obj_to_str(Object *obj, FILE *file) {

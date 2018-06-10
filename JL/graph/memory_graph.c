@@ -151,9 +151,10 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   Node *node = node_create(graph);
   node->obj.node = node;
   node->obj.type = OBJ;
+  node->obj.is_external = false;
   map_init(&node->obj.fields, DEFAULT_MAP_SZ, default_hasher,
       default_comparator);
-  Element e = { .type = OBJECT, .obj = &node->obj };
+  Element e = { .type = OBJECT, .obj = &node->obj, };
   return e;
 }
 

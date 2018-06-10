@@ -41,7 +41,8 @@ char *THIS;
 char *MODULE_FIELD;
 char *MODULES;
 char *CLASS_KEY;
-char *NEW_KEY;
+char *CONSTRUCTOR_KEY;
+char *DECONSTRUCTOR_KEY;
 char *PARENT_KEY;
 char *NAME_KEY;
 char *CLASS_NAME;
@@ -50,9 +51,12 @@ char *ARRAY_NAME;
 char *STRING_NAME;
 char *TUPLE_NAME;
 char *FUNCTION_NAME;
+char *EXTERNAL_FUNCTION_NAME;
 char *METHOD_NAME;
 char *MODULE_NAME;
+char *ERROR_NAME;
 char *ADDRESS_KEY;
+char *IS_EXTERNAL_KEY;
 
 struct Chunk_ {
   char *block;
@@ -90,17 +94,18 @@ void strings_insert_constants() {
   INITIALIZED = strings_intern("$initialized");
   CURRENT_BLOCK = strings_intern("$block");
   OLD_RESVALS = strings_intern("$old_resvals");
-  PARENT_MODULE = strings_intern("$module");
+  PARENT_MODULE = strings_intern("module");
   PARENT_CLASS = strings_intern("parent_class");
   TRUE_KEYWORD = strings_intern("True");
   FALSE_KEYWORD = strings_intern("False");
   NIL_KEYWORD = strings_intern("Nil");
   LENGTH_KEY = strings_intern("len");
   THIS = strings_intern("self");
-  MODULE_FIELD = strings_intern("module");
+  MODULE_FIELD = strings_intern("$module");
   MODULES = strings_intern("$modules");
   CLASS_KEY = strings_intern("class");
-  NEW_KEY = strings_intern("new");
+  CONSTRUCTOR_KEY = strings_intern("new");
+  DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
   PARENT_KEY = strings_intern("parent");
   NAME_KEY = strings_intern("name");
   CLASS_NAME = strings_intern("Class");
@@ -109,9 +114,12 @@ void strings_insert_constants() {
   STRING_NAME = strings_intern("String");
   TUPLE_NAME = strings_intern("Tuple");
   FUNCTION_NAME = strings_intern("Function");
+  EXTERNAL_FUNCTION_NAME = strings_intern("ExternalFunction");
   METHOD_NAME = strings_intern("Method");
   MODULE_NAME = strings_intern("Module");
+  ERROR_NAME = strings_intern("Error");
   ADDRESS_KEY = strings_intern("$adr");
+  IS_EXTERNAL_KEY = strings_intern("$is_external");
 }
 
 void strings_init() {

@@ -73,10 +73,15 @@ void *queue_peek(const Queue *queue) {
   if (NULL == queue->head) {
     return NULL;
   }
-
-  //printf("QUEUE PEEK: %s\n", ((Token *) queue->head->value)->text);
-
   return (void *) queue->head->value;
+}
+
+void *queue_peek_last(const Queue *queue) {
+  ASSERT_NOT_NULL(queue);
+  if (NULL == queue->tail) {
+    return NULL;
+  }
+  return (void *) queue->tail->value;
 }
 
 void *queue_last(const Queue *queue) {

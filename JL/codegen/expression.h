@@ -83,5 +83,7 @@ DefineExpression(parent_class_list);
 DefineExpression(parent_class_list1);
 DefineExpression(class_constructors);
 
+DefineExpression(break_statement);
+
 
 #endif /* EXPRESSION_H_ */

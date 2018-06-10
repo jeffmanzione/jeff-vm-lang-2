@@ -12,6 +12,7 @@
 
 #include "error.h"
 #include "strings.h"
+#include "graph/memory.h"
 
 #ifdef DEBUG
 bool DBG = true;
@@ -104,7 +105,6 @@ uint32_t string_hasher(const void *ptr) {
   return hval;
 }
 
-#ifndef OLD_STRCMP
 int32_t string_comparator(const void *ptr1, const void *ptr2) {
   if (ptr1 == ptr2) {
     return 0;
@@ -128,20 +128,58 @@ int32_t string_comparator(const void *ptr1, const void *ptr2) {
   }
   return strncmp((char *) lhs, (char *) rhs, sizeof(uint32_t));
 }
-#endif
 
-#ifdef OLD_STRCMP
-int32_t string_comparator(const void *ptr1, const void *ptr2) {
-  if (ptr1 == ptr2) {
-    return 0;
-  }
-  if (NULL == ptr1) {
-    return -1;
-  }
-  if (NULL == ptr2) {
-    return 1;
-  }
+size_t getline(char **lineptr, size_t *n, FILE *stream) {
+    char *bufptr = NULL;
+    char *p = bufptr;
+    size_t size;
+    int c;
 
-  return strcmp((char *) ptr1, (char *) ptr2);
+    if (lineptr == NULL) {
+        return -1;
+    }
+    if (stream == NULL) {
+        return -1;
+    }
+    if (n == NULL) {
+        return -1;
+    }
+    bufptr = *lineptr;
+    size = *n;
+
+    c = fgetc(stream);
+    if (c == EOF) {
+        return -1;
+    }
+    if (bufptr == NULL) {
+        bufptr = ALLOC_ARRAY2(char, 128);
+        if (bufptr == NULL) {
+            return -1;
+        }
+        size = 128;
+    }
+    p = bufptr;
+    while(c != EOF) {
+        if ((p - bufptr) > (size - 1)) {
+            size = size + 128;
+            bufptr = REALLOC(bufptr, char, size);
+            if (bufptr == NULL) {
+                return -1;
+            }
+        }
+        *p++ = c;
+        if (c == '\n') {
+            break;
+        }
+        if (c == '\r') {
+
+        }
+        c = fgetc(stream);
+    }
+
+    *p++ = '\0';
+    *lineptr = bufptr;
+    *n = size;
+
+    return p - bufptr - 1;
 }
-#endif

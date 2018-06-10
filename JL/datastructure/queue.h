@@ -38,6 +38,7 @@ void queue_iterate(Queue *queue, Q_Action act);
 void queue_iterate_until(Queue *queue, Q_ActionUntil act);
 void queue_iterate_mutable(Queue *queue, Q_MutableAction act);
 void *queue_peek(const Queue *queue);
+void *queue_peek_last(const Queue *queue);
 void *queue_last(const Queue *queue);
 void *queue_remove(Queue *queue);
 void *queue_remove_last(Queue *queue);

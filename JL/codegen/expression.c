@@ -53,9 +53,6 @@ void expression_tree_to_str(ExpressionTree exp, Parser *parser, FILE *file) {
 }
 
 void expression_tree_delete(ExpressionTree exp) {
-//  if (exp.token != NULL) {
-//    token_delete(exp.token);
-//  }
   if (exp.first != NULL) {
     expression_tree_delete(*exp.first);
     DEALLOC(exp.first);
@@ -99,12 +96,10 @@ bool is_newline(ExpressionTree exp_match) {
 ExpressionTree match(Parser *parser) {
   ExpressionTree exp_match = match_epsilon(parser);
   exp_match.token = queue_remove(&parser->queue);
-//  DEBUGF("match(%d)", exp_match.token->type);
   return exp_match;
 }
 
 ExpressionTree match_rollback(Parser *parser, ExpressionTree exp_match) {
-//  DEBUGF("match_rollback");
   ASSERT(exp_match.matched);
 
   if (NULL != exp_match.second) {
@@ -123,7 +118,6 @@ ExpressionTree match_rollback(Parser *parser, ExpressionTree exp_match) {
 
 ExpressionTree match_merge(Parser *parser, ExpressionTree parent,
     ExpressionTree child) {
-//  DEBUGF("match_merge");
   if (!parent.matched) {
     return match_rollback(parser, child);
   }
@@ -238,12 +232,14 @@ ImplExpression(string_literal, Type(STR));
 //     [ ]
 //     [ tuple_expression ]
 ImplExpression(array_declaration,
-    Or(And(Type(LBRAC), Type(RBRAC)), And(Type(LBRAC), tuple_expression, Type(RBRAC))));
+    Or(And(Type(LBRAC), Type(RBRAC)),
+        And(Type(LBRAC), tuple_expression, Type(RBRAC))));
 
 // length_expression
 //     | expression |
 //
-ImplExpression(length_expression, And(Type(PIPE), tuple_expression, Type(PIPE)))
+ImplExpression(length_expression,
+    And(Type(PIPE), tuple_expression, Type(PIPE)))
 
 // primary_expression
 //     identifier
@@ -252,7 +248,12 @@ ImplExpression(length_expression, And(Type(PIPE), tuple_expression, Type(PIPE)))
 //     array_declaration
 //     ( expression )
 ImplExpression(primary_expression,
-    Or(identifier, constant, string_literal, array_declaration, length_expression, And(Type(LPAREN), tuple_expression, Type(RPAREN))));
+    Or(identifier,
+        constant,
+        string_literal,
+        array_declaration,
+        length_expression,
+        And(Type(LPAREN), tuple_expression, Type(RPAREN))));
 
 ImplExpression(primary_expression_no_constants,
     Or(identifier, string_literal, array_declaration, And(Type(LPAREN), tuple_expression, Type(RPAREN))));
@@ -278,7 +279,11 @@ DefineExpression(assignment_expression);
 //     postfix_expression --
 //     anon_function
 ImplExpression(postfix_expression1,
-    Or(And(Type(LBRAC), tuple_expression, Type(RBRAC), postfix_expression1), And(Type(LPAREN), Type(RPAREN), postfix_expression1), And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1), And(Type(PERIOD), identifier, postfix_expression1),
+    Or(And(Type(LBRAC), tuple_expression, Type(RBRAC), postfix_expression1),
+        And(Type(LPAREN), Type(RPAREN), postfix_expression1),
+        And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1),
+        And(Type(PERIOD), identifier, postfix_expression1),
+
 //       And(Type(INC), postfix_expression1),
 //       And(Type(DEC), postfix_expression1),
     primary_expression, Epsilon));
@@ -303,7 +308,10 @@ ImplExpression(unary_expression,
 //    multiplicative_expression / unary_expression
 //    multiplicative_expression % unary_expression
 ImplExpression(multiplicative_expression1,
-    Or(And(Type(STAR), multiplicative_expression), And(Type(FSLASH), multiplicative_expression), And(Type(PERCENT), multiplicative_expression), Epsilon));
+    Or(And(Type(STAR), multiplicative_expression),
+        And(Type(FSLASH), multiplicative_expression),
+        And(Type(PERCENT), multiplicative_expression),
+        Epsilon));
 ImplExpression(multiplicative_expression,
     And(unary_expression, multiplicative_expression1));
 
@@ -312,7 +320,9 @@ ImplExpression(multiplicative_expression,
 //    additive_expression + multiplicative_expression
 //    additive_expression - multiplicative_expression
 ImplExpression(additive_expression1,
-    Or(And(Type(PLUS), additive_expression), And(Type(MINUS), additive_expression), Epsilon));
+    Or(And(Type(PLUS), additive_expression),
+        And(Type(MINUS), additive_expression),
+        Epsilon));
 ImplExpression(additive_expression,
     And(multiplicative_expression, additive_expression1));
 
@@ -323,7 +333,11 @@ ImplExpression(additive_expression,
 //    relational_expression <= additive_expression
 //    relational_expression >= additive_expression
 ImplExpression(relational_expression1,
-    Or(And(Type(LTHAN), additive_expression, relational_expression1), And(Type(GTHAN), additive_expression, relational_expression1), And(Type(LTHANEQ), additive_expression, relational_expression1), And(Type(GTHANEQ), additive_expression, relational_expression1), Epsilon));
+    Or(And(Type(LTHAN), additive_expression, relational_expression1),
+        And(Type(GTHAN), additive_expression, relational_expression1),
+        And(Type(LTHANEQ), additive_expression, relational_expression1),
+        And(Type(GTHANEQ), additive_expression, relational_expression1),
+        Epsilon));
 ImplExpression(relational_expression,
     And(additive_expression, relational_expression1));
 
@@ -332,7 +346,9 @@ ImplExpression(relational_expression,
 //    equality_expression == relational_expression
 //    equality_expression != relational_expression
 ImplExpression(equality_expression1,
-    Or(And(Type(EQUIV), relational_expression, equality_expression1), And(Type(NEQUIV), relational_expression, equality_expression1), Epsilon));
+    Or(And(Type(EQUIV), relational_expression, equality_expression1),
+        And(Type(NEQUIV), relational_expression, equality_expression1),
+        Epsilon));
 ImplExpression(equality_expression,
     And(relational_expression, equality_expression1));
 
@@ -340,21 +356,24 @@ ImplExpression(equality_expression,
 //    equality_expression
 //    and_expression & equality_expression
 ImplExpression(and_expression1,
-    Or(And(Type(AMPER), equality_expression, and_expression1), Epsilon));
+    Or(And(Type(AMPER), equality_expression, and_expression1),
+        Epsilon));
 ImplExpression(and_expression, And(equality_expression, and_expression1));
 
 // xor_expression
 //    and_expression
 //    xor_expression ^ and_expression
 ImplExpression(xor_expression1,
-    Or(And(Type(CARET), and_expression, xor_expression1), Epsilon));
+    Or(And(Type(CARET), and_expression, xor_expression1),
+        Epsilon));
 ImplExpression(xor_expression, And(and_expression, xor_expression1));
 
 // or_expression
 //    xor_expression
 //    or_expression | xor_expression
 ImplExpression(or_expression1,
-    Or(And(Type(PIPE), xor_expression, or_expression1), Epsilon));
+    Or(And(Type(PIPE), xor_expression, or_expression1),
+        Epsilon));
 ImplExpression(or_expression, And(xor_expression, or_expression1));
 
 // is_expression
@@ -373,14 +392,17 @@ ImplExpression(conditional_expression,
     Or(And(TypeLn(IF_T), Ln(is_expression), Opt(TypeLn(THEN)), Ln(conditional_expression), TypeLn(ELSE), conditional_expression), And(TypeLn(IF_T), Ln(is_expression), Opt(TypeLn(THEN)), conditional_expression), is_expression));
 
 ImplExpression(anon_function,
-    Or(And(Type(AT), Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), statement), conditional_expression));
+    Or(And(Type(AT), Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), statement),
+        conditional_expression));
 
 // assignment_expression
 //    conditional_expression
 //    assignment_tuple = assignment_expression
 //    unary_expression = assignment_expression
 ImplExpression(assignment_expression,
-    Or(And(assignment_tuple, Type(EQUALS), assignment_expression), And(unary_expression, Type(EQUALS), assignment_expression), anon_function));
+    Or(And(assignment_tuple, Type(EQUALS), assignment_expression),
+        And(unary_expression, Type(EQUALS), assignment_expression),
+        anon_function));
 
 // assignment_tuple
 //    ( function_argument_List )
@@ -406,13 +428,15 @@ DefineExpression(statement_list);
 //    while expression  statement
 //    for ( expression , expression , expression ) statement
 ImplExpression(iteration_statement,
-    Or(And(TypeLn(WHILE), Ln(tuple_expression), statement), And(TypeLn(FOR), Or(And(assignment_expression, TypeLn(COMMA), assignment_expression, TypeLn(COMMA), Ln(assignment_expression)), And(TypeLn(LPAREN), And(assignment_expression, TypeLn(COMMA), assignment_expression, TypeLn(COMMA), Ln(assignment_expression)), TypeLn(RPAREN))), statement)));
+    Or(And(TypeLn(WHILE), Ln(tuple_expression), statement),
+        And(TypeLn(FOR), Or(And(assignment_expression, TypeLn(COMMA), assignment_expression, TypeLn(COMMA), Ln(assignment_expression)), And(TypeLn(LPAREN), And(assignment_expression, TypeLn(COMMA), assignment_expression, TypeLn(COMMA), Ln(assignment_expression)), TypeLn(RPAREN))),statement)));
 
 // compound_statement
 //    { }
 //    { statement_list }
 ImplExpression(compound_statement,
-    Or(And(TypeLn(LBRCE), TypeLn(RBRCE)), And(TypeLn(LBRCE), Ln(statement_list), TypeLn(RBRCE))));
+    Or(And(TypeLn(LBRCE), TypeLn(RBRCE)),
+        And(TypeLn(LBRCE), Ln(statement_list), TypeLn(RBRCE))));
 
 // selection_statement
 //    if expression statement
@@ -422,11 +446,23 @@ ImplExpression(compound_statement,
 ImplExpression(selection_statement,
     And(Type(IF_T), Ln(tuple_expression), Ln(statement), Opt(And(TypeLn(ELSE), statement))));
 
+// try_statement
+//    try statement catch statement
+ImplExpression(try_statement,
+    And(Type(TRY), Ln(statement), TypeLn(CATCH), Ln(statement)));
+
 // jump_statement
 //    return \n
 //    return expression \n
 ImplExpression(jump_statement,
-    Or(And(Type(RETURN), Type(ENDLINE)), And(Type(RETURN), tuple_expression, Type(ENDLINE))));
+    Or(And(Type(RETURN), Type(ENDLINE)),
+        And(Type(RETURN), tuple_expression, Type(ENDLINE))));
+
+// break_statement
+//    break \n
+//    continue \n
+ImplExpression(break_statement,
+    And(Or(Type(BREAK), Type(CONTINUE)), Type(ENDLINE)));
 
 // function_argument_list
 //    identifier | function_argument_list , identifier
@@ -448,7 +484,8 @@ ImplExpression(field_statement, And(TypeLn(FIELD), function_argument_list));
 //    identifier ( argument_list )
 //    identifier ( argument_list ) , class_constructor_list
 ImplExpression(class_constructor_list1,
-    Or(And(TypeLn(COMMA), Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), class_constructor_list1), Epsilon));
+    Or(And(TypeLn(COMMA), Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), class_constructor_list1),
+        Epsilon));
 ImplExpression(class_constructor_list,
     And(Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), class_constructor_list1));
 
@@ -467,13 +504,16 @@ ImplExpression(class_new_statement,
 //    function_definition
 //    field_statement
 ImplExpression(class_statement,
-    Ln(Or(class_new_statement, field_statement, function_definition)));
+    Ln(Or(class_new_statement,
+        field_statement,
+        function_definition)));
 
 // class_statement_list
 //    class_statement
 //    class_statement class_statement_list
 ImplExpression(class_statement_list1,
-    Or(And(class_statement, class_statement_list1), Epsilon));
+    Or(And(class_statement, class_statement_list1),
+        Epsilon));
 ImplExpression(class_statement_list,
     And(class_statement, class_statement_list1));
 
@@ -505,12 +545,19 @@ ImplExpression(module_statement,
     And(Type(MODULE_T), identifier, Type(ENDLINE)));
 
 // statement
+//    try_statement
 //    compound_statement
 //    expression_statement
 //    selection_statement
 //    iteration_statement
 ImplExpression(statement,
-    Or(selection_statement, expression_statement, compound_statement, iteration_statement, jump_statement));
+    Or(try_statement,
+       selection_statement,
+       expression_statement,
+       compound_statement,
+       iteration_statement,
+       jump_statement,
+       break_statement));
 
 // file_level_statement
 //    module_statement
@@ -518,7 +565,11 @@ ImplExpression(statement,
 //    function_definition
 //    statement
 ImplExpression(file_level_statement,
-    Or(module_statement, import_statement, function_definition, class_definition, statement));
+    Or(module_statement,
+       import_statement,
+       function_definition,
+       class_definition,
+        statement));
 
 // file_level_statement_list
 //    file_level_statement

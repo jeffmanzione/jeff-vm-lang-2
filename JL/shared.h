@@ -54,4 +54,6 @@ int32_t default_comparator(const void *ptr1, const void *ptr2);
 uint32_t string_hasher(const void *ptr);
 int32_t string_comparator(const void *ptr1, const void *ptr2);
 
+size_t getline(char **lineptr, size_t *n, FILE *stream);
+
 #endif /* SHARED_H_ */

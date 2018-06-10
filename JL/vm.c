@@ -20,6 +20,7 @@
 #include "datastructure/map.h"
 #include "datastructure/tuple.h"
 #include "error.h"
+#include "external/external.h"
 #include "file_load.h"
 #include "graph/memory.h"
 #include "graph/memory_graph.h"
@@ -31,9 +32,21 @@
 
 #ifdef DEBUG
 #define BUILTIN_SRC "builtin.jl"
+#define IO_SRC      "io.jl"
+#define STRUCT_SRC   "struct.jl"
+#define ERROR_SRC   "error.jl"
 #else
 #define BUILTIN_SRC "builtin.jb"
+#define IO_SRC      "io.jb"
+#define STRUCT_SRC   "struct.jb"
+#define ERROR_SRC   "error.jb"
 #endif
+
+const char *PRELOADED[] = { IO_SRC, STRUCT_SRC, ERROR_SRC };
+
+int preloaded_size() {
+  return sizeof(PRELOADED) / sizeof(PRELOADED[0]);
+}
 
 void vm_to_string(const VM *vm, Element elt, FILE *target);
 void execute_tget(VM *vm, Ins ins, Element tuple, int64_t index);
@@ -119,7 +132,6 @@ void vm_throw_error(const VM *vm, Ins ins, const char fmt[], ...) {
             obj_get_field(obj_get_field(caller, PARENT_CLASS), NAME_KEY),
             stderr);
         fflush(stderr);
-
       }
       fprintf(stderr, ".");
       fflush(stderr);
@@ -186,6 +198,9 @@ void vm_add_builtin(VM *vm) {
   memory_graph_set_field(vm->graph, builtin_element, PARENT, vm->root);
   memory_graph_set_field(vm->graph, builtin_element, INITIALIZED,
       element_false(vm));
+
+  add_builtin_external(vm, builtin_element);
+
   void add_ref(Pair *pair) {
     Element function = create_function(vm, builtin_element,
         (uint32_t) pair->value, pair->key);
@@ -239,6 +254,42 @@ Element vm_add_module(VM *vm, const Module *module) {
   return module_element;
 }
 
+void vm_merge_module(VM *vm, const char fn[]) {
+  Module *module = load_fn(strings_intern(fn), vm->store);
+  ASSERT(NOT_NULL(vm), NOT_NULL(module));
+  Element module_element = create_module(vm, module);
+  memory_graph_set_field(vm->graph, vm->modules, module_name(module),
+      module_element);
+  memory_graph_set_field(vm->graph, module_element, PARENT, vm->root);
+  memory_graph_set_field(vm->graph, module_element, INITIALIZED,
+      element_false(vm));
+
+  if (starts_with(fn, IO_SRC)) {
+    add_io_external(vm, module_element);
+  }
+
+  void add_ref(Pair *pair) {
+    Element function = create_function(vm, module_element,
+        (uint32_t) pair->value, pair->key);
+    memory_graph_set_field(vm->graph, module_element, pair->key, function);
+  }
+  map_iterate(module_refs(module), add_ref);
+  void add_class(Pair *pair) {
+    Element class;
+    if ((class = obj_get_field(vm->root, pair->key)).type == NONE) {
+      class = class_create(vm, pair->key, class_object);
+    }
+    memory_graph_set_field(vm->graph, module_element, pair->key, class);
+    void add_method(Pair *pair2) {
+      memory_graph_set_field(vm->graph, class, pair2->key,
+          create_method(vm, module_element, (uint32_t) pair2->value, class,
+              pair2->key));
+    }
+    map_iterate(pair->value, add_method);
+  }
+  map_iterate(module_classes(module), add_class);
+}
+
 VM *vm_create(ArgStore *store) {
   VM *vm = ALLOC(VM);
   vm->store = store;
@@ -261,13 +312,25 @@ VM *vm_create(ArgStore *store) {
   memory_graph_set_field(vm->graph, vm->root, FALSE_KEYWORD, create_none());
   memory_graph_set_field(vm->graph, vm->root, TRUE_KEYWORD, create_int(1));
   vm_add_builtin(vm);
+  int i;
+  for (i = 0; i < preloaded_size(); ++i) {
+    vm_merge_module(vm, PRELOADED[i]);
+  }
   return vm;
 }
 
 void vm_delete(VM *vm) {
   ASSERT_NOT_NULL(vm->graph);
-  module_delete(
-      (Module *) vm_lookup_module(vm, strings_intern("builtin")).obj->module);
+  void delete_module(Pair *kv) {
+    ASSERT(NOT_NULL(kv));
+    Element *e = ((Element *) kv->value);
+    if (e->type != OBJECT || e->obj->type != MODULE) {
+      return;
+    }
+    Module *module = (Module*) e->obj->module;
+    module_delete(module);
+  }
+  map_iterate(&vm->modules.obj->fields, delete_module);
   memory_graph_delete(vm->graph);
   vm->graph = NULL;
   DEALLOC(vm);
@@ -391,10 +454,28 @@ const Element vm_get_old_resvals(VM *vm) {
   return obj_get_field(vm->root, OLD_RESVALS);
 }
 
+void call_external_fn(VM *vm, Element obj, Element external_func) {
+  if (external_func.type != OBJECT
+      || external_func.obj->type != EXTERNAL_FUNCTION) {
+    vm_throw_error(vm, vm_current_ins(vm),
+        "Cannot call ExternalFunction on something not ExternalFunction.");
+  }
+  ASSERT(NOT_NULL(external_func.obj->external_fn));
+  Element resval = vm_get_resval(vm);
+  ExternalData *ed = (obj.obj->is_external) ? obj.obj->external_data : NULL;
+  Element returned = external_func.obj->external_fn(vm, ed, resval);
+  vm_set_resval(vm, returned);
+}
+
 void call_fn(VM *vm, Element obj, Element func) {
-  if (func.type != OBJECT || func.obj->type != FUNCTION) {
+  if (func.type != OBJECT
+      || (func.obj->type != FUNCTION && func.obj->type != EXTERNAL_FUNCTION)) {
     vm_throw_error(vm, vm_current_ins(vm),
         "Attempted to call something not a function of Class.");
+  }
+  if (func.obj->type == EXTERNAL_FUNCTION) {
+    call_external_fn(vm, obj, func);
+    return;
   }
   Element parent = obj_get_field(func, PARENT_MODULE);
   ASSERT(OBJECT == parent.type, MODULE == parent.obj->type);
@@ -408,9 +489,16 @@ void call_fn(VM *vm, Element obj, Element func) {
 
 void call_new(VM *vm, Element class) {
   ASSERT(ISCLASS(class));
-  Element new_obj = create_obj_of_class(vm->graph, class);
-  Element new_func = obj_get_field(class, NEW_KEY);
-  if (new_func.type == OBJECT && new_func.obj->type == FUNCTION) {
+  Element new_obj;
+  if (NONE != obj_get_field(class, IS_EXTERNAL_KEY).type) {
+    new_obj = create_external_obj(vm, class);
+  } else {
+    new_obj = create_obj_of_class(vm->graph, class);
+  }
+  Element new_func = obj_get_field(class, CONSTRUCTOR_KEY);
+  if (new_func.type == OBJECT
+      && (new_func.obj->type == FUNCTION
+          || new_func.obj->type == EXTERNAL_FUNCTION)) {
     call_fn(vm, new_obj, new_func);
   } else {
     vm_set_resval(vm, new_obj);
@@ -443,7 +531,8 @@ bool execute_no_param(VM *vm, Ins ins) {
     return true;
   case CALL:
     elt = vm_popstack(vm);
-    if (elt.type == OBJECT && elt.obj->type == FUNCTION) {
+    if (elt.type == OBJECT
+        && (elt.obj->type == FUNCTION || elt.obj->type == EXTERNAL_FUNCTION)) {
       call_fn(vm, vm_lookup(vm, THIS), elt);
     } else if (elt.type == OBJECT && elt.obj->type == OBJ
         && class_class.obj == obj_get_field(elt, CLASS_KEY).obj) {
@@ -456,7 +545,10 @@ bool execute_no_param(VM *vm, Ins ins) {
   case ASET:
     elt = vm_popstack(vm);
     new_val = vm_popstack(vm);
-    ASSERT(elt.type == OBJECT && elt.obj->type == ARRAY);
+    if (elt.type != OBJECT || elt.obj->type != ARRAY) {
+      vm_throw_error(vm, ins,
+          "Cannot perform array operation on something not an Array.");
+    }
     index = vm_get_resval(vm);
     ASSERT(index.type == VALUE, index.val.type == INT)
     ;
@@ -473,6 +565,9 @@ bool execute_no_param(VM *vm, Ins ins) {
       execute_tget(vm, ins, elt, index.val.int_val);
       return true;
     }
+//    elt_to_str(elt, stdout);
+//    fprintf(stdout, "\n");
+//    fflush(stdout);
     if (elt.type != OBJECT || elt.obj->type != ARRAY) {
       vm_throw_error(vm, ins, "Array indexing on something not an Array.");
     }
@@ -579,12 +674,6 @@ bool execute_no_param(VM *vm, Ins ins) {
     ASSERT(rhs.type == OBJECT, rhs.obj->type == OBJ,
         class_class.obj == obj_get_field(rhs, CLASS_KEY).obj)
     ;
-//    fflush(stdout);
-//    elt_to_str(rhs, stderr);
-//    fprintf(stderr, "\n");
-//    elt_to_str(lhs, stderr);
-//    fprintf(stderr, "\n");
-//    fflush(stderr);
     if (lhs.type != OBJECT) {
       res = element_false(vm);
       break;
@@ -696,7 +785,7 @@ bool execute_id_param(VM *vm, Ins ins) {
     if (OBJECT != target.type) {
       vm_throw_error(vm, ins, "Object has no such function '%s'.", ins.str);
     }
-    if (target.obj->type == FUNCTION) {
+    if (target.obj->type == FUNCTION || target.obj->type == EXTERNAL_FUNCTION) {
       call_fn(vm, obj, target);
     } else if (target.obj->type == OBJ
         && class_class.obj == obj_get_field(target, CLASS_KEY).obj) {
@@ -845,6 +934,10 @@ bool execute_str_param(VM *vm, Ins ins) {
     if (DBG) {
       fflush(stdout);
     }
+    break;
+  case PSRS:
+    vm_pushstack(vm, str_array);
+    vm_set_resval(vm, str_array);
     break;
   default:
     ERROR("Instruction op was not a str_param. op=%s",

@@ -32,7 +32,8 @@ extern char *THIS;
 extern char *MODULE_FIELD;
 extern char *MODULES;
 extern char *CLASS_KEY;
-extern char *NEW_KEY;
+extern char *CONSTRUCTOR_KEY;
+extern char *DECONSTRUCTOR_KEY;
 extern char *PARENT_KEY;
 extern char *NAME_KEY;
 extern char *CLASS_NAME;
@@ -41,9 +42,12 @@ extern char *ARRAY_NAME;
 extern char *STRING_NAME;
 extern char *TUPLE_NAME;
 extern char *FUNCTION_NAME;
+extern char *EXTERNAL_FUNCTION_NAME;
 extern char *METHOD_NAME;
 extern char *MODULE_NAME;
+extern char *ERROR_NAME;
 extern char *ADDRESS_KEY;
+extern char *IS_EXTERNAL_KEY;
 
 typedef struct Chunk_ Chunk;
 

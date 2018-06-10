@@ -25,6 +25,7 @@ extern Element class_string;
 
 extern Element class_tuple;
 extern Element class_function;
+extern Element class_external_function;
 extern Element class_method;
 extern Element class_module;
 

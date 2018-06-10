@@ -87,12 +87,12 @@ typedef enum {
   WHILE,
   FOR,
   BREAK,
+  CONTINUE,
   RETURN,
   AS,
   IS_T,
-//  NAN,
-//  TRUE,
-//  FALSE,
+  TRY,
+  CATCH,
   IMPORT,
   MODULE_T,
 } TokenType;
@@ -129,5 +129,7 @@ void token_fill(Token *tok, TokenType type, int line, int col,
 Token *token_create(TokenType type, int line, int col, const char text[]);
 Token *token_copy(Token *tok);
 void token_delete(Token *tok);
+
+char char_unesc(char u);
 
 #endif /* TOKENIZER_H_ */

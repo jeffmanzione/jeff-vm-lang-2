@@ -64,11 +64,6 @@ int main(int argc, const char *argv[]) {
 //  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));
 //  memory_graph_print(vm_get_graph(vm), stdout);
 
-  void delete_module(void *ptr) {
-    ASSERT(NOT_NULL(ptr));
-    module_delete((Module*) ptr);
-  }
-  set_iterate(&modules, delete_module);
   set_finalize(&modules);
   argstore_delete(store);
   argconfig_delete(config);

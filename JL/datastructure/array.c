@@ -42,6 +42,8 @@ void array_maybe_realloc(Array * const array, uint32_t need_to_accomodate) {
   }
   array->table = REALLOC(array->table, Element, size);
   array->table_size = size;
+  memset(array->table + array->num_elts, 0x0,
+      (array->table_size - array->num_elts) * sizeof(Element));
 }
 
 void array_shift(Array * const array, uint32_t start_pos, int32_t amount) {

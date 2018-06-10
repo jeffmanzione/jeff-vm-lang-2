@@ -57,6 +57,16 @@
       ? element_false(vm) : element_true(vm);              \
   }
 
+#define OPFUNC_BOOLTYPE_NULLABLE(op, name)                 \
+  OPDEF_BOOLTYPE(name) {                                   \
+    if (lhe.type == OBJECT || rhe.type == OBJECT)          \
+      ERROR("Invalid operand (Object).");                  \
+    if (lhe.type == NONE) { lhe.val.type = INT; lhe.val.int_val = 0;} \
+    if (rhe.type == NONE) { rhe.val.type = INT; rhe.val.int_val = 0;} \
+    return APPLY(lhe.val, rhe.val,  op) == 0               \
+      ? element_false(vm) : element_true(vm);              \
+  }
+
 #define OPFUNC_BOOLTYPE_SINGLE(op, name)                   \
   OPDEF_SINGLE(name) {                                     \
     if (elt.type == OBJECT || elt.type == NONE)            \
