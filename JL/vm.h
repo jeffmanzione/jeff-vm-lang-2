@@ -13,6 +13,7 @@
 
 #include "command/commandline.h"
 #include "element.h"
+#include "instruction.h"
 
 typedef struct MemoryGraph_ MemoryGraph;
 typedef struct Module_ Module;
@@ -31,6 +32,11 @@ Element vm_add_module(VM *vm, const Module *module);
 Element vm_lookup_module(const VM *vm, const char module_name[]);
 const MemoryGraph *vm_get_graph(const VM *vm);
 void vm_delete(VM *vm);
+
+void vm_add_string_class(VM *vm);
+
+void vm_throw_error(VM *vm, Ins ins, const char fmt[], ...);
+Ins vm_current_ins(const VM *vm);
 
 void vm_pushstack(VM *vm, Element element);
 Element vm_popstack(VM *vm);

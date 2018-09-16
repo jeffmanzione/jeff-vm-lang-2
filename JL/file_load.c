@@ -13,8 +13,8 @@
 
 #include "arena/strings.h"
 #include "codegen/codegen.h"
-#include "codegen/expression.h"
 #include "codegen/parse.h"
+#include "codegen/syntax.h"
 #include "codegen/tokenizer.h"
 #include "datastructure/queue.h"
 #include "error.h"
@@ -83,7 +83,7 @@ Module *load_fn_jl(const char fn[], const ArgStore* store) {
 
   Module *module;
   FileInfo *fi = file_info(fn);
-  ExpressionTree tree = parse_file(fi);
+  SyntaxTree tree = parse_file(fi);
   Tape *tape = tape_create();
 
   codegen_file(&tree, tape);
@@ -124,7 +124,7 @@ Module *load_fn_jl(const char fn[], const ArgStore* store) {
     fclose(file);
   }
 
-  expression_tree_delete(tree);
+  expression_tree_delete(&tree);
   module = module_create_tape(fi, tape);
   return module;
 }

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "arena/strings.h"
+#include "datastructure/set.h"
 #include "element.h"
 #include "error.h"
 #include "graph/memory.h"
@@ -38,6 +39,7 @@ void tape_init(Tape *tape) {
   map_init_default(&tape->classes);
   map_init_default(&tape->class_starts);
   map_init_default(&tape->class_ends);
+  map_init_default(&tape->class_parents);
   queue_init(&tape->class_prefs);
 }
 
@@ -58,6 +60,11 @@ void tape_finalize(Tape *tape) {
   map_finalize(&tape->classes);
   map_finalize(&tape->class_starts);
   map_finalize(&tape->class_ends);
+  void delete_expando(Pair *kv) {
+    expando_delete((Expando *) kv->value);
+  }
+  map_iterate(&tape->class_parents, delete_expando);
+  map_finalize(&tape->class_parents);
   queue_shallow_delete(&tape->class_prefs);
 }
 
@@ -67,7 +74,7 @@ void tape_delete(Tape *tape) {
 }
 
 InsContainer insc_create(Token *token) {
-  InsContainer c; // = ARENA_ALLOC(InsContainer);
+  InsContainer c;
   c.token = token;
   return c;
 }
@@ -110,7 +117,7 @@ int tape_ins_neg(Tape *tape, Op op, Token *token) {
 
 int tape_ins_text(Tape *tape, Op op, const char text[], Token *token) {
   InsContainer c = insc_create(token);
-  c.ins = instruction_id(op, text);
+  c.ins = instruction_id(op, strings_intern(text));
   ASSERT(NOT_NULL(token));
   return tape_insc(tape, &c);
 }
@@ -181,6 +188,17 @@ int tape_class(Tape *tape, Token *token) {
   return 0;
 }
 
+int tape_class_with_parents(Tape *tape, Token *token, Queue *q_parents) {
+  tape_class(tape, token);
+  Expando *parents = expando(char *, 2);
+  while (q_parents->size > 0) {
+    char *parent = queue_remove(q_parents);
+    expando_append(parents, &parent);
+  }
+  map_insert(&tape->class_parents, token->text, parents);
+  return 0;
+}
+
 int tape_endclass(Tape *tape, Token *token) {
   char *cn = (char *) queue_remove(&tape->class_prefs);
   map_insert(&tape->class_ends, cn, (void *) expando_len(tape->ins));
@@ -229,6 +247,15 @@ void tape_append(Tape *head, Tape *tail) {
   }
   map_iterate(&tail->class_ends, insert_class_ends);
 
+  void insert_class_parent(Pair *kv) {
+    Expando *parents = expando(char *, 2);
+    void insert_parent_name(void *ptr) {
+      expando_append(parents, &ptr);
+    }
+    expando_iterate(((Expando *) kv->value), insert_parent_name);
+    map_insert(&head->class_parents, kv->key, parents);
+  }
+  map_iterate(&tail->class_parents, insert_class_parent);
   ASSERT(queue_size(&tail->class_prefs) == 0);
 }
 
@@ -303,10 +330,18 @@ void tape_write(const Tape * const tape, FILE *file) {
   for (i = 0; i < tape_len(tape); i++) {
     char *text = NULL;
     if (map_lookup(&i_to_class_ends, (void *) i)) {
-      fprintf(file, "endclass\n");
+      fprintf(file, "endclass\n\n");
     }
     if (NULL != (text = map_lookup(&i_to_class_starts, (void *) i))) {
-      fprintf(file, "\nclass %s\n", text);
+      fprintf(file, "\nclass %s", text);
+      Expando *parents = map_lookup(&tape->class_parents, text);
+      if (NULL != parents) {
+        void add_parent(void *ptr) {
+          fprintf(file, ",%s", *((char **) ptr));
+        }
+        expando_iterate(parents, add_parent);
+      }
+      fprintf(file, "\n");
     }
     if (NULL != (text = map_lookup(&i_to_refs, (void *) i))) {
       fprintf(file, "\n@%s\n", text);
@@ -346,8 +381,19 @@ void tape_read_ins(Tape * const tape, Queue *tokens) {
     return;
   }
   if (0 == strcmp(CLASS_KEYWORD, first->text)) {
-    tape_class(tape, queue_remove(tokens));
-    return;
+    Token *class_name = queue_remove(tokens);
+    if (ENDLINE == ((Token *) queue_peek(tokens))->type) {
+      tape_class(tape, class_name);
+      return;
+    }
+    Queue parents;
+    queue_init(&parents);
+    while (COMMA == ((Token *) queue_peek(tokens))->type) {
+      queue_remove(tokens);
+      queue_add(&parents, queue_remove(tokens));
+    }
+    tape_class_with_parents(tape, class_name, &parents);
+    queue_shallow_delete(&parents);
   }
   if (0 == strcmp(CLASSEND_KEYWORD, first->text)) {
     tape_endclass(tape, first);
@@ -421,18 +467,32 @@ void tape_read_binary(Tape * const tape, FILE *file) {
   uint16_t num_classes;
   deserialize_type(file, uint16_t, &num_classes);
   for (i = 0; i < num_classes; i++) {
-    uint16_t class_name_index, class_start, class_end, num_methods;
+    uint16_t class_name_index, class_start, class_end, num_parents, num_methods;
     deserialize_type(file, uint16_t, &class_name_index);
     deserialize_type(file, uint16_t, &class_start);
     deserialize_type(file, uint16_t, &class_end);
-    deserialize_type(file, uint16_t, &num_methods);
     char *class_name = *((char**) expando_get(strings,
         (uint32_t) class_name_index));
     map_insert(&tape->class_starts, class_name, (void *) (int) class_start);
     map_insert(&tape->class_ends, class_name, (void *) (int) class_end);
+
+    int j;
+    deserialize_type(file, uint16_t, &num_parents);
+    if (num_parents > 0) {
+      Expando *parents = expando(char *, 2);
+      for (j = 0; j < num_parents; j++) {
+        uint16_t parent_name_index;
+        deserialize_type(file, uint16_t, &parent_name_index);
+        char *parent_name = *((char**) expando_get(strings,
+            (uint32_t) parent_name_index));
+        expando_append(parents, &parent_name);
+      }
+      map_insert(&tape->class_parents, class_name, parents);
+    }
+
+    deserialize_type(file, uint16_t, &num_methods);
     Map* methods = map_create_default();
     map_insert(&tape->classes, class_name, methods);
-    int j;
     for (j = 0; j < num_methods; j++) {
       uint16_t method_name_index, method_index;
       deserialize_type(file, uint16_t, &method_name_index);
@@ -468,10 +528,20 @@ void tape_write_binary(const Tape * const tape, FILE *file) {
   void map_insert_string(Pair *kv) {
     insert_string(kv->key);
   }
+  void set_insert_string(void *ptr) {
+    insert_string(ptr);
+  }
+  void expando_insert_string(void *ptr) {
+    insert_string(*((char **) ptr));
+  }
   insert_string(tape->module_name);
   void map_insert_class(Pair *kv) {
     insert_string(kv->key);
     map_iterate(kv->value, map_insert_string);
+    Expando *parents = (Expando *) map_lookup(&tape->class_parents, kv->key);
+    if (NULL != parents) {
+      expando_iterate(parents, expando_insert_string);
+    }
   }
   map_iterate(&tape->classes, map_insert_class);
   map_iterate(&tape->refs, map_insert_string);
@@ -510,10 +580,26 @@ void tape_write_binary(const Tape * const tape, FILE *file) {
         kv->key);
     uint16_t class_end = (uint16_t) (int) map_lookup(&tape->class_ends,
         kv->key);
-    uint16_t num_methods = (uint16_t) (int) map_size((Map *) kv->value);
     serialize_type(&buffer, uint16_t, class_name_index);
     serialize_type(&buffer, uint16_t, class_start);
     serialize_type(&buffer, uint16_t, class_end);
+
+    Expando *parents = map_lookup(&tape->class_parents, kv->key);
+    if (NULL == parents) {
+      uint16_t num_parents = 0;
+      serialize_type(&buffer, uint16_t, num_parents);
+    } else {
+      uint16_t num_parents = (uint16_t) expando_len(parents);
+      serialize_type(&buffer, uint16_t, num_parents);
+      void add_parent(void *ptr) {
+        uint16_t parent_name_index = (uint16_t) (int) map_lookup(&string_index,
+            *((char **) ptr));
+        serialize_type(&buffer, uint16_t, parent_name_index);
+      }
+      expando_iterate(parents, add_parent);
+    }
+
+    uint16_t num_methods = (uint16_t) (int) map_size((Map *) kv->value);
     serialize_type(&buffer, uint16_t, num_methods);
     void add_methods(Pair *kv2) {
       uint16_t method_name_index = (uint16_t) (int) map_lookup(&string_index,
@@ -540,6 +626,11 @@ void tape_write_binary(const Tape * const tape, FILE *file) {
 const Map *tape_classes(const Tape * const tape) {
   ASSERT(NOT_NULL(tape));
   return &tape->classes;
+}
+
+const Map *tape_class_parents(const Tape * const tape) {
+  ASSERT(NOT_NULL(tape));
+  return &tape->class_parents;
 }
 
 const Map *tape_refs(const Tape * const tape) {

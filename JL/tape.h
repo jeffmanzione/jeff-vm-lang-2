@@ -25,7 +25,7 @@ typedef struct {
 typedef struct {
   Expando *ins;
   const char *module_name;
-  Map refs, classes, class_starts, class_ends;
+  Map refs, classes, class_starts, class_ends, class_parents;
   Queue class_prefs;
 } Tape;
 
@@ -47,6 +47,7 @@ int tape_anon_label(Tape *tape, Token *token);
 
 int tape_module(Tape *tape, Token *token);
 int tape_class(Tape *tape, Token *token);
+int tape_class_with_parents(Tape *tape, Token *token, Queue *tokens);
 int tape_endclass(Tape *tape, Token *token);
 
 InsContainer *tape_get_mutable(const Tape *tape, int i);
@@ -62,6 +63,7 @@ void tape_read_binary(Tape * const tape, FILE *file);
 void tape_write_binary(const Tape * const tape, FILE *file);
 
 const Map *tape_classes(const Tape * const tape);
+const Map *tape_class_parents(const Tape * const tape);
 const Map *tape_refs(const Tape * const tape);
 const char *tape_modulename(const Tape * tape);
 

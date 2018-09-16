@@ -48,6 +48,9 @@ extern char *MODULE_NAME;
 extern char *ERROR_NAME;
 extern char *ADDRESS_KEY;
 extern char *IS_EXTERNAL_KEY;
+extern char *ERROR_KEY;
+extern char *ARRAYLIKE_INDEX_KEY;
+extern char *ARRAYLIKE_SET_KEY;
 
 typedef struct Chunk_ Chunk;
 

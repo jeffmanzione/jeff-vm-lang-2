@@ -16,7 +16,6 @@ class Map {
       return None
     }
     entries = self.table[pos]
-    io.println('>>>',entries)
     for i=0, i<entries.len, i=i+1 {
       if eq(k, entries[i][0]) {
         old_v = entries[i][1]

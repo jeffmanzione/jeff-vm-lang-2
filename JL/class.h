@@ -13,6 +13,7 @@
 #include "element.h"
 
 #define ISOBJECT(elt) ((elt).type == OBJECT)
+#define ISCLASS_OBJ(cobj) (class_class.obj == obj_get_field_obj((cobj), CLASS_KEY).obj)
 #define ISCLASS(elt) (ISOBJECT(elt) && class_class.obj ==                      \
                                          obj_get_field((elt), CLASS_KEY).obj)
 #define ISTYPE(elt, class) (ISCLASS(class) && ISOBJECT(elt) &&                 \
@@ -30,11 +31,11 @@ extern Element class_method;
 extern Element class_module;
 
 void class_init(VM *vm);
-void class_fill(VM *vm, Element class, const char class_name[],
-    Element parent_class);
 void class_fill_unsafe(VM *vm, Element class, const char class_name[],
     Element parent_class);
 Element class_create(VM *vm, const char class_name[], Element parent_class);
+Element class_create_list(VM *vm, const char class_name[],
+    Expando *parent_classes);
 
 bool inherits_from(Element class, Element super);
 

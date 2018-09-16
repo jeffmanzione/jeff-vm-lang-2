@@ -21,6 +21,7 @@
 #include "datastructure/tuple.h"
 #include "error.h"
 #include "external/external.h"
+#include "external/strings.h"
 #include "file_load.h"
 #include "graph/memory.h"
 #include "graph/memory_graph.h"
@@ -43,6 +44,12 @@
 #endif
 
 const char *PRELOADED[] = { IO_SRC, STRUCT_SRC, ERROR_SRC };
+
+const Element vm_get_resval(VM *vm);
+void vm_set_resval(VM *vm, const Element elt);
+void call_new(VM *vm, Element class);
+void call_fn(VM *vm, Element obj, Element func);
+void vm_shift_ip(VM *vm, int num_ins);
 
 int preloaded_size() {
   return sizeof(PRELOADED) / sizeof(PRELOADED[0]);
@@ -80,82 +87,53 @@ Element vm_get_module(const VM *vm) {
   return module;
 }
 
-void vm_throw_error(const VM *vm, Ins ins, const char fmt[], ...) {
+void vm_throw_error(VM *vm, Ins ins, const char fmt[], ...) {
   fflush(stdout);
-  const Module *module = vm_get_module(vm).obj->module;
-  const InsContainer *c = module_insc(module, vm_get_ip(vm));
-  const Token *tok = c->token;
-  const FileInfo *fi = module_fileinfo(module);
-  const LineInfo *li =
-      (NULL == fi || NULL == tok) ? NULL : file_info_lookup(fi, tok->line);
-  const char *module_fn = module_filename(module);
-  fprintf(stderr, "Error in '%s' at line %d: ",
-      (NULL == module_fn) ? "?" : module_fn, (NULL == tok) ? -1 : tok->line);
   fflush(stderr);
-  va_list ap;
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  fflush(stderr);
-  va_end(ap);
-  fprintf(stderr, "\n");
-  if (NULL != fi && NULL != li && NULL != tok) {
-    int num_line_digits = (int) (log10(file_info_len(fi)) + 1);
-    fprintf(stderr, "%*d:%s", num_line_digits, tok->line,
-        (NULL == li) ? "No LineInfo" : li->line_text);
-    if ('\n' != li->line_text[strlen(li->line_text) - 1]) {
-      fprintf(stderr, "\n");
-    }
-    int i;
-    for (i = 0; i < tok->col + num_line_digits; i++) {
-      fprintf(stderr, " ");
-    }
-    for (i = 0; i < tok->len; i++) {
-      fprintf(stderr, "^");
-    }
-    fprintf(stderr, "\n");
-    fflush(stderr);
-  }
-  int i = -1;
-  Array *saved_array = obj_get_field(vm->root, SAVED_BLOCKS).obj->array;
-  Element current_block = obj_get_field(vm->root, CURRENT_BLOCK);
+  va_list args;
+  va_start(args, fmt);
+  char buffer[1024];
+  vsprintf(buffer, fmt, args);
+  va_end(args);
+  Element error_msg = string_create(vm, buffer);
+  Element error_module = vm_lookup_module(vm, strings_intern("error"));
+  Element error_class = obj_get_field(error_module, strings_intern("Error"));
+  Element curr_block = current_block(vm);
+  memory_graph_set_field(vm->graph, curr_block, ERROR_KEY, create_int(1));
+  vm_set_resval(vm, error_msg);
+  call_new(vm, error_class);
+}
+
+void catch_error(VM *vm) {
+  Element curr_block = create_none();
+  Element catch_goto = create_none();
   while (true) {
-    Element module = obj_get_field(current_block, MODULE_FIELD);
-    vm_to_string(vm, obj_get_field(module, NAME_KEY), stderr);
-    fflush(stderr);
-
-    Element caller = obj_get_field(current_block, CALLER_KEY);
-    if (NONE != caller.type) {
-      if (ISTYPE(caller, class_method)) {
-        fprintf(stderr, ".");
-        fflush(stderr);
-        vm_to_string(vm,
-            obj_get_field(obj_get_field(caller, PARENT_CLASS), NAME_KEY),
-            stderr);
-        fflush(stderr);
-      }
-      fprintf(stderr, ".");
-      fflush(stderr);
-      vm_to_string(vm, obj_get_field(caller, NAME_KEY), stderr);
-    }
-    fprintf(stderr, "(");
-    fflush(stderr);
-    const char *fn = module_filename(module.obj->module);
-    fprintf(stderr, "%s:", (NULL == fn) ? "?" : fn);
-    fflush(stderr);
-
-    uint32_t ip = obj_get_field(current_block, IP_FIELD).val.int_val;
-    const InsContainer *ci = module_insc(module.obj->module, ip);
-    const Token *toki = ci->token;
-    fprintf(stderr, "%d)\n", (NULL == toki) ? -1 : toki->line);
-    fflush(stderr);
-//    vm_to_string(vm, obj_get_field(current_block, IP_FIELD), stderr);
-    if (++i >= array_size(saved_array) - 1) {
+    curr_block = current_block(vm);
+    if (curr_block.type == NONE) {
       break;
     }
-    current_block = array_get(saved_array, i);
+    catch_goto = obj_get_field(curr_block, strings_intern("$try_goto"));
+    if (catch_goto.type != NONE) {
+      break;
+    }
+    if (0 == Array_size(vm->saved_blocks.obj->array)) {
+      break;
+    }
+    vm_back(vm);
   }
-  fflush(stderr);
-  exit(1);
+  if (catch_goto.type == NONE) {
+    Element error_module = vm_lookup_module(vm, strings_intern("error"));
+    Element raise_error = obj_get_field(error_module,
+        strings_intern("raise_error"));
+    // Simulate instruction advance.
+//    vm_shift_ip(vm, 1);
+    call_fn(vm, error_module, raise_error);
+    vm_shift_ip(vm, 1);
+    return;
+  }
+  vm_set_ip(vm, catch_goto.val.int_val);
+  memory_graph_set_field(vm->graph, current_block(vm), ERROR_KEY,
+      create_none());
 }
 
 Element vm_lookup_module(const VM *vm, const char module_name[]) {
@@ -187,6 +165,10 @@ Ins vm_current_ins(const VM *vm) {
   uint32_t i = vm_get_ip(vm);
   ASSERT(NOT_NULL(m), i >= 0, i < module_size(m));
   return module_ins(m, i);
+}
+
+void vm_add_string_class(VM *vm) {
+  merge_string_class(vm, class_string);
 }
 
 void vm_add_builtin(VM *vm) {
@@ -241,7 +223,27 @@ Element vm_add_module(VM *vm, const Module *module) {
   }
   map_iterate(module_refs(module), add_ref);
   void add_class(Pair *pair) {
-    Element class = class_create(vm, pair->key, class_object);
+    ////DEBUGF("add_class %s", pair->key);
+    Expando *parents = map_lookup(module_class_parents(module), pair->key);
+    Element class;
+    if (NULL == parents) {
+      class = class_create(vm, pair->key, class_object);
+    } else {
+      Expando *parent_classes = expando(Object *, expando_len(parents));
+      Element parent;
+      if (parents != NULL) {
+        void get_parent(void *ptr) {
+          parent = obj_get_field(module_element, *((char **) ptr));
+          ASSERT(NONE != parent.type);
+          expando_append(parent_classes, &parent.obj);
+        }
+        expando_iterate(parents, get_parent);
+      } else {
+        parent = class_object;
+      }
+      class = class_create_list(vm, pair->key, parent_classes);
+      expando_delete(parent_classes);
+    }
     memory_graph_set_field(vm->graph, module_element, pair->key, class);
     void add_method(Pair *pair2) {
       memory_graph_set_field(vm->graph, class, pair2->key,
@@ -296,6 +298,8 @@ VM *vm_create(ArgStore *store) {
   vm->graph = memory_graph_create();
   vm->root = memory_graph_create_root_element(vm->graph);
   class_init(vm);
+  vm_add_string_class(vm);
+
   memory_graph_set_field(vm->graph, vm->root, ROOT, vm->root);
   memory_graph_set_field(vm->graph, vm->root, CURRENT_BLOCK, vm->root);
   memory_graph_set_field(vm->graph, vm->root, THIS, vm->root);
@@ -311,6 +315,7 @@ VM *vm_create(ArgStore *store) {
   memory_graph_set_field(vm->graph, vm->root, NIL_KEYWORD, create_none());
   memory_graph_set_field(vm->graph, vm->root, FALSE_KEYWORD, create_none());
   memory_graph_set_field(vm->graph, vm->root, TRUE_KEYWORD, create_int(1));
+
   vm_add_builtin(vm);
   int i;
   for (i = 0; i < preloaded_size(); ++i) {
@@ -349,25 +354,25 @@ Element vm_popstack(VM *vm) {
   ASSERT(vm->stack.type == OBJECT);
   ASSERT(vm->stack.obj->type == ARRAY);
   ASSERT_NOT_NULL(vm->stack.obj->array);
-  ASSERT(!array_is_empty(vm->stack.obj->array));
+  ASSERT(!Array_is_empty(vm->stack.obj->array));
   return memory_graph_array_dequeue(vm->graph, vm->stack);
 }
 
-Element vm_peekstack(VM *vm) {
+Element vm_peekstack(VM *vm, int distance) {
   ASSERT_NOT_NULL(vm);
   ASSERT(vm->stack.type == OBJECT);
   ASSERT(vm->stack.obj->type == ARRAY);
   Array *array = vm->stack.obj->array;
   ASSERT_NOT_NULL(array);
-  ASSERT(!array_is_empty(array));
-  return array_get(array, array_size(array) - 1);
+  ASSERT(!Array_is_empty(array), (Array_size(array) - 1 - distance) >= 0);
+  return Array_get(array, Array_size(array) - 1 - distance);
 }
 
 Element vm_new_block(VM *vm, Element parent, Element new_this) {
   ASSERT_NOT_NULL(vm);
   ASSERT(OBJECT == new_this.type);
   ASSERT_NOT_NULL(new_this.obj);
-  Element old_block = obj_get_field(vm->root, CURRENT_BLOCK);
+  Element old_block = current_block(vm);
 
   memory_graph_array_push(vm->graph, vm->saved_blocks, old_block);
 
@@ -395,43 +400,32 @@ const MemoryGraph *vm_get_graph(const VM *vm) {
 }
 
 Element vm_object_lookup(VM *vm, Element obj, const char name[]) {
-  Element lookup;
-
-  if (NONE == obj.type || VALUE == obj.type) {
+  if (OBJECT != obj.type) {
     return create_none();
   }
-  // THIS IS PROBABLY THE PROBLEM
-  lookup = obj_get_field(obj, name);
-  if (NONE != lookup.type && (!ISCLASS(obj) || !ISTYPE(lookup, class_method))) {
-    return lookup;
-  }
-
-  Element class = obj_get_field(obj, CLASS_KEY);
-  while (NONE != class.type
-      && NONE == (lookup = obj_get_field(class, name)).type) {
-    class = obj_get_field(class, PARENT_KEY);
-  }
-  return lookup;
+  return obj_deep_lookup(obj.obj, name);
 }
 
-Element vm_object_get(VM *vm, const char name[]) {
+Element vm_object_get(VM *vm, const char name[], bool *has_error) {
   Element resval = vm_get_resval(vm);
   if (OBJECT != resval.type) {
     vm_throw_error(vm, vm_current_ins(vm), "Cannot get field '%s' from Nil.",
         name);
+    *has_error = true;
+    return create_none();
 //    ERROR("Cannot access field(%s) of Nil.", name);
   }
   return vm_object_lookup(vm, resval, name);
 }
 
 Element vm_lookup(VM *vm, const char name[]) {
-//DEBUGF("Looking for '%s'", name);
-  Element block = obj_get_field(vm->root, CURRENT_BLOCK);
+//////DEBUGF("Looking for '%s'", name);
+  Element block = current_block(vm);
   Element lookup;
   while (NONE != block.type
       && NONE == (lookup = obj_get_field(block, name)).type) {
     block = obj_get_field(block, PARENT);
-    //DEBUGF("Looking for '%s'", name);
+    //////DEBUGF("Looking for '%s'", name);
   }
   if (NONE == block.type) {
     return create_none();
@@ -459,6 +453,7 @@ void call_external_fn(VM *vm, Element obj, Element external_func) {
       || external_func.obj->type != EXTERNAL_FUNCTION) {
     vm_throw_error(vm, vm_current_ins(vm),
         "Cannot call ExternalFunction on something not ExternalFunction.");
+    return;
   }
   ASSERT(NOT_NULL(external_func.obj->external_fn));
   Element resval = vm_get_resval(vm);
@@ -472,6 +467,7 @@ void call_fn(VM *vm, Element obj, Element func) {
       || (func.obj->type != FUNCTION && func.obj->type != EXTERNAL_FUNCTION)) {
     vm_throw_error(vm, vm_current_ins(vm),
         "Attempted to call something not a function of Class.");
+    return;
   }
   if (func.obj->type == EXTERNAL_FUNCTION) {
     call_external_fn(vm, obj, func);
@@ -483,11 +479,12 @@ void call_fn(VM *vm, Element obj, Element func) {
 
   Element new_block = vm_new_block(vm, parent, obj);
   memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
-//DEBUGF("new_line=%d", obj_get_field(elt, INS_INDEX).val.int_val);
+//////DEBUGF("new_line=%d", obj_get_field(elt, INS_INDEX).val.int_val);
   vm_set_module(vm, parent, obj_get_field(func, INS_INDEX).val.int_val - 1);
 }
 
 void call_new(VM *vm, Element class) {
+  ////DEBUGF("call_new");
   ASSERT(ISCLASS(class));
   Element new_obj;
   if (NONE != obj_get_field(class, IS_EXTERNAL_KEY).type) {
@@ -524,8 +521,17 @@ bool execute_no_param(VM *vm, Ins ins) {
   case NOP:
     return true;
   case EXIT:
-    vm_set_resval(vm, vm_popstack(vm));
+//    vm_set_resval(vm, vm_popstack(vm));
+    fflush(stdout);
+    fflush(stderr);
     return false;
+  case RAIS:
+    memory_graph_set_field(vm->graph, current_block(vm), ERROR_KEY,
+        create_int(1));
+    catch_error(vm);
+    // Counter shift forward at end of instruction execution.
+    vm_shift_ip(vm, -2);
+    return true;
   case PUSH:
     vm_pushstack(vm, (Element) vm_get_resval(vm));
     return true;
@@ -540,53 +546,84 @@ bool execute_no_param(VM *vm, Ins ins) {
     } else {
       vm_throw_error(vm, ins,
           "Cannot execute call something not a Function or Class.");
+      return true;
     }
     return true;
   case ASET:
     elt = vm_popstack(vm);
     new_val = vm_popstack(vm);
-    if (elt.type != OBJECT || elt.obj->type != ARRAY) {
+    if (elt.type != OBJECT) {
       vm_throw_error(vm, ins,
-          "Cannot perform array operation on something not an Array.");
+          "Cannot perform array operation on something not an Object.");
+      return true;
     }
     index = vm_get_resval(vm);
-    ASSERT(index.type == VALUE, index.val.type == INT)
-    ;
-    memory_graph_array_set(vm->graph, elt, index.val.int_val, new_val);
-    vm_set_resval(vm, new_val);
+    if (elt.obj->type == ARRAY) {
+      if (index.type != VALUE || index.val.type != INT) {
+        vm_throw_error(vm, ins,
+            "Cannot index an array with something not an int.");
+        return true;
+      }
+      memory_graph_array_set(vm->graph, elt, index.val.int_val, new_val);
+    } else {
+      Element set_fn = vm_object_lookup(vm, elt, ARRAYLIKE_SET_KEY);
+      if (NONE == set_fn.type) {
+        vm_throw_error(vm, ins,
+            "Cannot perform array operation on something not Arraylike.");
+        return true;
+      }
+      Element args = create_tuple(vm->graph);
+      memory_graph_tuple_add(vm->graph, args, index);
+      memory_graph_tuple_add(vm->graph, args, new_val);
+      vm_set_resval(vm, args);
+      call_fn(vm, elt, set_fn);
+      vm_set_resval(vm, new_val);
+    }
     return true;
   case AIDX:
     elt = vm_popstack(vm);
     index = vm_get_resval(vm);
-    if (index.type != VALUE || index.val.type != INT) {
-      vm_throw_error(vm, ins, "Array indexing with something not an int.");
-    }
-    if (elt.type == OBJECT && elt.obj->type == TUPLE) {
-      execute_tget(vm, ins, elt, index.val.int_val);
+    if (elt.type != OBJECT) {
+      vm_throw_error(vm, ins, "Indexing on something not Arraylike.");
       return true;
     }
-//    elt_to_str(elt, stdout);
-//    fprintf(stdout, "\n");
-//    fflush(stdout);
-    if (elt.type != OBJECT || elt.obj->type != ARRAY) {
-      vm_throw_error(vm, ins, "Array indexing on something not an Array.");
+    if (elt.obj->type == TUPLE || elt.obj->type == ARRAY) {
+      if (index.type != VALUE || index.val.type != INT) {
+        vm_throw_error(vm, ins, "Array indexing with something not an int.");
+        return true;
+      }
+      if (elt.obj->type == TUPLE) {
+        execute_tget(vm, ins, elt, index.val.int_val);
+      } else {
+        if (index.val.int_val < 0
+            || index.val.int_val >= Array_size(elt.obj->array)) {
+          vm_throw_error(vm, ins,
+              "Array Index out of bounds. Index=%d, Array.len=%d.",
+              index.val.int_val, Array_size(elt.obj->array));
+          return true;
+        }
+        vm_set_resval(vm, Array_get(elt.obj->array, index.val.int_val));
+      }
+      return true;
+    } else {
+      Element index_fn = vm_object_lookup(vm, elt, ARRAYLIKE_INDEX_KEY);
+      if (NONE == index_fn.type) {
+        vm_throw_error(vm, ins,
+            "Cannot perform array operation on something not Arraylike.");
+        return true;
+      }
+      vm_set_resval(vm, index);
+      call_fn(vm, elt, index_fn);
     }
-    if (index.val.int_val < 0
-        || index.val.int_val >= array_size(elt.obj->array)) {
-      vm_throw_error(vm, ins,
-          "Array Index out of bounds. Index=%d, Array.len=%d.",
-          index.val.int_val, array_size(elt.obj->array));
-    }
-    vm_set_resval(vm, array_get(elt.obj->array, index.val.int_val));
     return true;
   case RES:
     vm_set_resval(vm, vm_popstack(vm));
     return true;
   case PEEK:
-    vm_set_resval(vm, vm_peekstack(vm));
+    vm_set_resval(vm, vm_peekstack(vm, 0));
     return true;
   case DUP:
-    elt = vm_peekstack(vm);
+    elt = vm_peekstack(vm, 0);
     vm_pushstack(vm, elt);
     return true;
   case RET:
@@ -612,6 +649,7 @@ bool execute_no_param(VM *vm, Ins ins) {
     elt = vm_get_resval(vm);
     if (OBJECT != elt.type) {
       vm_throw_error(vm, ins, "Cannot get the address of a non-object.");
+      return true;
     }
     vm_set_resval(vm, create_int((int32_t) elt.obj));
     return true;
@@ -624,7 +662,7 @@ bool execute_no_param(VM *vm, Ins ins) {
   Element lhs = vm_popstack(vm);
   switch (ins.op) {
   case ADD:
-    if (ISTYPE(lhs, class_string) && ISTYPE(rhs, class_string)) {
+    if ( ISTYPE(lhs, class_string) && ISTYPE(rhs, class_string)) {
       res = string_add(vm, lhs, rhs);
       break;
     }
@@ -671,22 +709,21 @@ bool execute_no_param(VM *vm, Ins ins) {
         operator_and(vm, element_not(vm, lhs), rhs));
     break;
   case IS:
-    ASSERT(rhs.type == OBJECT, rhs.obj->type == OBJ,
-        class_class.obj == obj_get_field(rhs, CLASS_KEY).obj)
-    ;
+    if (!ISCLASS(rhs)) {
+      vm_throw_error(vm, ins,
+          "Cannot perfom type-check against a non-object type.");
+      return true;
+    }
     if (lhs.type != OBJECT) {
       res = element_false(vm);
       break;
     }
     class = obj_get_field(lhs, CLASS_KEY);
-    while (class.type == OBJECT && class.obj->type == OBJ
-        && class.obj != rhs.obj) {
-      class = obj_get_field(class, PARENT_KEY);
-    }
-    if (class.type == OBJECT && class.obj->type == OBJ
-        && class.obj == rhs.obj) {
+    if (inherits_from(class, rhs)) {
+//      ////DEBUGF("TRUE");
       res = element_true(vm);
     } else {
+//      ////DEBUGF("FALSE");
       res = element_false(vm);
     }
     break;
@@ -700,9 +737,10 @@ bool execute_no_param(VM *vm, Ins ins) {
 
 bool execute_id_param(VM *vm, Ins ins) {
   ASSERT_NOT_NULL(ins.str);
-  Element block = obj_get_field(vm->root, CURRENT_BLOCK);
+  Element block = current_block(vm);
   Element module, new_res_val, obj;
   int32_t ip;
+  bool has_error = false;
   switch (ins.op) {
   case SET:
     memory_graph_set_field(vm->graph, block, ins.str, vm_get_resval(vm));
@@ -728,16 +766,23 @@ bool execute_id_param(VM *vm, Ins ins) {
     vm_set_resval(vm, vm_lookup(vm, ins.str));
     break;
   case GET:
-    vm_set_resval(vm, vm_object_get(vm, ins.str));
+    new_res_val = vm_object_get(vm, ins.str, &has_error);
+    if (!has_error) {
+      vm_set_resval(vm, new_res_val);
+    }
     break;
   case GTSH:
-    vm_pushstack(vm, vm_object_get(vm, ins.str));
+    vm_pushstack(vm, vm_object_get(vm, ins.str, &has_error));
     break;
   case INC:
-    new_res_val = vm_object_get(vm, ins.str);
+    new_res_val = vm_object_get(vm, ins.str, &has_error);
+    if (has_error) {
+      return true;
+    }
     if (VALUE != new_res_val.type) {
       vm_throw_error(vm, ins,
           "Cannot increment '%s' because it is not a value-type.", ins.str);
+      return true;
     }
     switch (new_res_val.val.type) {
     case INT:
@@ -754,10 +799,14 @@ bool execute_id_param(VM *vm, Ins ins) {
     vm_set_resval(vm, new_res_val);
     break;
   case DEC:
-    new_res_val = vm_object_get(vm, ins.str);
+    new_res_val = vm_object_get(vm, ins.str, &has_error);
+    if (has_error) {
+      return true;
+    }
     if (VALUE != new_res_val.type) {
       vm_throw_error(vm, ins,
           "Cannot increment '%s' because it is not a value-type.", ins.str);
+      return true;
     }
     switch (new_res_val.val.type) {
     case INT:
@@ -776,14 +825,23 @@ bool execute_id_param(VM *vm, Ins ins) {
   case CALL:
     obj = vm_popstack(vm);
     if (obj.type == NONE) {
+      //DEBUGF("CALL NONE");
       vm_throw_error(vm, ins, "Cannot deference Nil.");
+      return true;
     }
     if (obj.type != OBJECT) {
+      //DEBUGF("CALL NON-OBJECT");
       vm_throw_error(vm, ins, "Cannot call a non-object.");
+      return true;
     }
     Element target = vm_object_lookup(vm, obj, ins.str);
     if (OBJECT != target.type) {
+      elt_to_str(obj_get_field(obj, CLASS_KEY), stdout);
+      printf("\n");
+      fflush(stdout);
+      //DEBUGF("CALL NO SUCH FUNCTION");
       vm_throw_error(vm, ins, "Object has no such function '%s'.", ins.str);
+      return true;
     }
     if (target.obj->type == FUNCTION || target.obj->type == EXTERNAL_FUNCTION) {
       call_fn(vm, obj, target);
@@ -791,8 +849,10 @@ bool execute_id_param(VM *vm, Ins ins) {
         && class_class.obj == obj_get_field(target, CLASS_KEY).obj) {
       call_new(vm, target);
     } else {
+      //DEBUGF("CALL SOMETHING ELSE");
       vm_throw_error(vm, ins,
           "Cannot execute call something not a Function or Class.");
+      return true;
     }
     break;
   case RMDL:
@@ -823,11 +883,13 @@ bool execute_id_param(VM *vm, Ins ins) {
 void execute_tget(VM *vm, Ins ins, Element tuple, int64_t index) {
   if (tuple.type != OBJECT || tuple.obj->type != TUPLE) {
     vm_throw_error(vm, ins, "Attempted to index something not a tuple.");
+    return;
   }
   if (index < 0 || index >= tuple_size(tuple.obj->tuple)) {
     vm_throw_error(vm, ins,
         "Tuple Index out of bounds. Index=%d, Tuple.len=%d.", index,
         tuple_size(tuple.obj->tuple));
+    return;
   }
   vm_set_resval(vm, tuple_get(tuple.obj->tuple, index));
 }
@@ -846,6 +908,12 @@ bool execute_val_param(VM *vm, Ins ins) {
   case PUSH:
     vm_pushstack(vm, elt);
     break;
+  case PEEK:
+    vm_set_resval(vm, vm_peekstack(vm, elt.val.int_val));
+    break;
+  case SINC:
+    vm_pushstack(vm, create_int(vm_popstack(vm).val.int_val + elt.val.int_val));
+    break;
   case TUPL:
     ASSERT(elt.type == VALUE, elt.val.type == INT)
     ;
@@ -859,6 +927,7 @@ bool execute_val_param(VM *vm, Ins ins) {
     if (elt.type != VALUE || elt.val.type != INT) {
       vm_throw_error(vm, ins,
           "Attempted to index a tuple with something not an int.");
+      return true;
     }
     tuple = vm_get_resval(vm);
     execute_tget(vm, ins, tuple, elt.val.int_val);
@@ -896,6 +965,13 @@ bool execute_val_param(VM *vm, Ins ins) {
     for (i = 0; i < elt.val.int_val; i++) {
       memory_graph_array_enqueue(vm->graph, array, vm_popstack(vm));
     }
+    break;
+  case CTCH:
+    ASSERT(elt.type == VALUE, elt.val.type == INT)
+    ;
+    uint32_t ip = vm_get_ip(vm);
+    memory_graph_set_field(vm->graph, current_block(vm),
+        strings_intern("$try_goto"), create_int(ip + elt.val.int_val + 1));
     break;
   default:
     ERROR("Instruction op was not a val_param. op=%s",
@@ -949,6 +1025,13 @@ bool execute_str_param(VM *vm, Ins ins) {
 // returns whether or not the program should continue
 bool execute(VM *vm) {
   ASSERT_NOT_NULL(vm);
+  Element has_error = obj_get_field(current_block(vm), ERROR_KEY);
+  if (NONE != has_error.type) {
+//    ////DEBUGF("catch_error");
+    catch_error(vm);
+    return true;
+  }
+
   Ins ins = vm_current_ins(vm);
 //  fprintf(stdout, "module(%s) ", module_name(vm_get_module(vm).obj->module));
 //  fflush(stdout);
@@ -992,11 +1075,11 @@ void vm_maybe_initialize_and_execute(VM *vm, const Module *module) {
   vm_set_module(vm, module_element, 0);
 //  int i = 0;
   while (execute(vm)) {
-//    DEBUGF("EXECUTING INSTRUCTION #%d", i);
+//    ////DEBUGF("EXECUTING INSTRUCTION #%d", i);
 //    if (0 == ((i+1) % 100)) {
-//      DEBUGF("FREEING SPACE YAY (%d)", i);
+//      ////DEBUGF("FREEING SPACE YAY (%d)", i);
 //      memory_graph_free_space(vm->graph);
-//      DEBUGF("DONE FREEING SPACE", i);
+//      ////DEBUGF("DONE FREEING SPACE", i);
 //    }
 //    i++;
   }

@@ -16,6 +16,7 @@
 #include "../shared.h"
 
 #define DEFAULT_CHUNK_SIZE 8122
+#define DEFAULT_HASHTABLE_SIZE 511
 
 Strings strings;
 
@@ -57,6 +58,9 @@ char *MODULE_NAME;
 char *ERROR_NAME;
 char *ADDRESS_KEY;
 char *IS_EXTERNAL_KEY;
+char *ERROR_KEY;
+char *ARRAYLIKE_INDEX_KEY;
+char *ARRAYLIKE_SET_KEY;
 
 struct Chunk_ {
   char *block;
@@ -106,7 +110,7 @@ void strings_insert_constants() {
   CLASS_KEY = strings_intern("class");
   CONSTRUCTOR_KEY = strings_intern("new");
   DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
-  PARENT_KEY = strings_intern("parent");
+  PARENT_KEY = strings_intern("parents");
   NAME_KEY = strings_intern("name");
   CLASS_NAME = strings_intern("Class");
   OBJECT_NAME = strings_intern("Object");
@@ -120,13 +124,16 @@ void strings_insert_constants() {
   ERROR_NAME = strings_intern("Error");
   ADDRESS_KEY = strings_intern("$adr");
   IS_EXTERNAL_KEY = strings_intern("$is_external");
+  ERROR_KEY = strings_intern("$has_error");
+  ARRAYLIKE_INDEX_KEY = strings_intern("__index__");
+  ARRAYLIKE_SET_KEY = strings_intern("__set__");
 }
 
 void strings_init() {
   strings.chunk = strings.last = chunk_create();
   strings.tail = strings.chunk->block;
   strings.end = strings.tail + strings.chunk->sz;
-  set_init(&strings.strings, DEFAULT_TABLE_SZ, string_hasher,
+  set_init(&strings.strings, DEFAULT_HASHTABLE_SIZE, string_hasher,
       string_comparator);
   strings_insert_constants();
 }

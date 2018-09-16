@@ -32,6 +32,7 @@ const Map *module_refs(const Module *m);
 //Set *module_vars(const Module *m);
 //Map *module_refs(const Module *m);
 const Map *module_classes(const Module *m);
+const Map *module_class_parents(const Module *m);
 int32_t module_ref(const Module *m, const char ref_name[]);
 uint32_t module_size(const Module *m);
 const Tape *module_tape(const Module *m);

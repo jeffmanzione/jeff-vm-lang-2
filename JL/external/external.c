@@ -16,6 +16,8 @@
 #include "../vm.h"
 #include "error.h"
 #include "file.h"
+#include "math.h"
+#include "modules.h"
 #include "strings.h"
 
 ExternalData *externaldata_create(VM *vm, Element obj, Element class) {
@@ -44,7 +46,9 @@ void add_io_external(VM *vm, Element builtin) {
 void add_builtin_external(VM *vm, Element builtin) {
   add_external_function(vm, builtin, "stringify__", stringify__);
   add_external_function(vm, builtin, "token__", token__);
-//  add_external_function(vm, builtin, "file_line_text__", file_line_text__);
+  add_external_function(vm, builtin, "load_module__", load_module__);
+  add_external_function(vm, builtin, "log__", log__);
+  add_external_function(vm, builtin, "pow__", pow__);
 }
 
 void add_external_function(VM *vm, Element parent, const char fn_name[],
@@ -54,13 +58,18 @@ void add_external_function(VM *vm, Element parent, const char fn_name[],
       create_external_function(vm, parent, fn_name_str, fn));
 }
 
+void merge_external_class(VM *vm, Element class, ExternalFunction constructor,
+    ExternalFunction deconstructor) {
+  memory_graph_set_field(vm->graph, class, IS_EXTERNAL_KEY, create_int(1));
+  add_external_function(vm, class, CONSTRUCTOR_KEY, constructor);
+  add_external_function(vm, class, DECONSTRUCTOR_KEY, deconstructor);
+}
+
 Element create_external_class(VM *vm, Element module, const char class_name[],
     ExternalFunction constructor, ExternalFunction deconstructor) {
   const char *name = strings_intern(class_name);
   Element class = class_create(vm, name, class_object);
-  memory_graph_set_field(vm->graph, class, IS_EXTERNAL_KEY, create_int(1));
-  add_external_function(vm, class, CONSTRUCTOR_KEY, constructor);
-  add_external_function(vm, class, DECONSTRUCTOR_KEY, deconstructor);
+  merge_external_class(vm, class, constructor, deconstructor);
   memory_graph_set_field(vm->graph, module, name, class);
   return class;
 }
@@ -77,5 +86,10 @@ bool is_object_type(const Element *e, int type) {
     return false;
   }
   return e->obj->type == type;
+}
+
+Element throw_error(VM *vm, const char msg[]) {
+  vm_throw_error(vm, vm_current_ins(vm), msg);
+  return vm_get_resval(vm);
 }
 

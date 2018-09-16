@@ -10,7 +10,7 @@
 
 #include "../datastructure/map.h"
 #include "../datastructure/queue.h"
-#include "expression.h"
+#include "syntax.h"
 #include "tokenizer.h"
 
 #define GET_PARSER(_1,_2,NAME,...) NAME
@@ -28,7 +28,7 @@ typedef struct Parser_ {
   Map *exp_names;
 } Parser;
 
-ExpressionTree parse_file(FileInfo *src);
+SyntaxTree parse_file(FileInfo *src);
 Token *parser_next__(Parser *parser, Token **target);
 Token *parser_next_skip_ln__(Parser *parser, Token **target);
 

@@ -28,12 +28,17 @@ void add_io_external(VM *vm, Element builtin);
 
 void add_external_function(VM *vm, Element parent, const char fn_name[],
     ExternalFunction fn);
+
+void merge_external_class(VM *vm, Element class, ExternalFunction constructor,
+    ExternalFunction deconstructor);
 Element create_external_class(VM *vm, Element module, const char class_name[],
     ExternalFunction constructor, ExternalFunction deconstructor);
 
 
 bool is_value_type(const Element *e, int type);
 bool is_object_type(const Element *e, int type);
+
+Element throw_error(VM *vm, const char msg[]);
 
 
 #endif /* EXTERNAL_H_ */

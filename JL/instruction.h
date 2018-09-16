@@ -45,6 +45,7 @@ typedef enum {
   MOD,
   INC,
   DEC,
+  SINC,
   CALL,
   TUPL,
   DUP,
@@ -57,6 +58,8 @@ typedef enum {
   FLD,
   IS,
   ADR,
+  RAIS,
+  CTCH,
   // ARRAYS
   ANEW,
   AIDX,

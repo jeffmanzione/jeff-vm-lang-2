@@ -14,6 +14,7 @@
 #include "../arena/arena.h"
 #include "../arena/strings.h"
 #include "../datastructure/array.h"
+#include "../datastructure/expando.h"
 #include "../datastructure/map.h"
 #include "../datastructure/tuple.h"
 #include "../error.h"
@@ -152,8 +153,8 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   node->obj.node = node;
   node->obj.type = OBJ;
   node->obj.is_external = false;
-  map_init(&node->obj.fields, DEFAULT_MAP_SZ, default_hasher,
-      default_comparator);
+  map_init_default(&node->obj.fields);
+  node->obj.parent_objs = expando(Object *, 4);
   Element e = { .type = OBJECT, .obj = &node->obj, };
   return e;
 }
@@ -299,41 +300,43 @@ void memory_graph_array_push(MemoryGraph *graph, const Element parent,
     const Element element) {
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
-  array_push(arr, element);
+  Array_push(arr, element);
   if (OBJECT == element.type) {
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(array_size(arr)));
+      create_int(Array_size(arr)));
 }
 
 void memory_graph_array_set(MemoryGraph *graph, const Element parent,
     int64_t index, const Element element) {
   ASSERT(NOT_NULL(graph), index >= 0);
   Array *arr = extract_array(parent);
-  if (index < array_size(arr)) {
-    Element old = array_get(arr, index);
+  if (index < Array_size(arr)) {
+    Element old = Array_get(arr, index);
     if (old.type == OBJECT) {
       memory_graph_dec_edge(graph, parent.obj, old.obj);
     }
   }
-  array_set(arr, index, element);
+  Array_set(arr, index, element);
   if (OBJECT == element.type) {
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(array_size(arr)));
+      create_int(Array_size(arr)));
 }
 
 Element memory_graph_array_pop(MemoryGraph *graph, const Element parent) {
   ASSERT_NOT_NULL(graph);
+  ASSERT(OBJECT == parent.type, ARRAY == parent.obj->type);
   Array *arr = extract_array(parent);
-  Element element = array_pop(arr);
+  ASSERT(Array_size(arr) > 0);
+  Element element = Array_pop(arr);
   if (OBJECT == element.type) {
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(array_size(arr)));
+      create_int(Array_size(arr)));
   return element;
 }
 
@@ -341,19 +344,19 @@ void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
     const Element element) {
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
-  array_enqueue(arr, element);
+  Array_enqueue(arr, element);
   if (OBJECT == element.type) {
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(array_size(arr)));
+      create_int(Array_size(arr)));
 }
 
 Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
     const Element a2) {
   Element joined = create_array(graph);
-  array_append(joined.obj->array, a1.obj->array);
-  array_append(joined.obj->array, a2.obj->array);
+  Array_append(joined.obj->array, a1.obj->array);
+  Array_append(joined.obj->array, a2.obj->array);
   void append_child_edges(void *p) {
     NodeEdge *ne = (NodeEdge *) p;
     int i;
@@ -364,19 +367,19 @@ Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
   set_iterate(&a1.obj->node->children, append_child_edges);
   set_iterate(&a2.obj->node->children, append_child_edges);
   memory_graph_set_field(graph, joined, LENGTH_KEY,
-      create_int(array_size(joined.obj->array)));
+      create_int(Array_size(joined.obj->array)));
   return joined;
 }
 
 Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent) {
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
-  Element element = array_dequeue(arr);
+  Element element = Array_dequeue(arr);
   if (OBJECT == element.type) {
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(array_size(arr)));
+      create_int(Array_size(arr)));
   return element;
 }
 

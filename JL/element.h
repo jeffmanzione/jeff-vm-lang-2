@@ -12,7 +12,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "datastructure/expando.h"
 #include "datastructure/map.h"
+#include "datastructure/set.h"
+
+#define VALUE_OF(val) (((val).type==INT) ? val.int_val : (((val).type==FLOAT) ? val.float_val : val.char_val))
 
 typedef struct Array_ Array;
 typedef struct Tuple_ Tuple;
@@ -27,15 +31,15 @@ typedef struct ExternalData_ ExternalData;
 typedef Element (*ExternalFunction)(VM *, ExternalData *, Element);
 
 typedef struct Object_ {
-  // Pointer to node owner.
-  Node *node;
-//  Class *class;
-  bool fields_immutable;  // should be set to true for anything not OBJ
-  Map fields;
-  bool is_external;
   enum {
     OBJ, ARRAY, TUPLE, MODULE, FUNCTION, EXTERNAL_FUNCTION
   } type;
+  // Pointer to node owner.
+  Node *node;
+  Map fields;
+  bool is_external;
+  Expando *parent_objs;
+
   union {
     Array *array;
     Tuple *tuple;
@@ -74,11 +78,15 @@ Element create_char(int8_t val);
 Element create_obj(MemoryGraph *graph);
 Element create_obj_unsafe(MemoryGraph *graph);
 Element create_obj_of_class(MemoryGraph *graph, Element class);
+
+Element create_class_stub(MemoryGraph *graph);
+void fill_object_unsafe(MemoryGraph *graph, Element element, Element class);
+
 Element create_external_obj(VM *vm, Element class);
 Element create_array(MemoryGraph *graph);
 
+Element string_create_len(VM *vm, const char *str, size_t len);
 Element string_create(VM *vm, const char *str);
-Element string_create_unsafe(VM *vm, const char *str);
 Element string_add(VM *vm, Element str1, Element str2);
 
 Element create_tuple(MemoryGraph *graph);
@@ -91,8 +99,14 @@ Element create_method(VM *vm, Element module, uint32_t ins, Element class,
 Element val_to_elt(Value val);
 Value value_negate(Value val);
 void obj_set_field(Element elt, const char field_name[], Element field_val);
+Element obj_get_field_obj(Object *obj, const char field_name[]);
 Element obj_get_field(Element elt, const char field_name[]);
+Element obj_deep_lookup(Object *obj, const char name[]);
 void obj_delete_ptr(Object *obj, bool free_mem);
+
+void class_parents(Element child_class, Set *classes);
+typedef bool (*ObjectActionUntil)(Object *);
+void class_parents_action(Element child_class, ObjectActionUntil process);
 
 // Will fail if there is a cycle
 void obj_to_str(Object *obj, FILE *file);
@@ -105,9 +119,13 @@ Element element_true(VM *vm);
 Element element_false(VM *vm);
 Element element_not(VM *vm, Element elt);
 
+Element element_from_obj(Object * const obj);
+
 bool is_true(Element elt);
 bool is_false(Element elt);
 
-char *string_to_cstr(Array *arr);
+char *string_to_cstr(Element str);
+
+bool is_arraylike(Element elt);
 
 #endif /* ELEMENT_H_ */

@@ -8,30 +8,45 @@
 #include "../error.h"
 #include "error.h"
 
+#include "../arena/strings.h"
 #include "../codegen/tokenizer.h"
 #include "../datastructure/tuple.h"
 #include "../element.h"
 #include "../graph/memory_graph.h"
 #include "../module.h"
+#include "../shared.h"
 #include "../tape.h"
 #include "../vm.h"
 #include "external.h"
 
 Element token__(VM *vm, ExternalData *ed, Element argument) {
-  ASSERT(is_object_type(&argument, TUPLE));
+  if (!is_object_type(&argument, TUPLE)) {
+    return throw_error(vm, "Argument to token__ must be a tuple.");
+  }
   Tuple *args = argument.obj->tuple;
-  ASSERT(tuple_size(args) == 2);
+  if (tuple_size(args) != 2) {
+    return throw_error(vm, "Argument to token__ must be a size 2 tuple.");
+  }
   Element module = tuple_get(args, 0);
   Element ip = tuple_get(args, 1);
-  ASSERT(is_object_type(&module, MODULE), is_value_type(&ip, INT));
+  if (!is_object_type(&module, MODULE)) {
+    return throw_error(vm, "First argument to token__ must be a Module.");
+  }
+  if (!is_value_type(&ip, INT)) {
+    return throw_error(vm, "Second argument to token__ must be an int.");
+  }
   const InsContainer *c = module_insc(module.obj->module, ip.val.int_val);
   const FileInfo *fi = module_fileinfo(module.obj->module);
   const LineInfo *li =
-      (fi == NULL) ? NULL : file_info_lookup(fi, c->token->line);
+      (fi == NULL || c == NULL || c->token == NULL) ?
+          NULL : file_info_lookup(fi, c->token->line);
   Element retval = create_tuple(vm->graph);
-  memory_graph_tuple_add(vm->graph, retval, string_create(vm, c->token->text));
-  memory_graph_tuple_add(vm->graph, retval, create_int(c->token->line));
-  memory_graph_tuple_add(vm->graph, retval, create_int(c->token->col));
+  memory_graph_tuple_add(vm->graph, retval,
+      string_create(vm, GET_OR(c->token, text, strings_intern(""))));
+  memory_graph_tuple_add(vm->graph, retval,
+      create_int(GET_OR(c->token, line, -1)));
+  memory_graph_tuple_add(vm->graph, retval,
+      create_int(GET_OR(c->token, col, -1)));
   memory_graph_tuple_add(vm->graph, retval,
       (fi == NULL) ?
           create_none() :
@@ -40,17 +55,3 @@ Element token__(VM *vm, ExternalData *ed, Element argument) {
       (li == NULL) ? create_none() : string_create(vm, li->line_text));
   return retval;
 }
-
-//Element file_line_text__(VM *vm, ExternalData *ed, Element argument) {
-//  ASSERT(is_object_type(&argument, TUPLE));
-//  Tuple *args = argument.obj->tuple;
-//  ASSERT(tuple_size(args) == 2);
-//  Element module = tuple_get(args, 0);
-//  Element ip = tuple_get(args, 1);
-//  ASSERT(is_object_type(&module, MODULE), is_value_type(&ip, INT));
-//  const InsContainer *c = module_insc(module.obj->module, ip.val.int_val);
-//  const FileInfo *fi = module_fileinfo(module.obj->module);
-//  const LineInfo *li = file_info_lookup(fi, c->token->line);
-//  return string_create(vm, li->line_text);
-//
-//}

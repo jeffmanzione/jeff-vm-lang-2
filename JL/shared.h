@@ -12,6 +12,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define lambda(return_type, function_body) \
+({ \
+      return_type __fn__ function_body \
+          __fn__; \
+})
+
 #define NUMARGS(...)  (sizeof((int[]){0, ##__VA_ARGS__})/sizeof(int)-1)
 
 #define FILE_FN(fn, op_type) file_fn(fn, op_type, __LINE__, __func__, __FILE__)
@@ -25,6 +31,8 @@
 
 #define FNV_32_PRIME (0x01000193)
 #define FNV_1A_32_OFFSET (0x811C9DC5)
+
+#define GET_OR(v, e, d) ((NULL == (v)) ? (d) : ((v)->e))
 
 extern bool DBG;
 

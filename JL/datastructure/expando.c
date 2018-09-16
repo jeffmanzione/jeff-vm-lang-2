@@ -80,3 +80,10 @@ void expando_sort(Expando * const e, Comparator c, ESwapper eswap) {
   }
   sort(0, expando_len(e) - 1);
 }
+
+void expando_iterate(const Expando * const e, EAction action) {
+  int i;
+  for (i = 0; i < expando_len(e); ++i) {
+    action(expando_get(e, i));
+  }
+}

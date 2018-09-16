@@ -9,9 +9,9 @@
 #define CODEGEN_H_
 
 #include "../tape.h"
-#include "expression.h"
+#include "syntax.h"
 
-int codegen(ExpressionTree *tree, Tape *tape);
-int codegen_file(ExpressionTree *tree, Tape *tape);
+int codegen(SyntaxTree *tree, Tape *tape);
+int codegen_file(SyntaxTree *tree, Tape *tape);
 
 #endif /* CODEGEN_H_ */

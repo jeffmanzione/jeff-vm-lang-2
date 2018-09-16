@@ -25,7 +25,7 @@ class Map
   aset
   res   self
   ret
-  jmp   116
+  jmp   108
 
 @put
   push
@@ -74,14 +74,6 @@ class Map
   res   pos
   aidx
   set   entries
-  res   io
-  push
-  res   entries
-  push
-  res   '>>>'
-  push
-  tupl  2
-  call  println
   res   0
   set   i
   res   i
@@ -219,6 +211,7 @@ class Map
   ret
 endclass
 
+
 class Set
   jmp   10
 
@@ -258,4 +251,5 @@ class Set
   call  get
   ret
 endclass
+
   exit  0

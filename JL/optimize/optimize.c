@@ -13,6 +13,8 @@
 #include "../codegen/tokenizer.h"
 #include "../datastructure/expando.h"
 #include "../datastructure/map.h"
+#include "../datastructure/queue.h"
+#include "../datastructure/set.h"
 #include "../element.h"
 #include "../error.h"
 #include "../instruction.h"
@@ -81,7 +83,19 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
     if (NULL != (text = map_lookup(&oh->i_to_class_starts, (void *) i))) {
       Token tok;
       token_fill(&tok, WORD, 0, 0, text);
-      tape_class(new_tape, &tok);
+      Expando *parents;
+      if (NULL == (parents = map_lookup(&t->class_parents, text))) {
+        tape_class(new_tape, &tok);
+      } else {
+        Queue q_parents;
+        queue_init(&q_parents);
+        void add_parent_class(void *ptr) {
+          queue_add(&q_parents, *((char **) ptr));
+        }
+        expando_iterate(parents, add_parent_class);
+        tape_class_with_parents(new_tape, &tok, &q_parents);
+        queue_shallow_delete(&q_parents);
+      }
     }
     if (NULL != (text = map_lookup(&oh->i_to_refs, (void *) i))) {
       Token tok;

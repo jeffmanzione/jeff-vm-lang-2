@@ -134,6 +134,12 @@ const Map *module_classes(const Module *m) {
   return tape_classes(m->tape);
 }
 
+const Map *module_class_parents(const Module *m) {
+  ASSERT(NOT_NULL(m));
+  return tape_class_parents(m->tape);
+}
+
+
 uint32_t module_size(const Module *m) {
   ASSERT(NOT_NULL(m));
   return tape_len(m->tape);

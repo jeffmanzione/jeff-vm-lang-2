@@ -21,23 +21,18 @@
 #include "../shared.h"
 #include "../vm.h"
 #include "external.h"
+#include "strings.h"
 
 Element file_constructor(VM *vm, ExternalData *data, Element arg) {
   ASSERT(arg.type == OBJECT);
   char *fn, *mode;
   if (ISTYPE(arg, class_string)) {
-    char *fn_tmp = string_to_cstr(arg.obj->array);
-    fn = strings_intern(fn_tmp);
-    DEALLOC(fn_tmp);
+    fn = string_to_cstr(arg);
     mode = strings_intern("r");
   } else if (is_object_type(&arg, TUPLE)) {
     Tuple *args = arg.obj->tuple;
-    char *fn_tmp = string_to_cstr(tuple_get(args, 0).obj->array);
-    fn = strings_intern(fn_tmp);
-    DEALLOC(fn_tmp);
-    char *mode_tmp = string_to_cstr(tuple_get(args, 1).obj->array);
-    mode = strings_intern(mode_tmp);
-    DEALLOC(mode_tmp);
+    fn = string_to_cstr(tuple_get(args, 0));
+    mode = string_to_cstr(tuple_get(args, 1));
   } else {
     ERROR("Unknown input.");
     return create_none();
@@ -66,7 +61,7 @@ Element file_constructor(VM *vm, ExternalData *data, Element arg) {
 
 Element file_deconstructor(VM *vm, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
-  if (NULL != file && stdin != file && stdout != file) {
+  if (NULL != file && stdin != file && stdout != file && stderr != file) {
     fclose(file);
   }
   return create_none();
@@ -74,7 +69,7 @@ Element file_deconstructor(VM *vm, ExternalData *data, Element arg) {
 
 Element file_gets(VM *vm, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
-  ASSERT(file != NULL);
+  ASSERT(NOT_NULL(file));
   ASSERT(is_value_type(&arg, INT));
   char *buf = ALLOC_ARRAY2(char, arg.val.int_val + 1);
   fgets(buf, arg.val.int_val + 1, file);
@@ -85,14 +80,14 @@ Element file_gets(VM *vm, ExternalData *data, Element arg) {
 
 Element file_puts(VM *vm, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
-  ASSERT(file != NULL);
-  if (arg.type == NONE) {
+  ASSERT(NOT_NULL(file));
+  if (arg.type == NONE || !ISTYPE(arg, class_string)) {
     return create_none();
   }
-  ASSERT(ISTYPE(arg, class_string));
-  char *cstr = string_to_cstr(arg.obj->array);
-  fputs(cstr, file);
-  DEALLOC(cstr);
+//  char *cstr = string_to_cstr(arg);
+  String *string = String_extract(arg);
+  fprintf(file, "%*s", String_size(string), String_cstr(string));
+//  fputs(cstr, file);
   fflush(file);
   return create_none();
 }

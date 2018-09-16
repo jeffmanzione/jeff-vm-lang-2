@@ -1,10 +1,4 @@
 module io
-  res   '__STDOUT__'
-  set   STDOUT
-  res   '__STDIN__'
-  set   STDIN
-  res   '__STDERR__'
-  set   STDERR
 
 class FileInternal
   jmp   35
@@ -18,7 +12,7 @@ class FileInternal
   set   rw
   peek
   tget  2
-  set   append
+  set   a
   res
   tget  3
   set   binary
@@ -30,7 +24,7 @@ class FileInternal
   push  mode
   res   'b'
   call  append
-  res   append
+  res   a
   ifn   3
   push  mode
   res   '+'
@@ -83,6 +77,7 @@ class FileInternal
   call  close__
   ret
 endclass
+
 
 class FileReader
   jmp   18
@@ -153,6 +148,7 @@ class FileReader
   ret
 endclass
 
+
 class FileWriter
   jmp   21
 
@@ -215,10 +211,11 @@ class FileWriter
   call  close
   ret
 endclass
+
   push  FileReader
   push  False
   push  False
-  push  STDIN
+  push  '__STDIN__'
   tupl  3
   call
   push
@@ -227,7 +224,7 @@ endclass
   push  FileWriter
   push  False
   push  True
-  push  STDOUT
+  push  '__STDOUT__'
   tupl  3
   call
   push
@@ -236,7 +233,7 @@ endclass
   push  FileWriter
   push  False
   push  False
-  push  STDERR
+  push  '__STDERR__'
   tupl  3
   call
   push

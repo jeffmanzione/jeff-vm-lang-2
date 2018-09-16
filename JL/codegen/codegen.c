@@ -14,12 +14,12 @@
 #include "../error.h"
 #include "../instruction.h"
 #include "../tape.h"
-#include "expression.h"
+#include "syntax.h"
 #include "tokenizer.h"
 
-int codegen(ExpressionTree *tree, Tape *tape);
+int codegen(SyntaxTree *tree, Tape *tape);
 
-bool is_leaf(ExpressionTree *exp_tree) {
+bool is_leaf(SyntaxTree *exp_tree) {
   ASSERT_NOT_NULL(exp_tree);
   return exp_tree->token != NULL && exp_tree->first == NULL
       && exp_tree->second == NULL;
@@ -80,27 +80,26 @@ void append(FILE *head, FILE *tail) {
   }
 }
 
-int codegen_if(ExpressionTree *tree, Tape *tape) {
+int codegen_if(SyntaxTree *tree, Tape *tape) {
   //DEBUGF("codegen_if");
   int num_lines = 0;
   ASSERT(!is_leaf(tree->second), !is_leaf(tree->second->second));
   bool has_then = is_leaf(tree->second->second->first)
       && tree->second->second->first->token->type == THEN;
-  ExpressionTree *child_expressions =
+  SyntaxTree *child_expressions =
       has_then ? tree->second->second->second : tree->second->second;
 
   bool has_else = !is_leaf(child_expressions)
       && !is_leaf(child_expressions->second)
       && is_leaf(child_expressions->second->first)
       && child_expressions->second->first->token->type == ELSE;
-  ExpressionTree *if_case =
-      has_else ? child_expressions->first : child_expressions;
+  SyntaxTree *if_case = has_else ? child_expressions->first : child_expressions;
   int lines_for_condition = codegen(tree->second->first, tape);
   num_lines += lines_for_condition;
   Tape *tmp_tape = tape_create();
 
   if (has_else) {
-    ExpressionTree *else_case = child_expressions->second->second;
+    SyntaxTree *else_case = child_expressions->second->second;
     int lines_for_else = codegen(else_case, tmp_tape);
     num_lines += lines_for_else
         + tape_ins_int(tape, IF, lines_for_else + 1 /* for the jmp to end */,
@@ -126,11 +125,11 @@ int codegen_if(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_while(ExpressionTree *tree, Token *while_token, Tape *tape) {
+int codegen_while(SyntaxTree *tree, Token *while_token, Tape *tape) {
   //DEBUGF("codegen_while");
   int num_lines = 0;
-  ExpressionTree *condition_expression = tree->first;
-  ExpressionTree *body = tree->second;
+  SyntaxTree *condition_expression = tree->first;
+  SyntaxTree *body = tree->second;
   num_lines += codegen(condition_expression, tape);
 
   Tape *tmp_tape = tape_create();
@@ -158,19 +157,18 @@ int codegen_while(ExpressionTree *tree, Token *while_token, Tape *tape) {
   return num_lines;
 }
 
-int codegen_for(ExpressionTree *tree, Token *for_token, Tape *tape) {
+int codegen_for(SyntaxTree *tree, Token *for_token, Tape *tape) {
   //DEBUGF("codegen_for");
   int num_lines = 0;
-  ExpressionTree *condition_expression = tree->first;
-  ExpressionTree *body = tree->second;
+  SyntaxTree *condition_expression = tree->first;
+  SyntaxTree *body = tree->second;
   if (is_leaf(condition_expression->first)
       && LPAREN == condition_expression->first->token->type) {
     condition_expression = condition_expression->second->first;
   }
-  ExpressionTree *init = condition_expression->first;
-  ExpressionTree *condition = condition_expression->second->second->first;
-  ExpressionTree *incremental =
-      condition_expression->second->second->second->second;
+  SyntaxTree *init = condition_expression->first;
+  SyntaxTree *condition = condition_expression->second->second->first;
+  SyntaxTree *incremental = condition_expression->second->second->second->second;
   num_lines += codegen(init, tape);
   int lines_for_condition = codegen(condition, tape);
   num_lines += lines_for_condition;
@@ -205,7 +203,49 @@ int codegen_for(ExpressionTree *tree, Token *for_token, Tape *tape) {
   return num_lines;
 }
 
-int codegen_tuple1(ExpressionTree *tree, int *argument_count, Tape *tape) {
+int codegen_foreach(SyntaxTree *tree, Token *for_token, Tape *tape) {
+  int num_lines = 0;
+  SyntaxTree *iterative = tree->first;
+  SyntaxTree *body = tree->second;
+  if (is_leaf(iterative->first) && LPAREN == iterative->first->token->type) {
+    iterative = iterative->second->first;
+  }
+  SyntaxTree *var = iterative->first;
+  SyntaxTree *range = iterative->second->second;
+
+  num_lines += codegen(range, tape)
+      + tape_ins_no_arg(tape, PUSH, iterative->second->first->token)
+      + tape_ins_int(tape, PUSH, 0, iterative->second->first->token);
+
+  Tape *tmp = tape_create();
+  int body_lines = tape_ins_int(tmp, PEEK, 1, var->token)
+      + tape_ins_no_arg(tmp, PUSH, var->token)
+      + tape_ins_int(tmp, PEEK, 1, var->token)
+      + tape_ins_no_arg(tmp, AIDX, var->token) + tape_ins(tmp, SET, var->token)
+      + codegen(body, tmp)
+      + tape_ins_int(tmp, SINC, 1, iterative->second->first->token);
+
+  int inc_lines = tape_ins_no_arg(tape, DUP, iterative->second->first->token)
+      + tape_ins_int(tape, PEEK, 2, iterative->second->first->token)
+      + tape_ins_text(tape, GET, LENGTH_KEY, iterative->second->first->token)
+      + tape_ins_no_arg(tape, PUSH, iterative->second->first->token)
+      + tape_ins_no_arg(tape, LT, iterative->second->first->token)
+      + tape_ins_int(tape, IFN, body_lines + 1,
+          iterative->second->first->token);
+
+  tape_append(tape, tmp);
+  tape_delete(tmp);
+
+  num_lines += body_lines + inc_lines
+      + tape_ins_int(tape, JMP, -(inc_lines + body_lines + 1),
+          iterative->second->first->token)
+      + tape_ins_no_arg(tape, RES, iterative->second->first->token)
+      + tape_ins_no_arg(tape, RES, iterative->second->first->token);
+
+  return num_lines;
+}
+
+int codegen_tuple1(SyntaxTree *tree, int *argument_count, Tape *tape) {
   //DEBUGF("codegen_tuple");
   int num_lines = 0;
   ParseExpression prod = tree->expression;
@@ -226,7 +266,7 @@ int codegen_tuple1(ExpressionTree *tree, int *argument_count, Tape *tape) {
   return num_lines;
 }
 
-int codegen_tuple(ExpressionTree *tree, int *num_args, Tape *tape) {
+int codegen_tuple(SyntaxTree *tree, int *num_args, Tape *tape) {
   int num_lines = 0;
   if (tree->expression != tuple_expression) {
     ERROR("Not a tuple_expression");
@@ -237,7 +277,7 @@ int codegen_tuple(ExpressionTree *tree, int *num_args, Tape *tape) {
   return num_lines;
 }
 
-int codegen_function_args(ExpressionTree *tree, int argument_index, Tape *tape) {
+int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
   //DEBUGF("codegen_function_args");
   int num_lines = 0;
   ParseExpression prod = tree->expression;
@@ -262,34 +302,41 @@ int codegen_function_args(ExpressionTree *tree, int argument_index, Tape *tape) 
   return num_lines;
 }
 
-int codegen_function_arguments_list(ExpressionTree*tree, Tape* tape) {
+int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape) {
   return tape_ins_no_arg(tape, PUSH, tree->first->token)
       + tape_ins_int(tape, TGET, 0, tree->first->token)
       + tape_ins(tape, SET, tree->first->token)
       + codegen_function_args(tree->second, 1, tape);
 }
 
-int codegen_class(ExpressionTree *tree, Tape *tape) {
+int codegen_class(SyntaxTree *tree, Tape *tape) {
   //DEBUGF("codegen_class");
   int num_lines = 0;
-  ExpressionTree *class_inner = tree->second;
-  ExpressionTree *class_body = class_inner->second;
+  SyntaxTree *class_inner = tree->second;
+  SyntaxTree *class_body = class_inner->second;
   Token *class_name = class_inner->first->token;
-  num_lines += tape_class(tape, class_name);
-  // Iters through all parent classes
-  if (!is_leaf(class_body->first)) {
-    ExpressionTree *parent_class_iter = class_body->first->second;
+//  DEBUGF("CLASS: %s", class_name->text);
+  if (is_leaf(class_body->first)) {
+    num_lines += tape_class(tape, class_name);
+  } else {
+    Queue parents;
+    queue_init(&parents);
+    // Iters through all parent classes
+    SyntaxTree *parent_class_iter = class_body->first->second;
     // When there are parent classes, the class body will actually be here.
     class_body = class_body->second;
     while (!is_leaf(parent_class_iter)) {
-      ExpressionTree *parent_class = parent_class_iter->first;
-      // TODO: do something with parent_class
+      SyntaxTree *parent_class = parent_class_iter->first;
       if (is_leaf(parent_class)) {
-        break;
+        queue_add(&parents, parent_class->token->text);
+//        DEBUGF("PARENT_CLASS: %s", parent_class->token->text);
       }
       parent_class_iter = parent_class_iter->second->second;
     }
-    // TODO: do something with parent_class_iter
+    queue_add(&parents, parent_class_iter->token->text);
+//    DEBUGF("PARENT_CLASS LAST: %s", parent_class_iter->token->text);
+    num_lines += tape_class_with_parents(tape, class_name, &parents);
+    queue_shallow_delete(&parents);
   }
 
   if (is_leaf(class_body->first) && class_body->first->token->type == LBRCE) {
@@ -301,7 +348,7 @@ int codegen_class(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_import(ExpressionTree *tree, Tape *tape) {
+int codegen_import(SyntaxTree *tree, Tape *tape) {
   //DEBUGF("codegen_import");
   if (!is_leaf(tree->first) || tree->first->token->type != IMPORT) {
     ERROR("Unknown import expression");
@@ -316,8 +363,8 @@ int codegen_import(ExpressionTree *tree, Tape *tape) {
   return tape_ins(tape, RMDL, module_name) + tape_ins(tape, MDST, var_name);
 }
 
-int codegen_function_params(ExpressionTree *arg_begin,
-    ExpressionTree **function_body, Tape *tape) {
+int codegen_function_params(SyntaxTree *arg_begin, SyntaxTree **function_body,
+    Tape *tape) {
   int lines_for_func = 0;
   bool no_args = is_leaf(arg_begin->first)
       && arg_begin->first->token->type == RPAREN;
@@ -344,22 +391,22 @@ int codegen_function_params(ExpressionTree *arg_begin,
   return lines_for_func;
 }
 
-int codegen_function_helper(ExpressionTree *arg_begin, const Token *token,
+int codegen_function_helper(SyntaxTree *arg_begin, const Token *token,
     Tape* tape) {
-  ExpressionTree *function_body = NULL;
+  SyntaxTree *function_body = NULL;
   int lines_for_func = codegen_function_params(arg_begin, &function_body, tape);
 
   lines_for_func += codegen(function_body, tape);
   return lines_for_func;
 }
 
-int codegen_class_constructors(ExpressionTree *tree, Tape *tape) {
+int codegen_class_constructors(SyntaxTree *tree, Tape *tape) {
   int lines_for_func = 0;
-  ExpressionTree *constructor_list = tree->second;
+  SyntaxTree *constructor_list = tree->second;
   while (true) {
-    ExpressionTree *class_name = constructor_list->first;
+    SyntaxTree *class_name = constructor_list->first;
 //		DEBUGF("class_name=%s", class_name->token->text);
-    ExpressionTree *args = constructor_list->second->second;
+    SyntaxTree *args = constructor_list->second->second;
     if (is_leaf(args)) {
       ASSERT(RPAREN == args->token->type);
       break;
@@ -370,7 +417,7 @@ int codegen_class_constructors(ExpressionTree *tree, Tape *tape) {
         continue;
       }
       ASSERT(args->first->expression == identifier);
-      ExpressionTree *identifier = args->first;
+      SyntaxTree *identifier = args->first;
 //			DEBUGF("identifier=%s", identifier->token->text);
     } else {
       ASSERT(args->first->expression == function_argument_list);
@@ -387,13 +434,13 @@ int codegen_class_constructors(ExpressionTree *tree, Tape *tape) {
   return lines_for_func;
 }
 
-int codegen_anon_function(ExpressionTree *tree, Tape *tape) {
+int codegen_anon_function(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_anon_function");
   Tape *tmp_tape = tape_create();
   Token *token = tree->first->token;
   int num_lines = tape_anon_label(tmp_tape, token);
   int lines_for_func = 0;
-  ExpressionTree *arg_begin = tree->second->second;
+  SyntaxTree *arg_begin = tree->second->second;
 
   lines_for_func += codegen_function_helper(arg_begin, token, tmp_tape);
   lines_for_func += tape_ins_no_arg(tmp_tape, RET, token);
@@ -406,11 +453,11 @@ int codegen_anon_function(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_function(ExpressionTree *tree, Tape *tape) {
+int codegen_function(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_function");
   Tape *tmp_tape = tape_create();
 
-  ExpressionTree *arg_begin = tree->second->second->second;
+  SyntaxTree *arg_begin = tree->second->second->second;
   Token *token = tree->second->first->token;
   int num_lines = tape_label(tmp_tape, token);
   int lines_for_func = 0;
@@ -426,11 +473,11 @@ int codegen_function(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_new(ExpressionTree *tree, Tape *tape) {
+int codegen_new(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_function");
   Tape *tmp_tape = tape_create();
 
-  ExpressionTree *arg_begin = tree->second->second->second;
+  SyntaxTree *arg_begin = tree->second->second->second;
   Token *token = tree->second->first->token;
   int num_lines = tape_label(tmp_tape, token);
   int lines_for_func = 0;
@@ -447,7 +494,7 @@ int codegen_new(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_postfix1(ExpressionTree *tree, Tape *tape) {
+int codegen_postfix1(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_postfix1");
   int num_lines = 0;
   ParseExpression prod = tree->expression;
@@ -457,8 +504,8 @@ int codegen_postfix1(ExpressionTree *tree, Tape *tape) {
   if (is_leaf(tree)) {
     ERROR("Improperly handled postfix. Did not expect leaf");
   }
-  ExpressionTree *ext = tree->first;
-  ExpressionTree *tail = tree->second;
+  SyntaxTree *ext = tree->first;
+  SyntaxTree *tail = tree->second;
   switch (ext->token->type) {
   case (PERIOD):
     if (is_leaf(tail)) {
@@ -521,7 +568,7 @@ int codegen_postfix1(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_jump(ExpressionTree *tree, Tape *tape) {
+int codegen_jump(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_jump");
   ParseExpression prod = tree->expression;
   if (prod != jump_statement) {
@@ -534,8 +581,8 @@ int codegen_jump(ExpressionTree *tree, Tape *tape) {
     return tape_ins_no_arg(tape, RET, tree->token);
   }
 
-  ExpressionTree *jump_type = tree->first;
-  ExpressionTree *jump_value = tree->second;
+  SyntaxTree *jump_type = tree->first;
+  SyntaxTree *jump_value = tree->second;
 
   if (jump_type->token->type != RETURN) {
     ERROR("jump_statement not implemented");
@@ -544,7 +591,7 @@ int codegen_jump(ExpressionTree *tree, Tape *tape) {
       + tape_ins_no_arg(tape, RET, jump_type->token);
 }
 
-int codegen_break(ExpressionTree *tree, Tape *tape) {
+int codegen_break(SyntaxTree *tree, Tape *tape) {
   ParseExpression prod = tree->expression;
   if (prod != break_statement) {
     ERROR("Was not a break_statement");
@@ -559,14 +606,99 @@ int codegen_break(ExpressionTree *tree, Tape *tape) {
   }
 }
 
-int codegen_assignment_ext(ExpressionTree *tree, Tape *tape) {
+int codegen_exit(SyntaxTree *tree, Tape *tape) {
+  ParseExpression prod = tree->expression;
+  if (prod != exit_statement) {
+    ERROR("Was not an exit_statement");
+  }
+  return tape_ins_no_arg(tape, EXIT, tree->token);
+}
+
+int codegen_raise(SyntaxTree *tree, Tape *tape) {
+  ParseExpression prod = tree->expression;
+  if (prod != raise_statement) {
+    ERROR("Was not an raise_statement");
+  }
+  return codegen(tree->second, tape)
+      + tape_ins_no_arg(tape, RAIS, tree->first->token);
+}
+
+int codegen_range(SyntaxTree *tree, Tape *tape) {
+  ParseExpression prod = tree->expression;
+  int num_lines = 0;
+  if (prod != range_expression) {
+    ERROR("Was not an range_expression");
+  }
+  SyntaxTree *start = tree->first;
+  SyntaxTree *end, *inc = NULL;
+  int num_args = 2;
+  if (is_leaf(tree->second->second)) {
+    end = tree->second->second;
+  } else {
+    end = tree->second->second->second->second;
+    inc = tree->second->second->first;
+    num_args = 3;
+  }
+  num_lines += tape_ins_text(tape, PUSH, strings_intern("range"),
+      tree->second->first->token);
+  if (NULL != inc) {
+    num_lines += codegen(inc, tape) + tape_ins_no_arg(tape, PUSH, inc->token);
+  }
+  num_lines += codegen(end, tape) + tape_ins_no_arg(tape, PUSH, end->token)
+      + codegen(start, tape) + tape_ins_no_arg(tape, PUSH, start->token);
+
+  num_lines += tape_ins_int(tape, TUPL, num_args, tree->second->first->token);
+  return num_lines + tape_ins_no_arg(tape, CALL, tree->second->first->token);
+}
+
+int codegen_try(SyntaxTree *tree, Tape *tape) {
+  ParseExpression prod = tree->expression;
+  if (prod != try_statement) {
+    ERROR("Was not a try_statement");
+  }
+  SyntaxTree *try_body = tree->second->first;
+  SyntaxTree *error_identifier;
+  SyntaxTree *catch_body;
+  if (LPAREN == tree->second->second->second->first->token->type) {
+    error_identifier = tree->second->second->second->second->first;
+    catch_body = tree->second->second->second->second->second->second;
+  } else {
+    error_identifier = tree->second->second->second->first;
+    catch_body = tree->second->second->second->second;
+  }
+  int num_lines = 0;
+  Tape *try_body_tape = tape_create();
+  int try_lines = codegen(try_body, try_body_tape);
+  Tape *catch_body_tape = tape_create();
+  int catch_lines = codegen(catch_body, catch_body_tape);
+
+  int goto_pos = try_lines + 1;
+
+  num_lines += tape_ins_int(tape, CTCH, goto_pos, tree->first->token);
+  num_lines += try_lines;
+  tape_append(tape, try_body_tape);
+  num_lines += tape_ins_int(tape, JMP, catch_lines + 1, tree->first->token);
+  // Expect error to be in resval
+  num_lines += tape_ins(tape, SET, error_identifier->token);
+  num_lines += catch_lines;
+  tape_append(tape, catch_body_tape);
+  num_lines += tape_ins_text(tape, RES, NIL_KEYWORD, tree->first->token)
+      + tape_ins_text(tape, SET, "$try_goto", tree->first->token);
+
+  tape_delete(try_body_tape);
+  tape_delete(catch_body_tape);
+
+  return num_lines;
+}
+
+int codegen_assignment_ext(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_assignment_ext");
   ParseExpression prod = tree->expression;
   if (prod != postfix_expression1) {
     ERROR("Was not a postfix_expression1");
   }
-  ExpressionTree *ext = tree->first;
-  ExpressionTree *tail = tree->second;
+  SyntaxTree *ext = tree->first;
+  SyntaxTree *tail = tree->second;
 
   int num_lines = 0;
 
@@ -625,7 +757,7 @@ int codegen_assignment_ext(ExpressionTree *tree, Tape *tape) {
   return num_lines;
 }
 
-int codegen_assignment(ExpressionTree *lhs, Token *eq_sign, ExpressionTree* rhs,
+int codegen_assignment(SyntaxTree *lhs, Token *eq_sign, SyntaxTree* rhs,
     Tape *tape) {
   ParseExpression prod = lhs->expression;
   int num_lines = codegen(rhs, tape);
@@ -643,7 +775,7 @@ int codegen_assignment(ExpressionTree *lhs, Token *eq_sign, ExpressionTree* rhs,
   return num_lines;
 }
 
-int codegen(ExpressionTree *tree, Tape *tape) {
+int codegen(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_");
   int num_lines = 0;
   ParseExpression prod = tree->expression;
@@ -675,7 +807,7 @@ int codegen(ExpressionTree *tree, Tape *tape) {
     if (is_leaf(tree->first) && tree->first->token->type == LPAREN) {
       num_lines += codegen(tree->second->first, tape);
     } else {
-      expression_tree_to_str(*tree, NULL, stdout);
+      expression_tree_to_str(tree, NULL, stdout);
       ERROR("Unknown primary_expression");
     }
   } else if (prod == additive_expression || prod == multiplicative_expression
@@ -686,8 +818,8 @@ int codegen(ExpressionTree *tree, Tape *tape) {
     if (!is_leaf(tree->second) && !is_leaf(tree->second->second)
         && !is_leaf(tree->second->second->second)
         && is_leaf(tree->second->second->second->first)) {
-      ExpressionTree *second = tree->second->second;
-      ExpressionTree *op = second->second->first;
+      SyntaxTree *second = tree->second->second;
+      SyntaxTree *op = second->second->first;
       token = op->token;
       switch (op->token->type) {
       case PIPE:
@@ -741,18 +873,12 @@ int codegen(ExpressionTree *tree, Tape *tape) {
         tree->second->second, tape);
   } else if (prod == conditional_expression || prod == selection_statement) {
     num_lines += codegen_if(tree, tape);
-  } else if (prod == iteration_statement) {
-    switch (tree->first->token->type) {
-    case WHILE:
-      num_lines += codegen_while(tree->second, tree->first->token, tape);
-      break;
-    case FOR:
-      num_lines += codegen_for(tree->second, tree->first->token, tape);
-      break;
-    default:
-      expression_tree_to_str(*tree, NULL, stdout);
-      ERROR("Unknown iteration_statement");
-    }
+  } else if (prod == while_statement) {
+    num_lines += codegen_while(tree->second, tree->first->token, tape);
+  } else if (prod == for_statement) {
+    num_lines += codegen_for(tree->second, tree->first->token, tape);
+  } else if (prod == foreach_statement) {
+    num_lines += codegen_foreach(tree->second, tree->first->token, tape);
   } else if (prod == function_definition) {
     num_lines += codegen_function(tree, tape);
   } else if (prod == class_new_statement) {
@@ -789,14 +915,22 @@ int codegen(ExpressionTree *tree, Tape *tape) {
     num_lines += codegen_jump(tree, tape);
   } else if (prod == break_statement) {
     num_lines += codegen_break(tree, tape);
+  } else if (prod == try_statement) {
+    num_lines += codegen_try(tree, tape);
+  } else if (prod == exit_statement) {
+    num_lines += codegen_exit(tree, tape);
+  } else if (prod == raise_statement) {
+    num_lines += codegen_raise(tree, tape);
+  } else if (prod == range_expression) {
+    num_lines += codegen_range(tree, tape);
   } else {
-    expression_tree_to_str(*tree, NULL, stdout);
+    expression_tree_to_str(tree, NULL, stdout);
     ERROR("Unknown");
   }
   return num_lines;
 }
 
-int codegen_file(ExpressionTree *tree, Tape *tape) {
+int codegen_file(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_file");
   return codegen(tree, tape) + tape_ins_int(tape, EXIT, 0, NULL);
 }

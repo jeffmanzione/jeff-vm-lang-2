@@ -18,6 +18,7 @@
 typedef struct Expando_ Expando;
 
 typedef void (*ESwapper)(void *, void *);
+typedef void (*EAction)(void *);
 
 #define DEFAULT_EXPANDO_SIZE 128
 
@@ -34,5 +35,7 @@ void *expando_get(const Expando * const e, uint32_t i);
 uint32_t expando_len(const Expando * const e);
 
 void expando_sort(Expando * const e, Comparator c, ESwapper eswap);
+
+void expando_iterate(const Expando * const e, EAction action);
 
 #endif /* EXPANDO_H_ */

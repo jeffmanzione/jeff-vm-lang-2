@@ -128,10 +128,10 @@ void *alloc__(uint32_t elt_size, uint32_t count, uint32_t line,
     error(line, func, file, "Either allocated array is of 0 elements or it is"
         " an array of type sizeof(0).");
   }
-
   int info_space = alloc_info_size();
 
   void *info_ptr = calloc(1, info_space + count * elt_size);
+  ASSERT(NOT_NULL(info_ptr));
 
   *((AllocInfo *) info_ptr) = alloc_info(elt_size, count, line, type_name, func,
       file);
@@ -167,6 +167,7 @@ void *realloc__(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
   int old_size = old_info.elt_size * old_info.count;
 
   void *new_info_ptr = realloc(info_ptr, info_space + new_size);
+  ASSERT(NOT_NULL(new_info_ptr));
 
   if (NULL == new_info_ptr) {
     error(line, func, file, "Failed to reallocate memory.");

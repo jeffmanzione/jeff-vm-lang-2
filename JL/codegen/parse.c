@@ -94,14 +94,14 @@ Token *parser_next_skip_ln__(Parser *parser, Token **target) {
   return tok;
 }
 
-ExpressionTree parse_file(FileInfo *src) {
+SyntaxTree parse_file(FileInfo *src) {
   Parser parser;
   parser_init(&parser, src);
-  ExpressionTree m = file_level_statement_list(&parser);
+  SyntaxTree m = file_level_statement_list(&parser);
   if (DBG) {
     DEBUGF("%d", m.matched);
     if (m.matched) {
-      expression_tree_to_str(m, &parser, stdout);
+      expression_tree_to_str(&m, &parser, stdout);
       fprintf(stdout, "\n");
       fflush(stdout);
     }

@@ -1,0 +1,112 @@
+module test
+  jmp   52
+
+@max
+  set   args
+  res   args
+  push
+  res   Array
+  push
+  is
+  push
+  res   args
+  push
+  res   Tuple
+  push
+  is
+  push
+  or
+  not
+  ifn   2
+  res   args
+  ret
+  res   args
+  push
+  res   0
+  aidx
+  set   max
+  res   args
+  push
+  push  0
+  dup
+  peek  2
+  get   len
+  push
+  lt
+  ifn   15
+  peek  1
+  push
+  peek  1
+  aidx
+  set   i
+  res   i
+  push
+  res   max
+  push
+  gt
+  ifn   2
+  res   i
+  set   max
+  sinc  1
+  jmp   -21
+  res
+  res
+  res   max
+  ret
+  ret
+  jmp   52
+
+@min
+  set   args
+  res   args
+  push
+  res   Array
+  push
+  is
+  push
+  res   args
+  push
+  res   Tuple
+  push
+  is
+  push
+  or
+  not
+  ifn   2
+  res   args
+  ret
+  res   args
+  push
+  res   0
+  aidx
+  set   min
+  res   args
+  push
+  push  0
+  dup
+  peek  2
+  get   len
+  push
+  lt
+  ifn   15
+  peek  1
+  push
+  peek  1
+  aidx
+  set   i
+  res   i
+  push
+  res   min
+  push
+  gt
+  ifn   2
+  res   i
+  set   min
+  sinc  1
+  jmp   -21
+  res
+  res
+  res   min
+  ret
+  ret
+  exit  0

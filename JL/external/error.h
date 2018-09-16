@@ -12,6 +12,4 @@
 
 Element token__(VM *vm, ExternalData *ed, Element argument);
 
-//Element file_line_text__(VM *vm, ExternalData *ed, Element argument);
-
 #endif /* EXTERNAL_ERROR_H_ */

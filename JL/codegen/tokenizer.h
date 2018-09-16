@@ -93,8 +93,11 @@ typedef enum {
   IS_T,
   TRY,
   CATCH,
+  RAISE,
   IMPORT,
   MODULE_T,
+  EXIT_T,
+  IN,
 } TokenType;
 
 typedef struct {

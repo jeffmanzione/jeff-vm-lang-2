@@ -1,5 +1,11 @@
 module builtin
 
+import io
+
+def load_module(path) {
+  load_module__(path)  ; External C function
+}
+
 def str(input) {
   if ~input return 'None'
   if input is Object return input.to_s()
@@ -18,7 +24,7 @@ def concat(args) {
 }
 
 def hash(v) {
-  if (v is Object) {
+  if v is Object {
     return v.hash()
   }
   v
@@ -42,25 +48,26 @@ def eq(o1, o2) {
   return o1 == o2
 }
 
-def range(start, end) {
+def range(params) {
+  start = params[0]
+  end = params[1]
+  if params.len == 3 {
+    inc = params[2]
+  } else {
+    inc = 1
+  }
+  range_inner(start, end, inc)
+}
+
+def range_inner(start, end, inc) {
   arr = []
-  for i=start, i<end, i=i+1
+  for i=start, i<end, i=i+inc
     arr.append(i)
   arr
 }
 
-def strfmt(fmt, args) {
-  if ~(fmt is String) {
-    return None
-  }
-  i = 0
-  while i < fmt.len {
-    
-  }
-}
-
 class Object {
-  def to_s() self.class.name + '()'
+  def to_s() self.class.name.copy().extend('()')
   def hash() {
     return self.$adr
   }
@@ -71,7 +78,9 @@ class Object {
 }
 
 class Class {
-  def to_s() self.name + '.class'
+  def to_s() {
+    self.name.copy().extend('.class')
+  }
 }
 
 class Function {
@@ -79,7 +88,7 @@ class Function {
 }
 
 class Method {
-  def to_s() self.class.name.copy().extend('(').extend(self.$module.name).extend('.').extend(self.parent.name).extend('.').extend(self.name).extend(')')
+  def to_s() self.class.name.copy().extend('(').extend(self.$module.name).extend('.').extend(self.parent[0].name).extend('.').extend(self.name).extend(')')
 }
 
 class Module {
@@ -109,7 +118,7 @@ class Tuple {
 }
 
 class Array {
- def copy() {
+  def copy() {
     cpy = Array()
     for i=0, i<|self|, i=i+1 {
       cpy.append(self[i])
@@ -129,6 +138,7 @@ class Array {
     return self
   }
   def extend(arr) {
+    if ~(arr is Array) raise Error('Cannot extend something not an array.')
     if (0 == arr.len) return self
     self_len = self.len
     self[self_len+arr.len-1] = None
@@ -254,6 +264,118 @@ class String {
   def new(array) {
     for i=0, i < |array|, i=i+1
       self.append(array[i])
+  }
+  def hash() {
+    hashval = 5381
+    for i=0, i < self.len, i=i+1 {
+      c = hash(self[i])
+      hashval = ((hashval * 33) + hashval) + c
+    }
+    hashval
+  }
+  def append(elt) {
+    self[self.len] = elt
+    return self
+  }
+  def extend(arr) {
+    if ~(arr is String) raise Error('Cannot extend something not a String.')
+    if (0 == arr.len) return self
+    self_len = self.len
+;    self[self_len+arr.len-1] = ''
+    for i=0, i<arr.len, i=i+1 {
+      self[self_len+i] = arr[i]
+    }
+    return self
+  }
+  def map(f) {
+    arr = []
+    for i=self.len-1, i>=0, i=i-1 {
+      arr[i] = f(self[i])
+    }
+    arr
+  }
+  def collect(s, f) {
+    if self.len == 0 {
+      if s is Function {
+        a = s()
+      } else {
+        a = s
+      }
+      return a
+    }
+    a = self[0]
+    for i=1, i<self.len, i=i+1 {
+      a = f(a, self[i])
+    }
+    a
+  }
+  def equals_range(array, start, end) {
+    if (start < 0) return False
+    if (end > array.len) return False
+    if((array.len - start) > self.len) return False
+    if(array.len < end) return False
+ 
+    for i=start, i<end, i=i+1 {
+      if ~eq(array[i], self[i]) {
+        return False
+      }
+    }
+    True
+  }
+  def eq(o) {
+    if o.len != self.len return False
+    self.equals_range(o, 0, self.len)
+  }
+  def starts_with(array) {
+    if array.len > self.len {
+      return False 
+    }
+    for i=0, i<array.len, i=i+1 {
+      if eq(array[i], self[i]) {
+        return False
+      }
+    }
+    True
+  }
+  def ends_with(array) {
+    if array.len > self.len {
+      return False 
+    }
+    self_len = self.len-1
+    array_len = array.len-1
+    for i=0, i<=array_len, i=i+1 {
+      if ~eq(array[array_len-i], self[self_len-i]) {
+        return False
+      }
+    }
+    True
+  }
+  def partition(c, l, h) {
+    x = self[h]
+    i = l - 1
+    for j=l, j<=h-1, j=j+1 {
+      if c(self[j], x) <= 0 {
+        i = i+1
+        tmp = self[i]
+        self[i] = self[j]
+        self[j] = tmp
+      }
+    }
+    tmp = self[i+1]
+    self[i+1] = self[h]
+    self[h] = tmp
+    i+1
+  }
+  def qsort(c, l, h) {
+    if c(l, h) < 0 {
+      p = self.partition(c, l, h)
+      self.qsort(c, l, p-1)
+      self.qsort(c, p+1, h)
+    }
+    self
+  }
+  def sort(c) {
+    self.qsort(c, 0, self.len-1)
   }
   def copy() {
     cpy = ''

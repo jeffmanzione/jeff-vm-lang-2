@@ -1,16 +1,12 @@
 module io
 
-STDOUT = '__STDOUT__'
-STDIN = '__STDIN__'
-STDERR = '__STDERR__'
-
 class FileInternal {
-  def new(fn, rw, append, binary) {
+  def new(fn, rw, a, binary) {
     mode = rw.copy()
     if binary {
       mode.append('b')
     }
-    if append {
+    if a {
       mode.append('+')
     }
     self.file = File__(fn, mode)
@@ -52,9 +48,9 @@ class FileWriter {
   def close() self.fi.close()
 }
 
-self.IN = FileReader(STDIN, False, False)
-self.OUT = FileWriter(STDOUT, True, False)
-self.ERROR = FileWriter(STDERR, False, False)
+self.IN = FileReader('__STDIN__', False, False)
+self.OUT = FileWriter('__STDOUT__', True, False)
+self.ERROR = FileWriter('__STDERR__', False, False)
 
 def fprint(f, a) {
   f.write(str(a))

@@ -14,6 +14,7 @@
 #include "command/commandlines.h"
 #include "datastructure/map.h"
 #include "datastructure/set.h"
+#include "external/strings.h"
 #include "element.h"
 #include "error.h"
 #include "file_load.h"
