@@ -61,6 +61,9 @@ char *IS_EXTERNAL_KEY;
 char *ERROR_KEY;
 char *ARRAYLIKE_INDEX_KEY;
 char *ARRAYLIKE_SET_KEY;
+char *BUILTIN_MODULE_NAME;
+char *EQ_FN_NAME;
+char *NEQ_FN_NAME;
 
 struct Chunk_ {
   char *block;
@@ -127,6 +130,9 @@ void strings_insert_constants() {
   ERROR_KEY = strings_intern("$has_error");
   ARRAYLIKE_INDEX_KEY = strings_intern("__index__");
   ARRAYLIKE_SET_KEY = strings_intern("__set__");
+  BUILTIN_MODULE_NAME = strings_intern("builtin");
+  EQ_FN_NAME = strings_intern("eq");
+  NEQ_FN_NAME = strings_intern("neq");
 }
 
 void strings_init() {

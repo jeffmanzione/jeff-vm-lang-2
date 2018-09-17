@@ -383,11 +383,11 @@ int codegen_function_params(SyntaxTree *arg_begin, SyntaxTree **function_body,
     }
     *function_body = arg_begin->second->second;
   }
-  if (!is_leaf(*function_body) && !is_leaf((*function_body)->first)
-      && (*function_body)->first->expression == class_constructors) {
-    lines_for_func += codegen((*function_body)->first, tape);
-    *function_body = (*function_body)->second;
-  }
+//  if (!is_leaf(*function_body) && !is_leaf((*function_body)->first)
+//      && (*function_body)->first->expression == class_constructors) {
+//    lines_for_func += codegen((*function_body)->first, tape);
+//    *function_body = (*function_body)->second;
+//  }
   return lines_for_func;
 }
 
@@ -400,39 +400,39 @@ int codegen_function_helper(SyntaxTree *arg_begin, const Token *token,
   return lines_for_func;
 }
 
-int codegen_class_constructors(SyntaxTree *tree, Tape *tape) {
-  int lines_for_func = 0;
-  SyntaxTree *constructor_list = tree->second;
-  while (true) {
-    SyntaxTree *class_name = constructor_list->first;
-//		DEBUGF("class_name=%s", class_name->token->text);
-    SyntaxTree *args = constructor_list->second->second;
-    if (is_leaf(args)) {
-      ASSERT(RPAREN == args->token->type);
-      break;
-    } else if (is_leaf(args->first)) {
-      // special case where Class() is in list not at the end.
-      if (RPAREN == args->first->token->type) {
-        constructor_list = args->second->second;
-        continue;
-      }
-      ASSERT(args->first->expression == identifier);
-      SyntaxTree *identifier = args->first;
-//			DEBUGF("identifier=%s", identifier->token->text);
-    } else {
-      ASSERT(args->first->expression == function_argument_list);
-      Tape *tmp = tape_create();
-      /* lines_for_func += */codegen_function_arguments_list(args->first, tmp);
-      tape_delete(tmp);
-    }
-    if (is_leaf(args->second)) {
-      break;
-    }
-//		ASSERT(args->second->expression == class_constructor_list1);
-    constructor_list = args->second->second->second;
-  }
-  return lines_for_func;
-}
+//int codegen_class_constructors(SyntaxTree *tree, Tape *tape) {
+//  int lines_for_func = 0;
+//  SyntaxTree *constructor_list = tree->second;
+//  while (true) {
+//    SyntaxTree *class_name = constructor_list->first;
+////		DEBUGF("class_name=%s", class_name->token->text);
+//    SyntaxTree *args = constructor_list->second->second;
+//    if (is_leaf(args)) {
+//      ASSERT(RPAREN == args->token->type);
+//      break;
+//    } else if (is_leaf(args->first)) {
+//      // special case where Class() is in list not at the end.
+//      if (RPAREN == args->first->token->type) {
+//        constructor_list = args->second->second;
+//        continue;
+//      }
+//      ASSERT(args->first->expression == identifier);
+//      SyntaxTree *identifier = args->first;
+////			DEBUGF("identifier=%s", identifier->token->text);
+//    } else {
+//      ASSERT(args->first->expression == function_argument_list);
+//      Tape *tmp = tape_create();
+//      /* lines_for_func += */codegen_function_arguments_list(args->first, tmp);
+//      tape_delete(tmp);
+//    }
+//    if (is_leaf(args->second)) {
+//      break;
+//    }
+////		ASSERT(args->second->expression == class_constructor_list1);
+//    constructor_list = args->second->second->second;
+//  }
+//  return lines_for_func;
+//}
 
 int codegen_anon_function(SyntaxTree *tree, Tape *tape) {
 //DEBUGF("codegen_anon_function");
@@ -883,8 +883,8 @@ int codegen(SyntaxTree *tree, Tape *tape) {
     num_lines += codegen_function(tree, tape);
   } else if (prod == class_new_statement) {
     num_lines += codegen_new(tree, tape);
-  } else if (prod == class_constructors) {
-    num_lines += codegen_class_constructors(tree, tape);
+//  } else if (prod == class_constructors) {
+//    num_lines += codegen_class_constructors(tree, tape);
   } else if (prod == anon_function) {
     num_lines += codegen_anon_function(tree, tape);
   } else if (prod == postfix_expression) {

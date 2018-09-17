@@ -69,4 +69,6 @@ void memory_graph_free_space(MemoryGraph *memory_graph);
 
 void memory_graph_print(const MemoryGraph *graph, FILE *file);
 
+Array *extract_array(Element element);
+
 #endif /* MEMORY_GRAPH_H_ */

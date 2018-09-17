@@ -15,6 +15,7 @@
 #include "../class.h"
 #include "../element.h"
 #include "../error.h"
+#include "../datastructure/array.h"
 #include "../datastructure/arraylike.h"
 #include "../datastructure/map.h"
 #include "../datastructure/tuple.h"
@@ -83,13 +84,43 @@ String *String_of(const char *src, size_t len) {
 Element string_constructor(VM *vm, ExternalData *data, Element arg) {
   ASSERT(NOT_NULL(data));
   String *string = String_create();
-  map_insert(&data->state, strings_intern("string"), string);
+  map_insert(&data->state, STRING_NAME, string);
   memory_graph_set_field(vm->graph, data->object, LENGTH_KEY, create_int(0));
+
+  if (NONE == arg.type) {
+    return data->object;
+  }
+  if (OBJECT != arg.type) {
+    return throw_error(vm, "Non-object input to String()");
+  }
+  if (ISTYPE(arg, class_string)) {
+    String *tail = String_extract(arg);
+    String_append(string, tail);
+  } else if (ISTYPE(arg, class_array)) {
+    Array *arr = extract_array(arg);
+    int i;
+    for (i = 0; i < Array_size(arr); ++i) {
+      Element e = Array_get(arr, i);
+      if (VALUE == e.type && CHAR == e.val.type) {
+        String_enqueue(string, e.val.char_val);
+      } else if (ISTYPE(e, class_string)) {
+        String *tail = String_extract(e);
+        String_append(string, tail);
+      } else {
+        return throw_error(vm, "Invalid Array input to String()");
+      }
+    }
+  } else {
+    return throw_error(vm, "Invalid Object input to String()");
+  }
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
   return data->object;
+
 }
 
 Element string_deconstructor(VM *vm, ExternalData *data, Element arg) {
-  String *string = map_lookup(&data->state, strings_intern("string"));
+  String *string = map_lookup(&data->state, STRING_NAME);
   if (NULL != string) {
     String_delete(string);
   }
@@ -98,7 +129,7 @@ Element string_deconstructor(VM *vm, ExternalData *data, Element arg) {
 
 Element string_index(VM *vm, ExternalData *data, Element arg) {
   ASSERT(arg.type == VALUE && arg.val.type == INT);
-  String *string = map_lookup(&data->state, strings_intern("string"));
+  String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   return create_char(String_get(string, arg.val.int_val));
 }
@@ -115,7 +146,7 @@ Element string_set(VM *vm, ExternalData *data, Element arg) {
 //  elt_to_str(val, stdout);
 //  printf("\n");fflush(stdout);
   ASSERT(index.type == VALUE, index.val.type == INT);
-  String *string = map_lookup(&data->state, strings_intern("string"));
+  String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   if (val.type == VALUE && val.val.type == CHAR) {
     String_set(string, index.val.int_val, val.val.char_val);
@@ -130,10 +161,23 @@ Element string_set(VM *vm, ExternalData *data, Element arg) {
   return create_none();
 }
 
+Element string_extend(VM *vm, ExternalData *data, Element arg) {
+  if (!ISTYPE(arg, class_string)) {
+    return throw_error(vm, "Cannot extend something not a String.");
+  }
+  String *head = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(head));
+  String *tail = String_extract(arg);
+  ASSERT(NOT_NULL(tail));
+  String_append(head, tail);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(head)));
+  return data->object;
+}
+
 String *String_extract(Element elt) {
   ASSERT(obj_get_field(elt, CLASS_KEY).obj == class_string.obj);
-  String *string = map_lookup(&elt.obj->external_data->state,
-      strings_intern("string"));
+  String *string = map_lookup(&elt.obj->external_data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   return string;
 }
@@ -145,4 +189,6 @@ void merge_string_class(VM *vm, Element string_class) {
       string_index);
   add_external_function(vm, string_class, strings_intern("__set__"),
       string_set);
+  add_external_function(vm, string_class, strings_intern("__extend__"),
+      string_extend);
 }

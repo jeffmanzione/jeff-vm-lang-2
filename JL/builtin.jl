@@ -36,7 +36,7 @@ def cmp(o1, o2) {
   }
   o1 - o2
 }
-
+; Do NOT CHANGE
 def eq(o1, o2) {
   if hash(o1) != hash(o2) return False
   if (o1 is Object) & (o2 is Object) {
@@ -71,10 +71,11 @@ class Object {
   def hash() {
     return self.$adr
   }
-  def cmp(o2) {
-    o1.$adr - o2.$adr
+  def cmp(other) {
+    self.$adr - other.$adr
   }
-  def eq(o2) cmp(o2) == 0
+  def eq(other) self.cmp(other) == 0
+  def neq(other) ~self.eq(other)
 }
 
 class Class {
@@ -207,30 +208,6 @@ class Array {
     if o.len != self.len return False
     self.equals_range(o, 0, self.len)
   }
-  def starts_with(array) {
-    if array.len > self.len {
-      return False 
-    }
-    for i=0, i<array.len, i=i+1 {
-      if eq(array[i], self[i]) {
-        return False
-      }
-    }
-    True
-  }
-  def ends_with(array) {
-    if array.len > self.len {
-      return False 
-    }
-    self_len = self.len-1
-    array_len = array.len-1
-    for i=0, i<=array_len, i=i+1 {
-      if ~eq(array[array_len-i], self[self_len-i]) {
-        return False
-      }
-    }
-    True
-  }
   def partition(c, l, h) {
     x = self[h]
     i = l - 1
@@ -261,10 +238,6 @@ class Array {
 }
 
 class String {
-  def new(array) {
-    for i=0, i < |array|, i=i+1
-      self.append(array[i])
-  }
   def hash() {
     hashval = 5381
     for i=0, i < self.len, i=i+1 {
@@ -279,35 +252,8 @@ class String {
   }
   def extend(arr) {
     if ~(arr is String) raise Error('Cannot extend something not a String.')
-    if (0 == arr.len) return self
-    self_len = self.len
-;    self[self_len+arr.len-1] = ''
-    for i=0, i<arr.len, i=i+1 {
-      self[self_len+i] = arr[i]
-    }
+    self.__extend__(arr)
     return self
-  }
-  def map(f) {
-    arr = []
-    for i=self.len-1, i>=0, i=i-1 {
-      arr[i] = f(self[i])
-    }
-    arr
-  }
-  def collect(s, f) {
-    if self.len == 0 {
-      if s is Function {
-        a = s()
-      } else {
-        a = s
-      }
-      return a
-    }
-    a = self[0]
-    for i=1, i<self.len, i=i+1 {
-      a = f(a, self[i])
-    }
-    a
   }
   def equals_range(array, start, end) {
     if (start < 0) return False
@@ -349,33 +295,6 @@ class String {
       }
     }
     True
-  }
-  def partition(c, l, h) {
-    x = self[h]
-    i = l - 1
-    for j=l, j<=h-1, j=j+1 {
-      if c(self[j], x) <= 0 {
-        i = i+1
-        tmp = self[i]
-        self[i] = self[j]
-        self[j] = tmp
-      }
-    }
-    tmp = self[i+1]
-    self[i+1] = self[h]
-    self[h] = tmp
-    i+1
-  }
-  def qsort(c, l, h) {
-    if c(l, h) < 0 {
-      p = self.partition(c, l, h)
-      self.qsort(c, l, p-1)
-      self.qsort(c, p+1, h)
-    }
-    self
-  }
-  def sort(c) {
-    self.qsort(c, 0, self.len-1)
   }
   def copy() {
     cpy = ''

@@ -27,7 +27,7 @@ class Map
   ret
   jmp   108
 
-@put
+@__set__
   push
   tget  0
   set   k
@@ -138,7 +138,7 @@ class Map
   ret
   jmp   70
 
-@get
+@__index__
   set   k
   res   hash
   push

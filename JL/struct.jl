@@ -8,7 +8,7 @@ class Map {
     self.table = []
     self.table[self.sz] = None
   }
-  def put(k, v) {
+  def __set__(k, v) {
     hval = hash(k)
     pos = hval % self.sz
     if ~self.table[pos] {
@@ -26,7 +26,7 @@ class Map {
     entries.append((k,v))
     return None
   }
-  def get(k) {
+  def __index__(k) {
     hval = hash(k)
     pos = hval % self.sz
     if ~self.table[pos] {

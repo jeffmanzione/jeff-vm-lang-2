@@ -515,6 +515,19 @@ void vm_to_string(const VM *vm, Element elt, FILE *target) {
   elt_to_str(elt, target);
 }
 
+void execute_object_operation(VM *vm, Element lhs, Element rhs,
+    const char func_name[]) {
+  Element args = create_tuple(vm->graph);
+  memory_graph_tuple_add(vm->graph, args, lhs);
+  memory_graph_tuple_add(vm->graph, args, rhs);
+  Element builtin = vm_lookup_module(vm, BUILTIN_MODULE_NAME);
+  ASSERT(NONE != builtin.type);
+  Element eq_fn = vm_object_lookup(vm, builtin, func_name);
+  ASSERT(NONE != eq_fn.type);
+  vm_set_resval(vm, args);
+  call_fn(vm, builtin, eq_fn);
+}
+
 bool execute_no_param(VM *vm, Ins ins) {
   Element elt, index, new_val, class;
   switch (ins.op) {
@@ -577,7 +590,6 @@ bool execute_no_param(VM *vm, Ins ins) {
       memory_graph_tuple_add(vm->graph, args, new_val);
       vm_set_resval(vm, args);
       call_fn(vm, elt, set_fn);
-      vm_set_resval(vm, new_val);
     }
     return true;
   case AIDX:
@@ -681,9 +693,17 @@ bool execute_no_param(VM *vm, Ins ins) {
     res = operator_mod(lhs, rhs);
     break;
   case EQ:
+    if (lhs.type != VALUE || rhs.type != VALUE) {
+      execute_object_operation(vm, lhs, rhs, EQ_FN_NAME);
+      return true;
+    }
     res = operator_eq(vm, lhs, rhs);
     break;
   case NEQ:
+    if (lhs.type != VALUE || rhs.type != VALUE) {
+      execute_object_operation(vm, lhs, rhs, NEQ_FN_NAME);
+      return true;
+    }
     res = operator_neq(vm, lhs, rhs);
     break;
   case GT:
@@ -836,9 +856,9 @@ bool execute_id_param(VM *vm, Ins ins) {
     }
     Element target = vm_object_lookup(vm, obj, ins.str);
     if (OBJECT != target.type) {
-      elt_to_str(obj_get_field(obj, CLASS_KEY), stdout);
-      printf("\n");
-      fflush(stdout);
+//      elt_to_str(obj_get_field(obj, CLASS_KEY), stdout);
+//      printf("\n");
+//      fflush(stdout);
       //DEBUGF("CALL NO SUCH FUNCTION");
       vm_throw_error(vm, ins, "Object has no such function '%s'.", ins.str);
       return true;

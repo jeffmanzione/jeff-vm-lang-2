@@ -276,7 +276,6 @@ DefineSyntax(assignment_expression);
 //     postfix_expression ( )
 //     postfix_expression ( tuple_expression )
 //     postfix_expression . identifier
-//     postfix_expression . (Class . identifier)
 //     postfix_expression ++
 //     postfix_expression --
 //     anon_function
@@ -284,7 +283,7 @@ ImplSyntax(postfix_expression1,
     Or(And(Type(LBRAC), tuple_expression, Type(RBRAC), postfix_expression1),
         And(Type(LPAREN), Type(RPAREN), postfix_expression1),
         And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1),
-        And(Type(PERIOD), identifier, postfix_expression1),
+        And(Type(PERIOD), Or(identifier, Type(NEW)), postfix_expression1),
 
 //       And(Type(INC), postfix_expression1),
 //       And(Type(DEC), postfix_expression1),
@@ -509,24 +508,10 @@ ImplSyntax(function_definition,
 //    field function_argument_lsit
 ImplSyntax(field_statement, And(TypeLn(FIELD), function_argument_list));
 
-// class_constructor_list
-//    identifier ( argument_list )
-//    identifier ( argument_list ) , class_constructor_list
-ImplSyntax(class_constructor_list1,
-    Or(And(TypeLn(COMMA), Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), class_constructor_list1),
-        Epsilon));
-ImplSyntax(class_constructor_list,
-    And(Ln(identifier), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), class_constructor_list1));
-
-// class_constructors
-//    : class_constructor_list
-ImplSyntax(class_constructors, And(TypeLn(COLON), class_constructor_list));
-
 // class_new_statement
-//    def new ( argument_list ) class_constructors statement
 //    def new ( argument_list ) statement
 ImplSyntax(class_new_statement,
-    And(TypeLn(DEF), TypeLn(NEW), TypeLn(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), Opt(class_constructors), statement));
+    And(Type(DEF), Type(NEW), Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), statement));
 
 // class_statement
 //    class_new_statement
@@ -541,10 +526,10 @@ ImplSyntax(class_statement,
 //    class_statement
 //    class_statement class_statement_list
 ImplSyntax(class_statement_list1,
-    Or(And(class_statement, class_statement_list1),
+    Or(And(Ln(class_statement), class_statement_list1),
         Epsilon));
 ImplSyntax(class_statement_list,
-    And(class_statement, class_statement_list1));
+    And(Ln(class_statement), class_statement_list1));
 
 // parent_class_list
 //    identifier
@@ -577,10 +562,12 @@ ImplSyntax(module_statement,
 //    exit_statement
 //    raise_statement
 //    try_statement
-//    compound_statement
-//    expression_statement
 //    selection_statement
+//    expression_statement
+//    compound_statement
 //    iteration_statement
+//    jump_statement
+//    break_statement
 ImplSyntax(statement,
     Or(exit_statement,
        raise_statement,
@@ -595,14 +582,15 @@ ImplSyntax(statement,
 // file_level_statement
 //    module_statement
 //    import_statement
+//    class_definition
 //    function_definition
 //    statement
 ImplSyntax(file_level_statement,
     Or(module_statement,
        import_statement,
-       function_definition,
        class_definition,
-        statement));
+       function_definition,
+       statement));
 
 // file_level_statement_list
 //    file_level_statement

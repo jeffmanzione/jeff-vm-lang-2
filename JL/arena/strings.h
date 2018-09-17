@@ -51,6 +51,9 @@ extern char *IS_EXTERNAL_KEY;
 extern char *ERROR_KEY;
 extern char *ARRAYLIKE_INDEX_KEY;
 extern char *ARRAYLIKE_SET_KEY;
+extern char *BUILTIN_MODULE_NAME;
+extern char *EQ_FN_NAME;
+extern char *NEQ_FN_NAME;
 
 typedef struct Chunk_ Chunk;
 
