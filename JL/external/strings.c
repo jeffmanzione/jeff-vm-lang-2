@@ -134,6 +134,41 @@ Element string_index(VM *vm, ExternalData *data, Element arg) {
   return create_char(String_get(string, arg.val.int_val));
 }
 
+Element string_find(VM *vm, ExternalData *data, Element arg) {
+  if (!is_object_type(&arg, TUPLE)) {
+    return throw_error(vm, "Expected more than one arg.");
+  }
+  Tuple *args = arg.obj->tuple;
+  if (tuple_size(args) != 2) {
+    return throw_error(vm, "Expected 2 arguments.");
+  }
+  Element string_arg = tuple_get(args, 0);
+  Element index = tuple_get(args, 1);
+  if (!ISTYPE(string_arg, class_string)) {
+    return throw_error(vm, "Only a String can be in a String.");
+  }
+  if (!is_value_type(&index, INT)) {
+    return throw_error(vm, "Expected a starting index.");
+  }
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  String *substr = String_extract(string_arg);
+  ASSERT(NOT_NULL(substr));
+
+  if ((index.val.int_val + String_size(substr)) > String_size(string)) {
+    return throw_error(vm, "Expected a starting index.");
+  }
+  char *start_index = string->table + index.val.int_val;
+  size_t size_after_start = String_size(string) - index.val.int_val;
+
+  char *found_index = find_str(start_index, size_after_start, substr->table,
+      String_size(substr));
+  if (NULL == found_index) {
+    return create_none();
+  }
+  return create_int((int64_t) (found_index - start_index));
+}
+
 Element string_set(VM *vm, ExternalData *data, Element arg) {
   if (!is_object_type(&arg, TUPLE)) {
     ERROR("Unknown input.");
@@ -189,6 +224,8 @@ void merge_string_class(VM *vm, Element string_class) {
       string_index);
   add_external_function(vm, string_class, strings_intern("__set__"),
       string_set);
-  add_external_function(vm, string_class, strings_intern("__extend__"),
+  add_external_function(vm, string_class, strings_intern("find__"),
+      string_find);
+  add_external_function(vm, string_class, strings_intern("extend__"),
       string_extend);
 }

@@ -41,6 +41,7 @@ int tape_ins_text(Tape *tape, Op op, const char text[], Token *token);
 int tape_ins_int(Tape *tape, Op op, int val, Token *token);
 int tape_ins_no_arg(Tape *tape, Op op, Token *token);
 int tape_ins_anon(Tape *tape, Op op, Token *token);
+int tape_ins_neg(Tape *tape, Op op, Token *token);
 
 int tape_label(Tape *tape, Token *token);
 int tape_anon_label(Tape *tape, Token *token);

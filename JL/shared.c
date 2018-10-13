@@ -77,6 +77,25 @@ void strcrepl(char *src, char from, char to) {
   }
 }
 
+char *find_str(char *haystack, size_t haystack_len, const char *needle,
+    size_t needle_len) {
+//  DEBUGF("haystack='%*s'(%d), needle='%*s'(%d)", haystack_len, haystack,
+//      haystack_len, needle_len, needle, needle_len);
+  int i, j;
+  for (i = 0; i <= (haystack_len - needle_len); ++i) {
+    for (j = 0; j < needle_len; ++j) {
+//      DEBUGF("i=%d, j=%d", i, j);
+      if (haystack[i + j] != needle[j]) {
+        break;
+      } else if (j == (needle_len - 1)) {
+//        DEBUGF("found at i=%d", i);
+        return haystack + i;
+      }
+    }
+  }
+  return NULL;
+}
+
 bool contains_char(const char str[], char c) {
   int i;
   for (i = 0; i < strlen(str); i++) {
@@ -130,56 +149,56 @@ int32_t string_comparator(const void *ptr1, const void *ptr2) {
 }
 
 size_t getline(char **lineptr, size_t *n, FILE *stream) {
-    char *bufptr = NULL;
-    char *p = bufptr;
-    size_t size;
-    int c;
+  char *bufptr = NULL;
+  char *p = bufptr;
+  size_t size;
+  int c;
 
-    if (lineptr == NULL) {
-        return -1;
-    }
-    if (stream == NULL) {
-        return -1;
-    }
-    if (n == NULL) {
-        return -1;
-    }
-    bufptr = *lineptr;
-    size = *n;
+  if (lineptr == NULL) {
+    return -1;
+  }
+  if (stream == NULL) {
+    return -1;
+  }
+  if (n == NULL) {
+    return -1;
+  }
+  bufptr = *lineptr;
+  size = *n;
 
-    c = fgetc(stream);
-    if (c == EOF) {
-        return -1;
-    }
+  c = fgetc(stream);
+  if (c == EOF) {
+    return -1;
+  }
+  if (bufptr == NULL) {
+    bufptr = ALLOC_ARRAY2(char, 128);
     if (bufptr == NULL) {
-        bufptr = ALLOC_ARRAY2(char, 128);
-        if (bufptr == NULL) {
-            return -1;
-        }
-        size = 128;
+      return -1;
     }
-    p = bufptr;
-    while(c != EOF) {
-        if ((p - bufptr) > (size - 1)) {
-            size = size + 128;
-            bufptr = REALLOC(bufptr, char, size);
-            if (bufptr == NULL) {
-                return -1;
-            }
-        }
-        *p++ = c;
-        if (c == '\n') {
-            break;
-        }
-        if (c == '\r') {
-
-        }
-        c = fgetc(stream);
+    size = 128;
+  }
+  p = bufptr;
+  while (c != EOF) {
+    if ((p - bufptr) > (size - 1)) {
+      size = size + 128;
+      bufptr = REALLOC(bufptr, char, size);
+      if (bufptr == NULL) {
+        return -1;
+      }
     }
+    *p++ = c;
+    if (c == '\n') {
+      break;
+    }
+    if (c == '\r') {
 
-    *p++ = '\0';
-    *lineptr = bufptr;
-    *n = size;
+    }
+    c = fgetc(stream);
+  }
 
-    return p - bufptr - 1;
+  *p++ = '\0';
+  *lineptr = bufptr;
+  *n = size;
+
+  return p - bufptr - 1;
 }

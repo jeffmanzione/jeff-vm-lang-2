@@ -26,5 +26,6 @@ String *String_extract(Element elt);
 
 void merge_string_class(VM *vm, Element string_class);
 Element string_constructor(VM *vm, ExternalData *data, Element arg);
+Element string_deconstructor(VM *vm, ExternalData *data, Element arg);
 
 #endif /* EXTERNAL_STRINGS_H_ */

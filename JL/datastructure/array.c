@@ -7,8 +7,6 @@
 
 #include "array.h"
 
-#include <string.h>
-
 #include "arraylike.h"
 #include "../error.h"
 #include "../graph/memory.h"

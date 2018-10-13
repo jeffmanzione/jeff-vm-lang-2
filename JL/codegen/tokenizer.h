@@ -98,6 +98,7 @@ typedef enum {
   MODULE_T,
   EXIT_T,
   IN,
+  NOTIN,
 } TokenType;
 
 typedef struct {

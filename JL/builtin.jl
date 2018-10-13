@@ -2,6 +2,10 @@ module builtin
 
 import io
 
+$root.Int = self.Int
+$root.Float = self.Float
+$root.Char = self.Char
+
 def load_module(path) {
   load_module__(path)  ; External C function
 }
@@ -27,7 +31,7 @@ def hash(v) {
   if v is Object {
     return v.hash()
   }
-  v
+  Int(v)
 }
 
 def cmp(o1, o2) {
@@ -36,7 +40,7 @@ def cmp(o1, o2) {
   }
   o1 - o2
 }
-; Do NOT CHANGE
+; DO NOT CHANGE
 def eq(o1, o2) {
   if hash(o1) != hash(o2) return False
   if (o1 is Object) & (o2 is Object) {
@@ -45,29 +49,46 @@ def eq(o1, o2) {
   if (o1 is Object) | (o2 is Object) {
     return False
   }
-  return o1 == o2
+  return Int(o1) == Int(o2)
+}
+
+class Range {
+  def new(start, inc, end) {
+    self.start = start
+    self.inc = inc
+    self.end = end
+  }
+  def __in__(n) {
+    (n <= self.end) & (n >= self.start) & (n % self.inc == self.start % self.inc)
+  }
+  def __index__(i) {
+    if (i < 0) raise Error(cat('Range index out of bounds. was ', i))
+    val = self.start + i * self.inc
+    if (val > self.end) raise Error(cat('Range index out of bounds. was ', i))
+    val
+  }
+  def iter() {
+    IndexIterator(self, 0, (self.end - self.start) / self.inc)
+  }
+  def to_s() {
+    ':'.join(str(self.start), str(self.inc), str(self.end))
+  }
 }
 
 def range(params) {
   start = params[0]
-  end = params[1]
   if params.len == 3 {
-    inc = params[2]
+    inc = params[1]
+    end = params[2]
   } else {
     inc = 1
+    end = params[1]
   }
-  range_inner(start, end, inc)
-}
-
-def range_inner(start, end, inc) {
-  arr = []
-  for i=start, i<end, i=i+inc
-    arr.append(i)
-  arr
+  Range(start, inc, end)
 }
 
 class Object {
-  def to_s() self.class.name.copy().extend('()')
+  def to_s() concat(self.class.name, '()')
   def hash() {
     return self.$adr
   }
@@ -80,16 +101,41 @@ class Object {
 
 class Class {
   def to_s() {
-    self.name.copy().extend('.class')
+    concat(self.name, '.class')
   }
 }
 
 class Function {
-  def to_s() self.class.name.copy().extend('(').extend(self.$module.name).extend('.').extend(self.name).extend(')')
+  def to_s() concat(self.class.name, '(',
+                    self.module.name, '.',
+                    self.name, ')')
+  def call(args) {
+    self.module.$lookup(self.name)(args)
+  }
 }
 
-class Method {
-  def to_s() self.class.name.copy().extend('(').extend(self.$module.name).extend('.').extend(self.parent[0].name).extend('.').extend(self.name).extend(')')
+class Method : Function {
+  def to_s() concat(self.class.name, '(', self.method_path(), ')')
+  def method_path() concat(self.module.name, '.',
+                           self.parent_class.name, '.',
+                           self.Function.name)
+  def call(obj, args) {
+    obj.$lookup(self.Function.name)(args)
+  }
+}
+
+class MethodInstance {
+  def new(obj, method) {
+    self.obj = obj
+    self.method = method
+  }
+  def call(args) {
+    self.method.call(self.obj, args)
+  }
+  def to_s() {
+    concat(self.class.name, '(obj=', self.obj,
+           ',method=', self.method, ')')
+  }
 }
 
 class Module {
@@ -205,6 +251,7 @@ class Array {
     True
   }
   def eq(o) {
+    if !0 return False
     if o.len != self.len return False
     self.equals_range(o, 0, self.len)
   }
@@ -235,6 +282,9 @@ class Array {
   def sort(c) {
     self.qsort(c, 0, self.len-1)
   }
+  def iter() {
+    IndexIterator(self)
+  }
 }
 
 class String {
@@ -248,13 +298,29 @@ class String {
   }
   def append(elt) {
     self[self.len] = elt
-    return self
+    self
   }
   def extend(arr) {
     if ~(arr is String) raise Error('Cannot extend something not a String.')
-    self.__extend__(arr)
-    return self
+    self.extend__(arr)
+    self
   }
+  def find(args) {
+    index = 0
+    if args is Tuple {
+      substr = args[0]
+      index = args[1]
+    } else if args is String {
+      substr = args
+    } else {
+      raise Error(concat('Expected (String, int) or (String) input, but was.', args))
+    }
+    self.find__(substr, index)
+  }
+  def __in__(substr) {
+    self.find(substr) != None
+  }
+  
   def equals_range(array, start, end) {
     if (start < 0) return False
     if (end > array.len) return False
@@ -269,6 +335,7 @@ class String {
     True
   }
   def eq(o) {
+    if ~o return False
     if o.len != self.len return False
     self.equals_range(o, 0, self.len)
   }
@@ -315,5 +382,56 @@ class String {
   }
   def to_s() {
     self
+  }
+  def iter() {
+    IndexIterator(self)
+  }
+}
+
+class Iterator {
+  def new(has_next, next) {
+    self.has_next = has_next
+    self.next = next    
+  }
+}
+
+class IndexIterator : Iterator {
+  def new(args) {
+    if args is Array {
+      self.indexable = args
+      self.start = 0
+      self.end = args.len
+    } else if args is Tuple {
+      self.indexable = args[0]
+      self.start = args[1]
+      self.end = args[2]
+    } else {
+      raise Error(concat('Strange input: ', args))
+    }
+    self.i = -1
+    self.index = self.start - 1
+    self.Iterator.new(self.has_next_internal,
+                      self.next_internal2)
+  }
+  def has_next_internal() {
+    self.index < (self.end - 1)
+  }
+  def next_internal2() {
+    self.i = self.i + 1
+    self.index = self.index + 1
+    (self.i, self.indexable[self.index])
+  }
+}
+
+class KVIterator : Iterator {
+  def new(key_iter, container) {
+    self.key_iter = key_iter
+    self.container = container
+    self.Iterator.new(self.key_iter.has_next,
+                      self.next_internal2)
+  }
+  def next_internal2() {
+    k = self.key_iter.next()[1]
+    (k, self.container[k])
   }
 }

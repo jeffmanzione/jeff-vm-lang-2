@@ -54,6 +54,7 @@ char *TUPLE_NAME;
 char *FUNCTION_NAME;
 char *EXTERNAL_FUNCTION_NAME;
 char *METHOD_NAME;
+char *METHOD_INSTANCE_NAME;
 char *MODULE_NAME;
 char *ERROR_NAME;
 char *ADDRESS_KEY;
@@ -64,6 +65,13 @@ char *ARRAYLIKE_SET_KEY;
 char *BUILTIN_MODULE_NAME;
 char *EQ_FN_NAME;
 char *NEQ_FN_NAME;
+char *IN_FN_NAME;
+char *ITER_FN_NAME;
+char *NEXT_FN_NAME;
+char *HAS_NEXT_FN_NAME;
+char *OBJ_KEY;
+char *METHOD_KEY;
+char *CALL_KEY;
 
 struct Chunk_ {
   char *block;
@@ -123,6 +131,7 @@ void strings_insert_constants() {
   FUNCTION_NAME = strings_intern("Function");
   EXTERNAL_FUNCTION_NAME = strings_intern("ExternalFunction");
   METHOD_NAME = strings_intern("Method");
+  METHOD_INSTANCE_NAME = strings_intern("MethodInstance");
   MODULE_NAME = strings_intern("Module");
   ERROR_NAME = strings_intern("Error");
   ADDRESS_KEY = strings_intern("$adr");
@@ -133,6 +142,13 @@ void strings_insert_constants() {
   BUILTIN_MODULE_NAME = strings_intern("builtin");
   EQ_FN_NAME = strings_intern("eq");
   NEQ_FN_NAME = strings_intern("neq");
+  IN_FN_NAME = strings_intern("__in__");
+  ITER_FN_NAME = strings_intern("iter");
+  NEXT_FN_NAME = strings_intern("next");
+  HAS_NEXT_FN_NAME = strings_intern("has_next");
+  OBJ_KEY = strings_intern("obj");
+  METHOD_KEY = strings_intern("method");
+  CALL_KEY = strings_intern("call");
 }
 
 void strings_init() {

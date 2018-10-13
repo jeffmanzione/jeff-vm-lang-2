@@ -13,7 +13,11 @@ class Token {
     self.line_text = line_text
   }
   def to_s() {
-    concat('Token("', self.text, '":', self.line, ',', self.col, ',', self.fn, ',', self.line_text, ')')
+    concat('Token("', self.text, '":',
+           self.line, ',',
+           self.col, ',',
+           self.fn, ',',
+           self.line_text, ')')
   }
 }
 
@@ -25,12 +29,17 @@ class StackLine {
     self.token = Token(builtin.token__(self.mod, self.ip))    
   }
   def to_s() {
-    tos = self.mod.name.copy()
+    tos = ''
     if self.caller {
-      if self.caller is Method {
-        tos.extend('.').extend(self.caller.parent_class.name)
+      if self.caller is MethodInstance {
+        tos.extend(self.caller.method.method_path())
+      } else if self.caller is Method {
+        tos.extend(self.caller.method_path())
+      } else {
+        tos.extend(concat(self.mod.name,'.', self.caller.name))
       }
-      tos.extend('.').extend(self.caller.name)
+    } else {
+      tos.extend(self.mod.name)
     }
     tos.extend(concat('(', self.token.fn, ':', self.token.line, ')'))
   }
@@ -48,7 +57,9 @@ class Error {
   def to_s() {
     head = self.stack_lines[0]
     tok = head.token
-    tos = concat('Error in ', tok.fn, ' at line ', tok.line, ' col ', tok.col, ': ', self.msg, '\n')
+    tos = concat('Error in ', tok.fn,
+                 ' at line ', tok.line, ' col ', tok.col, ': ',
+                 self.msg, '\n')
     tos.extend(concat(tok.line, ':', tok.line_text))
     if ~tok.line_text.ends_with('\n') {
       tos.extend('\n')
@@ -63,7 +74,6 @@ class Error {
     for i=0, i<self.stack_lines.len, i=i+1 {
       sl = self.stack_lines[i]
       tos.extend(sl.to_s()).extend('\n')
-
     }
     tos
   }

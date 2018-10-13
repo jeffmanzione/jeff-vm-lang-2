@@ -261,15 +261,6 @@ ImplSyntax(primary_expression_no_constants,
 
 DefineSyntax(assignment_expression);
 
-//// argument_expression_list
-////    assignment_expression
-////    argument_expression-list , assignment_expression
-//ImplExpression(argument_expression_list1,
-//    Or(And(Type(COMMA), assignment_expression, argument_expression_list1),
-//       Epsilon));
-//ImplExpression(argument_expression_list,
-//    And(assignment_expression, argument_expression_list1));
-
 // postfix_expression
 //     primary_expression
 //     postfix_expression [ experssion ]
@@ -281,13 +272,13 @@ DefineSyntax(assignment_expression);
 //     anon_function
 ImplSyntax(postfix_expression1,
     Or(And(Type(LBRAC), tuple_expression, Type(RBRAC), postfix_expression1),
-        And(Type(LPAREN), Type(RPAREN), postfix_expression1),
-        And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1),
-        And(Type(PERIOD), Or(identifier, Type(NEW)), postfix_expression1),
-
+       And(Type(LPAREN), Type(RPAREN), postfix_expression1),
+       And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1),
+       And(Type(PERIOD), Or(identifier, Type(NEW)), postfix_expression1),
 //       And(Type(INC), postfix_expression1),
 //       And(Type(DEC), postfix_expression1),
-    primary_expression, Epsilon));
+       primary_expression,
+       Epsilon));
 ImplSyntax(postfix_expression,
     Or(And(primary_expression_no_constants, postfix_expression1), primary_expression));
 
@@ -298,11 +289,13 @@ ImplSyntax(range_expression,
 //    postfix_expression
 //    ~ unary_expression
 //    ! unary_expression
+//    - unary_expression
 //    ++ unary_expression
 //    -- unary_expression
 ImplSyntax(unary_expression,
     Or(And(Type(TILDE), unary_expression),
        And(Type(EXCLAIM), unary_expression),
+       And(Type(MINUS), unary_expression),
 //       And(Type(INC), unary_expression),
 //       And(Type(DEC), unary_expression),
        range_expression));
@@ -331,20 +324,29 @@ ImplSyntax(additive_expression1,
 ImplSyntax(additive_expression,
     And(multiplicative_expression, additive_expression1));
 
+// in_expression
+//    additive_expression
+//    in_expression in additive_expression
+ImplSyntax(in_expression1,
+    Or(And(Or(Type(IN), Type(NOTIN)), additive_expression, in_expression1),
+       Epsilon));
+ImplSyntax(in_expression,
+    And(additive_expression, in_expression1));
+
 // relational_expression
-//    shift_expression
-//    relational_expression < additive_expression
-//    relational_expression > additive_expression
-//    relational_expression <= additive_expression
-//    relational_expression >= additive_expression
+//    in_expression
+//    relational_expression < in_expression
+//    relational_expression > in_expression
+//    relational_expression <= in_expression
+//    relational_expression >= in_expression
 ImplSyntax(relational_expression1,
-    Or(And(Type(LTHAN), additive_expression, relational_expression1),
-        And(Type(GTHAN), additive_expression, relational_expression1),
-        And(Type(LTHANEQ), additive_expression, relational_expression1),
-        And(Type(GTHANEQ), additive_expression, relational_expression1),
+    Or(And(Type(LTHAN), in_expression, relational_expression1),
+        And(Type(GTHAN), in_expression, relational_expression1),
+        And(Type(LTHANEQ), in_expression, relational_expression1),
+        And(Type(GTHANEQ), in_expression, relational_expression1),
         Epsilon));
 ImplSyntax(relational_expression,
-    And(additive_expression, relational_expression1));
+    And(in_expression, relational_expression1));
 
 // equality_expression
 //    relational_expression
@@ -410,15 +412,17 @@ ImplSyntax(assignment_expression,
         anon_function));
 
 // assignment_tuple
-//    ( function_argument_List )
+//    function_argument_list
+//    ( function_argument_list )
 ImplSyntax(assignment_tuple,
-    And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)));
+    Or(function_argument_list,
+       And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN))));
 
 //expression
 //    assignment_expression
 //    tuple_expression , assignment_expression
 ImplSyntax(tuple_expression1,
-    Or(And(Type(COMMA), assignment_expression, tuple_expression1), Epsilon));
+    Or(And(TypeLn(COMMA), assignment_expression, tuple_expression1), Epsilon));
 ImplSyntax(tuple_expression, And(assignment_expression, tuple_expression1));
 
 // expression_statement
@@ -430,7 +434,8 @@ DefineSyntax(statement);
 DefineSyntax(statement_list);
 
 ImplSyntax(foreach_statement,
-    And(TypeLn(FOR), Or(And(TypeLn(LPAREN), identifier, TypeLn(IN), assignment_expression, TypeLn(RPAREN)), And(identifier, TypeLn(IN), assignment_expression)), statement));
+    And(TypeLn(FOR), Or(And(TypeLn(LPAREN), Or(assignment_tuple, identifier), TypeLn(IN), assignment_expression, TypeLn(RPAREN)),
+                        And(Or(assignment_tuple, identifier), TypeLn(IN), assignment_expression)), statement));
 
 ImplSyntax(for_statement,
     And(TypeLn(FOR), Or(And(assignment_expression, TypeLn(COMMA), assignment_expression, TypeLn(COMMA), Ln(assignment_expression)), And(TypeLn(LPAREN), And(assignment_expression, TypeLn(COMMA), assignment_expression, TypeLn(COMMA), Ln(assignment_expression)), TypeLn(RPAREN))),statement));
@@ -495,7 +500,7 @@ ImplSyntax(break_statement,
 // function_argument_list
 //    identifier | function_argument_list , identifier
 ImplSyntax(function_argument_list1,
-    Or(And(Type(COMMA), identifier, function_argument_list1), Epsilon));
+    Or(And(TypeLn(COMMA), identifier, function_argument_list1), Epsilon));
 ImplSyntax(function_argument_list,
     And(identifier, function_argument_list1));
 

@@ -30,10 +30,12 @@ typedef struct Element_ Element;
 typedef struct ExternalData_ ExternalData;
 typedef Element (*ExternalFunction)(VM *, ExternalData *, Element);
 
+typedef enum {
+  OBJ, ARRAY, TUPLE, MODULE
+} ObjectType;
+
 typedef struct Object_ {
-  enum {
-    OBJ, ARRAY, TUPLE, MODULE, FUNCTION, EXTERNAL_FUNCTION
-  } type;
+  char type;
   // Pointer to node owner.
   Node *node;
   Map fields;
@@ -50,10 +52,11 @@ typedef struct Object_ {
 } Object;
 
 // Do not manually access any of these =(
+typedef enum {
+  INT, FLOAT, CHAR
+} ValType;
 typedef struct Value_ {
-  enum {
-    INT, FLOAT, CHAR
-  } type;
+  char type;
   union {
     int8_t char_val;
     int64_t int_val;
@@ -96,6 +99,9 @@ Element create_external_function(VM *vm, Element module, const char name[],
     ExternalFunction external_fn);
 Element create_method(VM *vm, Element module, uint32_t ins, Element class,
     const char name[]);
+Element create_method_instance(MemoryGraph *graph, Element object,
+    Element method);
+
 Element val_to_elt(Value val);
 Value value_negate(Value val);
 void obj_set_field(Element elt, const char field_name[], Element field_val);
@@ -125,7 +131,5 @@ bool is_true(Element elt);
 bool is_false(Element elt);
 
 char *string_to_cstr(Element str);
-
-bool is_arraylike(Element elt);
 
 #endif /* ELEMENT_H_ */

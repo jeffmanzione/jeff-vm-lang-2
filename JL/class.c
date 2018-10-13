@@ -10,6 +10,7 @@
 #include "arena/strings.h"
 #include "element.h"
 #include "error.h"
+#include "external/external.h"
 #include "graph/memory_graph.h"
 #include "vm.h"
 
@@ -22,6 +23,7 @@ Element class_tuple;
 Element class_function;
 Element class_external_function;
 Element class_method;
+Element class_methodinstance;
 Element class_module;
 Element class_error;
 
@@ -31,7 +33,6 @@ void class_fill(VM *vm, Element class, const char class_name[],
 void class_init(VM *vm) {
   // Create dummy objects that are needed for VM construction first since we
   // need them for the VM to work =)
-  //DEBUGF("A");
   class_class = create_class_stub(vm->graph);
   class_object = create_class_stub(vm->graph);
   class_string = create_class_stub(vm->graph);
@@ -40,27 +41,24 @@ void class_init(VM *vm) {
   class_function = create_class_stub(vm->graph);
   class_external_function = create_class_stub(vm->graph);
   class_method = create_class_stub(vm->graph);
+  class_methodinstance = create_class_stub(vm->graph);
   class_module = create_class_stub(vm->graph);
   class_error = create_class_stub(vm->graph);
 
-
-  //DEBUGF("B");
   class_fill(vm, class_object, OBJECT_NAME, create_none());
-  //DEBUGF("F");
   class_fill(vm, class_class, CLASS_NAME, class_object);
-  //DEBUGF("G");
   class_fill(vm, class_string, STRING_NAME, class_object);
-  //DEBUGF("H");
   class_fill(vm, class_array, ARRAY_NAME, class_object);
-  //DEBUGF("I");
   // Time to fill them
   class_fill(vm, class_tuple, TUPLE_NAME, class_object);
   class_fill(vm, class_function, FUNCTION_NAME, class_object);
   class_fill(vm, class_external_function, EXTERNAL_FUNCTION_NAME,
       class_function);
   class_fill(vm, class_method, METHOD_NAME, class_function);
+  class_fill(vm, class_methodinstance, METHOD_INSTANCE_NAME, class_object);
   class_fill(vm, class_module, MODULE_NAME, class_object);
   class_fill(vm, class_error, ERROR_NAME, class_object);
+  merge_object_class(vm);
 }
 
 void class_fill_base(VM *vm, Element class, const char class_name[],
@@ -87,7 +85,7 @@ void class_fill(VM *vm, Element class, const char class_name[],
 void class_fill_list(VM *vm, Element class, const char class_name[],
     Expando *parent_classes) {
   Element parents = create_array(vm->graph);
-  if (NONE == parent_classes) {
+  if (NULL == parent_classes) {
     return;
   }
   void add_parent_class(void *ptr) {

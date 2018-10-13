@@ -17,7 +17,15 @@
 
 #define DEFINE_ARRAYLIKE(name, type) \
   typedef struct name##_ name;\
+  struct name##_ {\
+    uint32_t table_size;\
+    uint32_t num_elts;\
+    uint32_t next_index;\
+    type *table;\
+  };\
+  void name##_init(name*);\
   name *name##_create();\
+  void name##_finalize(name*);\
   void name##_delete(name*);\
   void name##_clear(name* const);\
   void name##_push(name* const, type);\
@@ -32,24 +40,25 @@
   void name##_append(name* const head, const name* const tail);
 
 #define IMPL_ARRAYLIKE(name, type) \
-  struct name##_ {\
-    uint32_t table_size;\
-    uint32_t num_elts;\
-    uint32_t next_index;\
-    type *table;\
-  };\
-  \
-  name *name##_create() {\
-    name *array = ALLOC2(name);\
+  void name##_init(name *array) {\
     array->table = ALLOC_ARRAY(type, array->table_size = DEFAULT_TABLE_SIZE);\
     array->num_elts = 0;\
     array->next_index = 0;\
+  }\
+  name *name##_create() {\
+    name *array = ALLOC2(name);\
+    name##_init(array);\
     return array;\
+  }\
+  \
+  void name##_finalize(name* array) {\
+    ASSERT(NOT_NULL(array));\
+    DEALLOC(array->table);\
   }\
   \
   void name##_delete(name* array) {\
     ASSERT(NOT_NULL(array));\
-    DEALLOC(array->table);\
+    name##_finalize(array);\
     DEALLOC(array);\
   }\
   \

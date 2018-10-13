@@ -105,8 +105,8 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
   set_finalize(&node->children);
   set_finalize(&node->parents);
   obj_delete_ptr(&node->obj, /*free_mem=*/free_mem);
-  set_remove(&graph->nodes, node);
   if (free_mem) {
+    set_remove(&graph->nodes, node);
     ARENA_DEALLOC(Node, node);
   }
 }
@@ -156,6 +156,7 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   map_init_default(&node->obj.fields);
   node->obj.parent_objs = expando(Object *, 4);
   Element e = { .type = OBJECT, .obj = &node->obj, };
+  memory_graph_set_field(graph, e, ADDRESS_KEY, create_int((int32_t) e.obj));
   return e;
 }
 

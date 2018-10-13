@@ -5,7 +5,6 @@
  *      Author: Dad
  */
 
-
 #ifdef NEW_MODULE
 
 #include <stdbool.h>
@@ -129,6 +128,45 @@ const Map *module_refs(const Module *m) {
   return tape_refs(m->tape);
 }
 
+void module_iterate_classes(const Module *m, ClassAction action) {
+  ASSERT(NOT_NULL(m));
+  Set processed;
+  set_init_default(&processed);
+
+  // For each class
+  void process_class(Pair *kv) {
+    const char *class_name = (char *) kv->key;
+    const Map *methods = (Map *) kv->value;
+    // Check if already processed.
+    if (set_lookup(&processed, methods)) {
+      return;
+    }
+    // Check if the parents have been processed processed.
+    void maybe_process_parent(void *ptr) {
+      const char *parent_class_name = *((char **) ptr);
+      Map *parent_methods = map_lookup(module_classes(m), parent_class_name);
+      // If parent not processed, process it.
+      if (set_lookup(&processed, parent_methods)) {
+        return;
+      }
+      Pair kv2;
+      kv2.key = parent_class_name;
+      kv2.value = parent_methods;
+      process_class(&kv2);
+    }
+    Expando *class_parents = map_lookup(module_class_parents(m), class_name);
+    if (NULL != class_parents) {
+      expando_iterate(class_parents, maybe_process_parent);
+    }
+    // Process class
+    action((char *) kv->key, (const Map*) kv->value);
+    set_insert(&processed, kv->value);
+  }
+  map_iterate(module_classes(m), process_class);
+
+  set_finalize(&processed);
+}
+
 const Map *module_classes(const Module *m) {
   ASSERT(NOT_NULL(m));
   return tape_classes(m->tape);
@@ -138,7 +176,6 @@ const Map *module_class_parents(const Module *m) {
   ASSERT(NOT_NULL(m));
   return tape_class_parents(m->tape);
 }
-
 
 uint32_t module_size(const Module *m) {
   ASSERT(NOT_NULL(m));

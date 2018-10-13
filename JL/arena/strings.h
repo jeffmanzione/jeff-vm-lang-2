@@ -44,6 +44,7 @@ extern char *TUPLE_NAME;
 extern char *FUNCTION_NAME;
 extern char *EXTERNAL_FUNCTION_NAME;
 extern char *METHOD_NAME;
+extern char *METHOD_INSTANCE_NAME;
 extern char *MODULE_NAME;
 extern char *ERROR_NAME;
 extern char *ADDRESS_KEY;
@@ -54,6 +55,14 @@ extern char *ARRAYLIKE_SET_KEY;
 extern char *BUILTIN_MODULE_NAME;
 extern char *EQ_FN_NAME;
 extern char *NEQ_FN_NAME;
+extern char *IN_FN_NAME;
+extern char *ITER_FN_NAME;
+extern char *NEXT_FN_NAME;
+extern char *HAS_NEXT_FN_NAME;
+extern char *OBJ_KEY;
+extern char *METHOD_KEY;
+extern char *CALL_KEY;
+
 
 typedef struct Chunk_ Chunk;
 

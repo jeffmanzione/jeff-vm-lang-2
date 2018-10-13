@@ -30,6 +30,7 @@ VM *vm_create(ArgStore *store);
 void vm_set_module(VM *vm, Element module_element, uint32_t ip);
 Element vm_add_module(VM *vm, const Module *module);
 Element vm_lookup_module(const VM *vm, const char module_name[]);
+Element vm_object_lookup(VM *vm, Element obj, const char name[]);
 const MemoryGraph *vm_get_graph(const VM *vm);
 void vm_delete(VM *vm);
 

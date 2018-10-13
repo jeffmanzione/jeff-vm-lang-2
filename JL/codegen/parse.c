@@ -54,6 +54,9 @@ bool parser_finalize(Parser *parser) {
     has_error = true;
   }
   void say_tokens(void *ptr) {
+    Token *tok = (Token *) ptr;
+    fprintf(stderr, "Token(type=%d,line=%d,col=%d,text=%s)\n", tok->type,
+        tok->line, tok->col, tok->text);
     token_delete((Token *) ptr);
   }
   queue_deep_delete(&parser->queue, (Deleter) say_tokens);

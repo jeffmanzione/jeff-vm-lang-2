@@ -45,7 +45,6 @@ int main(int argc, const char *argv[]) {
     set_insert(&modules, module);
   }
   set_iterate(argstore_sources(store), load_src);
-
   VM *vm = vm_create(store);
 
   Element main_element = create_none();
@@ -64,13 +63,10 @@ int main(int argc, const char *argv[]) {
 //  memory_graph_print(vm_get_graph(vm), stdout);
 //  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));
 //  memory_graph_print(vm_get_graph(vm), stdout);
-
   set_finalize(&modules);
   argstore_delete(store);
   argconfig_delete(config);
-
   vm_delete(vm);
-
   optimize_finalize();
   strings_finalize();
   arenas_finalize();

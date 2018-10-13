@@ -34,12 +34,12 @@
 #ifdef DEBUG
 #define BUILTIN_SRC "builtin.jl"
 #define IO_SRC      "io.jl"
-#define STRUCT_SRC   "struct.jl"
+#define STRUCT_SRC  "struct.jl"
 #define ERROR_SRC   "error.jl"
 #else
 #define BUILTIN_SRC "builtin.jb"
 #define IO_SRC      "io.jb"
-#define STRUCT_SRC   "struct.jb"
+#define STRUCT_SRC  "struct.jb"
 #define ERROR_SRC   "error.jb"
 #endif
 
@@ -171,6 +171,35 @@ void vm_add_string_class(VM *vm) {
   merge_string_class(vm, class_string);
 }
 
+Element maybe_create_class_with_parents(VM *vm, Element module_element,
+    const char class_name[]) {
+  Expando *parents = map_lookup(
+      module_class_parents(module_element.obj->module), class_name);
+  Element class;
+
+  if (NULL == parents) {
+    if ((class = obj_get_field(vm->root, class_name)).type == NONE) {
+      class = class_create(vm, class_name, class_object);
+    }
+  } else {
+    Expando *parent_classes = expando(Object *, expando_len(parents));
+    void get_parent(void *ptr) {
+      Element parent = obj_get_field(module_element, *((char **) ptr));
+      ASSERT(NONE != parent.type);
+      expando_append(parent_classes, &parent.obj);
+    }
+    expando_iterate(parents, get_parent);
+
+    if ((class = obj_get_field(vm->root, class_name)).type == NONE) {
+      class = class_create_list(vm, class_name, parent_classes);
+    } else {
+      class_fill_list(vm, class, class_name, parent_classes);
+    }
+    expando_delete(parent_classes);
+  }
+  return class;
+}
+
 void vm_add_builtin(VM *vm) {
   Module *builtin = load_fn(strings_intern(BUILTIN_SRC), vm->store);
   ASSERT(NOT_NULL(vm), NOT_NULL(builtin));
@@ -182,7 +211,7 @@ void vm_add_builtin(VM *vm) {
       element_false(vm));
 
   add_builtin_external(vm, builtin_element);
-
+  add_global_builtin_external(vm, builtin_element);
   void add_ref(Pair *pair) {
     Element function = create_function(vm, builtin_element,
         (uint32_t) pair->value, pair->key);
@@ -190,21 +219,20 @@ void vm_add_builtin(VM *vm) {
     memory_graph_set_field(vm->graph, vm->root, pair->key, function);
   }
   map_iterate(module_refs(builtin), add_ref);
-  void add_class(Pair *pair) {
-    Element class;
-    if ((class = obj_get_field(vm->root, pair->key)).type == NONE) {
-      class = class_create(vm, pair->key, class_object);
-    }
-    memory_graph_set_field(vm->graph, builtin_element, pair->key, class);
+  void add_class(const char class_name[], const Map *methods) {
+    Element class = maybe_create_class_with_parents(vm, builtin_element,
+        class_name);
+    memory_graph_set_field(vm->graph, builtin_element, class_name, class);
     memory_graph_set_field(vm->graph, class, PARENT_MODULE, builtin_element);
     void add_method(Pair *pair2) {
-      memory_graph_set_field(vm->graph, class, pair2->key,
-          create_method(vm, builtin_element, (uint32_t) pair2->value, class,
-              pair2->key));
+      Element method = create_method(vm, builtin_element,
+          (uint32_t) pair2->value, class, pair2->key);
+      memory_graph_set_field(vm->graph, class, pair2->key, method);
     }
-    map_iterate(pair->value, add_method);
+    map_iterate(methods, add_method);
   }
-  map_iterate(module_classes(builtin), add_class);
+  module_iterate_classes(builtin, add_class);
+//  map_iterate(module_classes(builtin), add_class);
 }
 
 Element vm_add_module(VM *vm, const Module *module) {
@@ -222,37 +250,19 @@ Element vm_add_module(VM *vm, const Module *module) {
         create_function(vm, module_element, (uint32_t) pair->value, pair->key));
   }
   map_iterate(module_refs(module), add_ref);
-  void add_class(Pair *pair) {
-    ////DEBUGF("add_class %s", pair->key);
-    Expando *parents = map_lookup(module_class_parents(module), pair->key);
-    Element class;
-    if (NULL == parents) {
-      class = class_create(vm, pair->key, class_object);
-    } else {
-      Expando *parent_classes = expando(Object *, expando_len(parents));
-      Element parent;
-      if (parents != NULL) {
-        void get_parent(void *ptr) {
-          parent = obj_get_field(module_element, *((char **) ptr));
-          ASSERT(NONE != parent.type);
-          expando_append(parent_classes, &parent.obj);
-        }
-        expando_iterate(parents, get_parent);
-      } else {
-        parent = class_object;
-      }
-      class = class_create_list(vm, pair->key, parent_classes);
-      expando_delete(parent_classes);
-    }
-    memory_graph_set_field(vm->graph, module_element, pair->key, class);
+  void add_class(const char class_name[], const Map *methods) {
+    Element class = maybe_create_class_with_parents(vm, module_element,
+        class_name);
+    memory_graph_set_field(vm->graph, module_element, class_name, class);
     void add_method(Pair *pair2) {
       memory_graph_set_field(vm->graph, class, pair2->key,
           create_function(vm, module_element, (uint32_t) pair2->value,
-              pair->key));
+              pair2->key));
     }
-    map_iterate(pair->value, add_method);
+    map_iterate(methods, add_method);
   }
-  map_iterate(module_classes(module), add_class);
+  module_iterate_classes(module, add_class);
+//  map_iterate(module_classes(module), add_class);
   return module_element;
 }
 
@@ -299,6 +309,8 @@ VM *vm_create(ArgStore *store) {
   vm->root = memory_graph_create_root_element(vm->graph);
   class_init(vm);
   vm_add_string_class(vm);
+  // Complete the root object.
+  fill_object_unsafe(vm->graph, vm->root, class_object);
 
   memory_graph_set_field(vm->graph, vm->root, ROOT, vm->root);
   memory_graph_set_field(vm->graph, vm->root, CURRENT_BLOCK, vm->root);
@@ -317,6 +329,7 @@ VM *vm_create(ArgStore *store) {
   memory_graph_set_field(vm->graph, vm->root, TRUE_KEYWORD, create_int(1));
 
   vm_add_builtin(vm);
+
   int i;
   for (i = 0; i < preloaded_size(); ++i) {
     vm_merge_module(vm, PRELOADED[i]);
@@ -403,7 +416,19 @@ Element vm_object_lookup(VM *vm, Element obj, const char name[]) {
   if (OBJECT != obj.type) {
     return create_none();
   }
-  return obj_deep_lookup(obj.obj, name);
+  Element elt = obj_deep_lookup(obj.obj, name);
+
+  // Create MethodInstance for methods since Methods do not contain any Object
+  // state.
+  if (ISTYPE(elt, class_method)
+  // Do not box methods if they are directly retrieved from a class.
+      && !(ISCLASS(obj) && elt.obj == obj_get_field(obj, name).obj)
+      && !ISTYPE(obj, class_methodinstance)
+      && !ISTYPE(obj, class_method) && !ISTYPE(obj, class_function)
+      && !ISTYPE(obj, class_external_function)) {
+    return create_method_instance(vm->graph, obj, elt);
+  }
+  return elt;
 }
 
 Element vm_object_get(VM *vm, const char name[], bool *has_error) {
@@ -449,8 +474,7 @@ const Element vm_get_old_resvals(VM *vm) {
 }
 
 void call_external_fn(VM *vm, Element obj, Element external_func) {
-  if (external_func.type != OBJECT
-      || external_func.obj->type != EXTERNAL_FUNCTION) {
+  if (!ISTYPE(external_func, class_external_function)) {
     vm_throw_error(vm, vm_current_ins(vm),
         "Cannot call ExternalFunction on something not ExternalFunction.");
     return;
@@ -458,33 +482,52 @@ void call_external_fn(VM *vm, Element obj, Element external_func) {
   ASSERT(NOT_NULL(external_func.obj->external_fn));
   Element resval = vm_get_resval(vm);
   ExternalData *ed = (obj.obj->is_external) ? obj.obj->external_data : NULL;
+  ExternalData tmp;
+  if (NULL == ed) {
+    tmp.object = obj;
+    tmp.vm = vm;
+    ed = &tmp;
+  }
   Element returned = external_func.obj->external_fn(vm, ed, resval);
   vm_set_resval(vm, returned);
 }
 
-void call_fn(VM *vm, Element obj, Element func) {
-  if (func.type != OBJECT
-      || (func.obj->type != FUNCTION && func.obj->type != EXTERNAL_FUNCTION)) {
-    vm_throw_error(vm, vm_current_ins(vm),
-        "Attempted to call something not a function of Class.");
-    return;
+void call_function_internal(VM *vm, Element obj, Element func) {
+  Element parent;
+  if (ISTYPE(func, class_method)) {
+    Object *function_object = *((Object **) expando_get(func.obj->parent_objs,
+        0));
+    parent = obj_get_field_obj(function_object, PARENT_MODULE);
+  } else {
+    parent = obj_get_field(func, PARENT_MODULE);
   }
-  if (func.obj->type == EXTERNAL_FUNCTION) {
-    call_external_fn(vm, obj, func);
-    return;
-  }
-  Element parent = obj_get_field(func, PARENT_MODULE);
-  ASSERT(OBJECT == parent.type, MODULE == parent.obj->type);
+  ASSERT(ISTYPE(parent, class_module));
+//  DEBUGF("module_name=%s", string_to_cstr(obj_get_field(parent, NAME_KEY)));
+//  elt_to_str(parent, stdout);
+//  printf("\n");
+//  fflush(stdout);
+
   vm_maybe_initialize_and_execute(vm, parent.obj->module);
 
   Element new_block = vm_new_block(vm, parent, obj);
   memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
-//////DEBUGF("new_line=%d", obj_get_field(elt, INS_INDEX).val.int_val);
-  vm_set_module(vm, parent, obj_get_field(func, INS_INDEX).val.int_val - 1);
+  vm_set_module(vm, parent,
+      obj_deep_lookup(func.obj, INS_INDEX).val.int_val - 1);
+
+}
+
+void call_methodinstance(VM *vm, Element methodinstance) {
+//  DEBUGF("call_methodinstance");
+// self.method.call(self.obj)
+//  vm_set_resval(vm, obj_get_field(methodinstance, OBJ_KEY));
+//  call_function_internal(vm, obj_get_field(methodinstance, METHOD_KEY),
+//      obj_get_field(class_method, CALL_KEY));
+  call_function_internal(vm, obj_get_field(methodinstance, OBJ_KEY),
+      obj_get_field(methodinstance, METHOD_KEY));
 }
 
 void call_new(VM *vm, Element class) {
-  ////DEBUGF("call_new");
+////DEBUGF("call_new");
   ASSERT(ISCLASS(class));
   Element new_obj;
   if (NONE != obj_get_field(class, IS_EXTERNAL_KEY).type) {
@@ -493,25 +536,40 @@ void call_new(VM *vm, Element class) {
     new_obj = create_obj_of_class(vm->graph, class);
   }
   Element new_func = obj_get_field(class, CONSTRUCTOR_KEY);
-  if (new_func.type == OBJECT
-      && (new_func.obj->type == FUNCTION
-          || new_func.obj->type == EXTERNAL_FUNCTION)) {
+  if (NONE != new_func.type) {
     call_fn(vm, new_obj, new_func);
   } else {
     vm_set_resval(vm, new_obj);
   }
 }
 
+void call_fn(VM *vm, Element obj, Element func) {
+//  DEBUGF("A");
+//  elt_to_str(obj, stdout);
+//  printf("\n");
+//  elt_to_str(func, stdout);
+//  printf("\n");
+//  fflush(stdout);
+  if (!ISTYPE(func, class_function) &&
+  !ISTYPE(func, class_method) &&
+  !ISTYPE(func, class_external_function) &&
+  !ISTYPE(func, class_methodinstance)) {
+    vm_throw_error(vm, vm_current_ins(vm),
+        "Attempted to call something not a function of Class.");
+    return;
+  }
+  if (ISTYPE(func, class_external_function)) {
+    call_external_fn(vm, obj, func);
+    return;
+  }
+  if (ISTYPE(func, class_methodinstance)) {
+    call_methodinstance(vm, func);
+    return;
+  }
+  call_function_internal(vm, obj, func);
+}
+
 void vm_to_string(const VM *vm, Element elt, FILE *target) {
-//  if (OBJECT == elt.type) {
-//    Element to_s = vm_object_lookup(vm, elt, "to_s");
-//    if (OBJECT == to_s.type && FUNCTION == to_s.obj->type) {
-//      // Since we need to call prnt again
-//      vm_shift_ip(vm, -1);
-//      call_fn(vm, elt, to_s);
-//      return;
-//    }
-//  }
   elt_to_str(elt, target);
 }
 
@@ -522,10 +580,10 @@ void execute_object_operation(VM *vm, Element lhs, Element rhs,
   memory_graph_tuple_add(vm->graph, args, rhs);
   Element builtin = vm_lookup_module(vm, BUILTIN_MODULE_NAME);
   ASSERT(NONE != builtin.type);
-  Element eq_fn = vm_object_lookup(vm, builtin, func_name);
-  ASSERT(NONE != eq_fn.type);
+  Element fn = vm_object_lookup(vm, builtin, func_name);
+  ASSERT(NONE != fn.type);
   vm_set_resval(vm, args);
-  call_fn(vm, builtin, eq_fn);
+  call_fn(vm, builtin, fn);
 }
 
 bool execute_no_param(VM *vm, Ins ins) {
@@ -550,12 +608,14 @@ bool execute_no_param(VM *vm, Ins ins) {
     return true;
   case CALL:
     elt = vm_popstack(vm);
-    if (elt.type == OBJECT
-        && (elt.obj->type == FUNCTION || elt.obj->type == EXTERNAL_FUNCTION)) {
-      call_fn(vm, vm_lookup(vm, THIS), elt);
-    } else if (elt.type == OBJECT && elt.obj->type == OBJ
-        && class_class.obj == obj_get_field(elt, CLASS_KEY).obj) {
-      call_new(vm, elt);
+    if (ISOBJECT(elt)) {
+      class = obj_get_field(elt, CLASS_KEY);
+      if (inherits_from(class,
+          class_function) || ISTYPE(elt, class_methodinstance)) {
+        call_fn(vm, vm_lookup(vm, THIS), elt);
+      } else if (ISTYPE(elt, class_class)) {
+        call_new(vm, elt);
+      }
     } else {
       vm_throw_error(vm, ins,
           "Cannot execute call something not a Function or Class.");
@@ -693,19 +753,21 @@ bool execute_no_param(VM *vm, Ins ins) {
     res = operator_mod(lhs, rhs);
     break;
   case EQ:
-    if (lhs.type != VALUE || rhs.type != VALUE) {
-      execute_object_operation(vm, lhs, rhs, EQ_FN_NAME);
-      return true;
+//    DEBUGF("lhs.type=%d, rhs.type=%d", lhs.type, rhs.type);
+    if (lhs.type == VALUE && rhs.type == VALUE) {
+      res = operator_eq(vm, lhs, rhs);
+      break;
     }
-    res = operator_eq(vm, lhs, rhs);
-    break;
+    execute_object_operation(vm, lhs, rhs, EQ_FN_NAME);
+    return true;
   case NEQ:
-    if (lhs.type != VALUE || rhs.type != VALUE) {
-      execute_object_operation(vm, lhs, rhs, NEQ_FN_NAME);
-      return true;
+//    DEBUGF("lhs.type=%d, rhs.type=%d", lhs.type, rhs.type);
+    if (lhs.type == VALUE && rhs.type == VALUE) {
+      res = operator_neq(vm, lhs, rhs);
+      break;
     }
-    res = operator_neq(vm, lhs, rhs);
-    break;
+    execute_object_operation(vm, lhs, rhs, NEQ_FN_NAME);
+    return true;
   case GT:
     res = operator_gt(vm, lhs, rhs);
     break;
@@ -845,31 +907,24 @@ bool execute_id_param(VM *vm, Ins ins) {
   case CALL:
     obj = vm_popstack(vm);
     if (obj.type == NONE) {
-      //DEBUGF("CALL NONE");
       vm_throw_error(vm, ins, "Cannot deference Nil.");
       return true;
     }
-    if (obj.type != OBJECT) {
-      //DEBUGF("CALL NON-OBJECT");
+    if (!ISOBJECT(obj)) {
       vm_throw_error(vm, ins, "Cannot call a non-object.");
       return true;
     }
     Element target = vm_object_lookup(vm, obj, ins.str);
     if (OBJECT != target.type) {
-//      elt_to_str(obj_get_field(obj, CLASS_KEY), stdout);
-//      printf("\n");
-//      fflush(stdout);
-      //DEBUGF("CALL NO SUCH FUNCTION");
       vm_throw_error(vm, ins, "Object has no such function '%s'.", ins.str);
       return true;
     }
-    if (target.obj->type == FUNCTION || target.obj->type == EXTERNAL_FUNCTION) {
+    if (inherits_from(obj_get_field(target, CLASS_KEY),
+        class_function) || ISTYPE(target, class_methodinstance)) {
       call_fn(vm, obj, target);
-    } else if (target.obj->type == OBJ
-        && class_class.obj == obj_get_field(target, CLASS_KEY).obj) {
+    } else if (ISTYPE(target, class_class)) {
       call_new(vm, target);
     } else {
-      //DEBUGF("CALL SOMETHING ELSE");
       vm_throw_error(vm, ins,
           "Cannot execute call something not a Function or Class.");
       return true;
@@ -1000,22 +1055,6 @@ bool execute_val_param(VM *vm, Ins ins) {
   return true;
 }
 
-//bool execute_goto_param(VM *vm, Ins ins) {
-//  Element block = obj_get_field(vm->root, CURRENT_BLOCK);
-//  switch (ins.op) {
-//  case CALL:
-//    vm_new_block(vm, block, block);
-//    vm_set_ip(vm, ins.go_to);
-//    break;
-//  case GOTO:
-//    vm_set_ip(vm, ins.go_to);
-//    break;
-//  default:
-//    ERROR("Instruction op was not a goto_param. op=%s", instructions[ins.op]);
-//  }
-//  return true;
-//}
-
 bool execute_str_param(VM *vm, Ins ins) {
   Element str_array = string_create(vm, ins.str);
   switch (ins.op) {
@@ -1047,7 +1086,6 @@ bool execute(VM *vm) {
   ASSERT_NOT_NULL(vm);
   Element has_error = obj_get_field(current_block(vm), ERROR_KEY);
   if (NONE != has_error.type) {
-//    ////DEBUGF("catch_error");
     catch_error(vm);
     return true;
   }
@@ -1067,9 +1105,6 @@ bool execute(VM *vm) {
   case VAL_PARAM:
     status = execute_val_param(vm, ins);
     break;
-//  case GOTO_PARAM:
-//    status = execute_goto_param(vm, ins);
-//    break;
   case STR_PARAM:
     status = execute_str_param(vm, ins);
     break;

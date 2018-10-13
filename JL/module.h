@@ -36,6 +36,10 @@ const Map *module_class_parents(const Module *m);
 int32_t module_ref(const Module *m, const char ref_name[]);
 uint32_t module_size(const Module *m);
 const Tape *module_tape(const Module *m);
+
+typedef void (*ClassAction)(const char *class_name, const Map *methods);
+void module_iterate_classes(const Module *m, ClassAction action);
+
 void module_delete(Module *module);
 
 #endif /* MODULE_H_ */

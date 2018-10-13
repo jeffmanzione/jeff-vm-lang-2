@@ -43,6 +43,7 @@ DefineSyntax(postfix_expression1);
 DefineSyntax(unary_expression);
 DefineSyntax(multiplicative_expression);
 DefineSyntax(additive_expression);
+DefineSyntax(in_expression);
 DefineSyntax(relational_expression);
 DefineSyntax(equality_expression);
 DefineSyntax(and_expression);

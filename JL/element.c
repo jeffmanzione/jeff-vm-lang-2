@@ -15,6 +15,7 @@
 #include "class.h"
 #include "codegen/tokenizer.h"
 #include "datastructure/array.h"
+#include "datastructure/queue2.h"
 #include "datastructure/tuple.h"
 #include "error.h"
 #include "external/external.h"
@@ -25,6 +26,8 @@
 
 Element create_obj_of_class_unsafe_inner(MemoryGraph *graph, Map *objs,
     Element class);
+Element create_method_instance(MemoryGraph *graph, Element object,
+    Element method);
 
 Element create_int(int64_t val) {
   Element to_return;
@@ -56,22 +59,15 @@ Element element_for_obj(Object *obj) {
 }
 
 Element create_obj_unsafe_base(MemoryGraph *graph) {
-  Element to_return = memory_graph_new_node(graph);
-  to_return.obj->is_external = false;
-  memory_graph_set_field(graph, to_return, ADDRESS_KEY,
-      create_int((int32_t) to_return.obj));
-  return to_return;
+  return memory_graph_new_node(graph);
 }
 
 void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
     Element class) {
-  //DEBUGF("create_obj_unsafe_complete begin");
   memory_graph_set_field(graph, element, CLASS_KEY, class);
-
   Element parents = obj_get_field(class, PARENT_KEY);
-  // Object class
+// Object class
   if (NONE == parents.type) {
-    //DEBUGF("create_obj_unsafe_complete end 1");
     return;
   }
 
@@ -79,8 +75,6 @@ void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
   int i;
   for (i = 0; i < Array_size(parents.obj->array); ++i) {
     Element parent_class = Array_get(parents.obj->array, i);
-//    elt_to_str(parent_class,stdout);
-//    printf("\n");fflush(stdout);
     ASSERT(ISCLASS(parent_class));
     // Check if we already created a type of this class.
     Object *obj = map_lookup(objs, parent_class.obj);
@@ -97,16 +91,13 @@ void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
           element_for_obj(obj));
     }
   }
-  //DEBUGF("create_obj_unsafe_complete end2");
 }
 
 void fill_object_unsafe(MemoryGraph *graph, Element element, Element class) {
-  //DEBUGF("fill_object_unsafe begin");
   Map objs;
   map_init_default(&objs);
   create_obj_unsafe_complete(graph, &objs, element, class);
   map_finalize(&objs);
-  //DEBUGF("fill_object_unsafe end");
 }
 
 Element create_class_stub(MemoryGraph *graph) {
@@ -115,30 +106,23 @@ Element create_class_stub(MemoryGraph *graph) {
 
 Element create_obj_of_class_unsafe_inner(MemoryGraph *graph, Map *objs,
     Element class) {
-  //DEBUGF("create_obj_of_class_unsafe_inner begin");
   Element to_return = create_obj_unsafe_base(graph);
-  // Return early if the class is not yet constructed.
   if (NONE == class.type) {
-    //DEBUGF("create_obj_of_class_unsafe_inner end1");
     return to_return;
   }
   create_obj_unsafe_complete(graph, objs, to_return, class);
-  //DEBUGF("create_obj_of_class_unsafe_inner end2");
   return to_return;
 }
 
 Element create_obj_of_class_unsafe(MemoryGraph *graph, Element class) {
-  //DEBUGF("create_obj_of_class_unsafe begin");
   Map objs;
   map_init_default(&objs);
   Element obj = create_obj_of_class_unsafe_inner(graph, &objs, class);
   map_finalize(&objs);
-  //DEBUGF("create_obj_of_class_unsafe end");
   return obj;
 }
 
 Element create_external_obj(VM *vm, Element class) {
-  //DEBUGF("create_external_obj");
   Element elt = create_obj_of_class(vm->graph, class);
   elt.obj->is_external = true;
   elt.obj->external_data = externaldata_create(vm, elt, class);
@@ -146,60 +130,41 @@ Element create_external_obj(VM *vm, Element class) {
 }
 
 Element create_obj_of_class(MemoryGraph *graph, Element class) {
-  //DEBUGF("create_obj_of_class begin %d", class.type);
-  ASSERT(NOT_NULL(graph), class.type == OBJECT);
-//  //DEBUGF("create_obj_of_class(%s)",
-//      string_to_cstr(obj_get_field(class, NAME_KEY).obj->array));
+  ASSERT(NOT_NULL(graph));
+  Element elt = create_obj_of_class_unsafe(graph, class);
 
-  Element elt;
-//  if (class.obj == class_string.obj) {
-//    elt = create_obj_of_class_unsafe(graph, class_array);
-//    memory_graph_set_field(graph, elt, CLASS_KEY, class_string);
-//  } else {
-  elt = create_obj_of_class_unsafe(graph, class);
-//  }
-
-  if (class.obj == class_array.obj /* || class.obj == class_string.obj*/) {
+  if (class.obj == class_array.obj) {
     elt.obj->type = ARRAY;
     elt.obj->array = Array_create();
     memory_graph_set_field(graph, elt, LENGTH_KEY, create_int(0));
   }
-  //DEBUGF("create_obj_of_class end");
   return elt;
 }
 
 Element create_obj_unsafe(MemoryGraph *graph) {
-  //DEBUGF("create_obj_unsafe begin");
   return create_obj_of_class_unsafe(graph, class_object);
-  //DEBUGF("create_obj_unsafe end");
 }
 
 Element create_obj(MemoryGraph *graph) {
-  //DEBUGF("create_obj");
   return create_obj_of_class(graph, class_object);
 }
 
 Element create_array(MemoryGraph *graph) {
-  //DEBUGF("create_array");
   return create_obj_of_class(graph, class_array);
 }
 
 Element string_create_len(VM *vm, const char *str, size_t len) {
-  //DEBUGF("string_create begin");
   Element elt = create_external_obj(vm, class_string);
   ASSERT(NONE != elt.type);
-  //DEBUGF("string_constructor before");
   string_constructor(vm, elt.obj->external_data, create_none());
-  //DEBUGF("string_create begin");
+  elt.obj->external_data->deconstructor = string_deconstructor;
   String *string = String_extract(elt);
-  //DEBUGF("String_extract after");
 
   if (NULL != str) {
     String_append_unescape(string, str, len);
   }
   memory_graph_set_field(vm->graph, elt, LENGTH_KEY,
       create_int(String_size(string)));
-  //DEBUGF("string_create end");
   return elt;
 }
 
@@ -219,7 +184,6 @@ Element string_add(VM *vm, Element str1, Element str2) {
 }
 
 Element create_tuple(MemoryGraph *graph) {
-  //DEBUGF("create_tuple");
   Element elt = create_obj_of_class(graph, class_tuple);
   elt.obj->type = TUPLE;
   elt.obj->tuple = tuple_create();
@@ -228,43 +192,54 @@ Element create_tuple(MemoryGraph *graph) {
 }
 
 Element create_module(VM *vm, const Module *module) {
-  //DEBUGF("create_module");
   Element elt = create_obj_of_class(vm->graph, class_module);
   memory_graph_set_field(vm->graph, elt, NAME_KEY,
       string_create(vm, module_name(module)));
   elt.obj->type = MODULE;
   elt.obj->module = module;
-  //DEBUGF("create_module end");
   return elt;
 }
 
+void decorate_function(VM *vm, Element func, Element module, uint32_t ins,
+    const char name[]) {
+  memory_graph_set_field(vm->graph, func, NAME_KEY, string_create(vm, name));
+  memory_graph_set_field(vm->graph, func, INS_INDEX, create_int(ins));
+  memory_graph_set_field(vm->graph, func, PARENT_MODULE, module);
+}
+
 Element create_function(VM *vm, Element module, uint32_t ins, const char name[]) {
-  //DEBUGF("create_function");
   Element elt = create_obj_of_class(vm->graph, class_function);
-  elt.obj->type = FUNCTION;
-  memory_graph_set_field(vm->graph, elt, NAME_KEY, string_create(vm, name));
-  memory_graph_set_field(vm->graph, elt, INS_INDEX, create_int(ins));
-  memory_graph_set_field(vm->graph, elt, PARENT_MODULE, module);
+  decorate_function(vm, elt, module, ins, name);
   return elt;
 }
 
 Element create_external_function(VM *vm, Element module, const char name[],
     ExternalFunction external_fn) {
-  //DEBUGF("create_external_function");
   Element elt = create_obj_of_class(vm->graph, class_external_function);
-  elt.obj->type = EXTERNAL_FUNCTION;
   elt.obj->external_fn = external_fn;
-  memory_graph_set_field(vm->graph, elt, NAME_KEY, string_create(vm, name));
-  memory_graph_set_field(vm->graph, elt, PARENT_MODULE, module);
+
+  Object *function_object = *((Object **) expando_get(elt.obj->parent_objs, 0));
+  decorate_function(vm, element_for_obj(function_object), module, -1, name);
   return elt;
 }
 
 Element create_method(VM *vm, Element module, uint32_t ins, Element class,
     const char name[]) {
-  Element elt = create_function(vm, module, ins, name);
-  memory_graph_set_field(vm->graph, elt, CLASS_KEY, class_method);
+  Element elt = create_obj_of_class(vm->graph, class_method);
+  Object *function_object = *((Object **) expando_get(elt.obj->parent_objs, 0));
+  decorate_function(vm, element_for_obj(function_object), module, ins, name);
   memory_graph_set_field(vm->graph, elt, PARENT_CLASS, class);
-  memory_graph_set_field(vm->graph, elt, PARENT_MODULE, module);
+  return elt;
+}
+
+Element create_method_instance(MemoryGraph *graph, Element object,
+    Element method) {
+  ASSERT(ISOBJECT(object));
+  ASSERT(ISTYPE(method, class_method));
+  Element elt = create_obj_of_class(graph, class_methodinstance);
+  memory_graph_set_field(graph, elt, OBJ_KEY, object);
+  memory_graph_set_field(graph, elt, METHOD_KEY, method);
+//  DEBUGF("B");
   return elt;
 }
 
@@ -303,23 +278,18 @@ Element obj_get_field_obj(Object *obj, const char field_name[]) {
 }
 
 Element obj_get_field(Element elt, const char field_name[]) {
-//  if (elt.type != OBJECT) {
-//    //DEBUGF("field_name=%s", field_name);
-//    elt_to_str(elt, stdout);
-//    printf("\n");
-//    fflush(stdout);
   ASSERT(OBJECT == elt.type);
-//  }
   return obj_get_field_obj(elt.obj, field_name);
 }
 
 void obj_delete_ptr(Object *obj, bool free_mem) {
+  ASSERT(NOT_NULL(obj));
   if (obj->is_external) {
-    ASSERT(NOT_NULL(obj->external_data),
-        NOT_NULL(obj->external_data->deconstructor),
-        NOT_NULL(externaldata_vm(obj->external_data)));
-    obj->external_data->deconstructor(externaldata_vm(obj->external_data),
-        obj->external_data, create_none());
+    ASSERT(NOT_NULL(obj->external_data));
+    if (NULL != obj->external_data->deconstructor) {
+      obj->external_data->deconstructor(externaldata_vm(obj->external_data),
+          obj->external_data, create_none());
+    }
     externaldata_delete(obj->external_data);
   }
   if (free_mem) {
@@ -330,6 +300,7 @@ void obj_delete_ptr(Object *obj, bool free_mem) {
   }
   map_finalize(&obj->fields);
 
+  ASSERT(NOT_NULL(obj->parent_objs));
   expando_delete(obj->parent_objs);
 
   if (ARRAY == obj->type) {
@@ -344,12 +315,12 @@ Element obj_deep_lookup(Object *obj, const char name[]) {
 
   Set checked;
   set_init_default(&checked);
-  Queue to_process;
-  queue_init(&to_process);
-  queue_add(&to_process, obj);
+  Q to_process;
+  Q_init(&to_process);
+  Q_enqueue(&to_process, obj);
 
-  while (queue_size(&to_process) > 0) {
-    Object *obj = queue_remove(&to_process);
+  while (Q_size(&to_process) > 0) {
+    Object *obj = Q_dequeue(&to_process);
     ASSERT(NOT_NULL(obj));
     // Check object.
     Element field = obj_get_field_obj(obj, name);
@@ -379,11 +350,11 @@ Element obj_deep_lookup(Object *obj, const char name[]) {
       Object *parent_obj = *((Object **) expando_get(obj->parent_objs, i));
       // Add them to the queue if we haven't already checked them.
       if (NULL == set_lookup(&checked, parent_obj)) {
-        queue_add(&to_process, parent_obj);
+        Q_enqueue(&to_process, parent_obj);
       }
     }
   }
-  queue_shallow_delete(&to_process);
+  Q_finalize(&to_process);
   set_finalize(&checked);
 
   return to_return;
@@ -393,12 +364,12 @@ void class_parents_action(Element child_class, ObjectActionUntil process) {
   if (!ISCLASS(child_class)) {
     return;
   }
-  Queue to_process;
-  queue_init(&to_process);
-  queue_add(&to_process, child_class.obj);
+  Q to_process;
+  Q_init(&to_process);
+  Q_enqueue(&to_process, child_class.obj);
 
-  while (queue_size(&to_process) > 0) {
-    Object *class_obj = queue_remove(&to_process);
+  while (Q_size(&to_process) > 0) {
+    Object *class_obj = Q_dequeue(&to_process);
     ASSERT(NOT_NULL(class_obj));
 
     if (process(class_obj)) {
@@ -413,10 +384,10 @@ void class_parents_action(Element child_class, ObjectActionUntil process) {
     for (i = 0; i < Array_size(parents.obj->array); ++i) {
       Element parent = Array_get(parents.obj->array, i);
       ASSERT(NONE != parent.type);
-      queue_add(&to_process, parent.obj);
+      Q_enqueue(&to_process, parent.obj);
     }
   }
-  queue_shallow_delete(&to_process);
+  Q_finalize(&to_process);
 }
 
 void val_to_str(Value val, FILE *file) {
@@ -466,49 +437,67 @@ void obj_to_str(Object *obj, FILE *file) {
   switch (obj->type) {
   case OBJ:
   case MODULE:
-  case FUNCTION:
-    if (class.obj == class_string.obj) {
-      fprintf(file, "'%*s'==",
-          String_size(String_extract(element_from_obj(obj))),
-          String_cstr(String_extract(element_from_obj(obj))));
+    if (NONE == class.type) {
+      fprintf(file, "?");
+      fflush(file);
+    } else {
+      if (class.obj == class_string.obj) {
+        fprintf(file, "'%*s'==",
+            String_size(String_extract(element_from_obj(obj))),
+            String_cstr(String_extract(element_from_obj(obj))));
+        fflush(file);
+      }
+      fprintf(file, "%s", string_to_cstr(obj_get_field(class, NAME_KEY)));
     }
-    fprintf(file, "%s",
-        string_to_cstr(
-            obj_get_field(obj_get_field_obj(obj, CLASS_KEY), NAME_KEY)));
+    fflush(file);
     name = obj_get_field_obj(obj, NAME_KEY);
-    if (OBJECT == name.type /*&& ARRAY == name.obj->type*/) {
+    if (NONE != name.type
+        && OBJECT == name.type /*&& ARRAY == name.obj->type*/) {
       fprintf(file, "[%s]", string_to_cstr(name));
+      fflush(file);
     }
     fprintf(file, "(");
+    fflush(file);
     void print_field(Pair *pair) {
       Element *field_val = (Element *) pair->value;
+      Element to_print = *field_val;
+      if (ISOBJECT(*field_val)) {
+        Element field_class = obj_get_field(*field_val, CLASS_KEY);
+        to_print = field_class;
+        if (ISOBJECT(field_class)) {
+          Element class_name = obj_get_field(field_class, NAME_KEY);
+          to_print = class_name;
+        }
+      }
       fprintf(file, "%s:%s, ", (char *) pair->key,
-          (field_val->type == OBJECT) ?
-              string_to_cstr(
-                  obj_get_field(obj_get_field(*field_val, CLASS_KEY),
-                      NAME_KEY)) :
-              ((field_val->type == VALUE) ?
-                  VALTYPE_NAME(field_val->val) : "(None)"));
+          ISOBJECT(to_print) ? string_to_cstr(to_print) :
+          ISVALUE(to_print) ? VALTYPE_NAME(to_print.val) : "(None)");
+      fflush(file);
     }
     map_iterate(&obj->fields, print_field);
     fprintf(file, ")");
+    fflush(file);
     break;
   case TUPLE:
     tuple_print(obj->tuple, file);
     break;
   case ARRAY:
     fprintf(file, "[");
+    fflush(file);
     if (Array_size(obj->array) > 0) {
       elt_to_str(Array_get(obj->array, 0), file);
     }
     for (i = 1; i < Array_size(obj->array); i++) {
       fprintf(file, ",");
+      fflush(file);
       elt_to_str(Array_get(obj->array, i), file);
     }
     fprintf(file, "]");
+    fflush(file);
     break;
   default:
     fprintf(file, "no_impl");
+    fflush(file);
     break;
   }
 }
@@ -549,10 +538,4 @@ bool is_false(Element elt) {
 Element element_from_obj(Object * const obj) {
   Element e = { .type = OBJECT, .obj = obj };
   return e;
-}
-
-bool is_arraylike(Element elt) {
-  return (elt.type == OBJECT)
-      && ((elt.obj->type == ARRAY)
-          || obj_get_field(elt, CLASS_KEY).obj == class_string.obj);
 }

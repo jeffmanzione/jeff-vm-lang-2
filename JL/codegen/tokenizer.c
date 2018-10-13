@@ -17,7 +17,7 @@
 
 char *keyword_to_type[] = { "if", "then", "else", "def", "new", "field",
     "class", "while", "for", "break", "continue", "return", "as", "is", "try",
-    "catch", "raise", "import", "module", "exit", "in" };
+    "catch", "raise", "import", "module", "exit", "in", "notin" };
 
 struct FileInfo_ {
   char *name;

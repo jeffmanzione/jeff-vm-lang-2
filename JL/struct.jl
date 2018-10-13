@@ -7,12 +7,14 @@ class Map {
     self.sz = sz
     self.table = []
     self.table[self.sz] = None
+    self.keys = []
   }
   def __set__(k, v) {
     hval = hash(k)
     pos = hval % self.sz
     if ~self.table[pos] {
       self.table[pos] = [(k,v)]
+      self.keys.append(k)
       return None
     }
     entries = self.table[pos]
@@ -24,6 +26,7 @@ class Map {
       }
     }
     entries.append((k,v))
+    self.keys.append(k)
     return None
   }
   def __index__(k) {
@@ -40,6 +43,13 @@ class Map {
     }
     return None
   }
+  def __in__(k) {
+    self.__index__(k) != None
+  }
+  
+  def iter() {
+    KVIterator(self.keys.iter(), self)
+  }
 }
 
 class Set {
@@ -49,7 +59,10 @@ class Set {
   def insert(k) {
     self.map.put(k, k)
   }
-  def contains(k) {
+  def __in__(k) {
     self.map.get(k)
+  }
+  def iter() {
+    self.keys.iter()
   }
 }

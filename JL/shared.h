@@ -45,6 +45,8 @@ void file_op(FILE *file, FileHandler operation, int line_num,
 bool ends_with(const char *str, const char *suffix);
 bool starts_with(const char *str, const char *prefix);
 void strcrepl(char *src, char from, char to);
+char *find_str(char *haystack, size_t hashtack_len, const char *needle,
+    size_t needle_len);
 bool contains_char(const char str[], char c);
 
 /*
