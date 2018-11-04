@@ -29,7 +29,7 @@ class Map
   fld   keys
   res   self
   ret
-  jmp   118
+  jmp   126
 
 @__set__
   push
@@ -42,6 +42,17 @@ class Map
   push
   res   k
   call
+  set   hval
+  res   hval
+  push
+  res   0
+  push
+  lt
+  ifn   5
+  res   hval
+  push
+  push  -1
+  mult
   set   hval
   res   hval
   push
@@ -91,8 +102,8 @@ class Map
   get   len
   push
   lt
-  ifn   42
-  res   eq
+  ifn   39
+  res   k
   push
   res   entries
   push
@@ -102,10 +113,7 @@ class Map
   res   0
   aidx
   push
-  res   k
-  push
-  tupl  2
-  call
+  eq
   ifn   20
   res   entries
   push
@@ -133,7 +141,7 @@ class Map
   push
   add
   set   i
-  jmp   -48
+  jmp   -45
   res   entries
   push
   res   v
@@ -268,19 +276,17 @@ class Set
   fld   map
   res   self
   ret
-  jmp   11
+  jmp   9
 
 @insert
   set   k
+  res   k
+  push
   res   self
   get   map
   push
   res   k
-  push
-  res   k
-  push
-  tupl  2
-  call  put
+  aset
   ret
   jmp   7
 
@@ -290,7 +296,7 @@ class Set
   get   map
   push
   res   k
-  call  get
+  aidx
   ret
   jmp   5
 
@@ -299,6 +305,351 @@ class Set
   get   keys
   push
   call  iter
+  ret
+endclass
+
+
+class Node
+  jmp   13
+
+@new
+  res   Map
+  push
+  res   255
+  call
+  push
+  res   self
+  fld   children
+  res   None
+  push
+  res   self
+  fld   value
+  res   self
+  ret
+  jmp   53
+
+@to_s
+  res   'Node('
+  set   tos
+  res   self
+  get   value
+  ifn   8
+  res   tos
+  push
+  res   'value='
+  call  extend
+  push
+  res   self
+  get   value
+  call  extend
+  res   self
+  get   children
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   26
+  dup
+  call  next
+  push
+  tget  0
+  set   k
+  res
+  tget  1
+  set   v
+  res   tos
+  push
+  res   concat
+  push
+  res   '),'
+  push
+  res   v
+  push
+  res   '->'
+  push
+  res   k
+  push
+  res   '('
+  push
+  tupl  5
+  call
+  call  extend
+  jmp   -29
+  res
+  res   tos
+  push
+  res   ')'
+  call  extend
+  ret
+endclass
+
+
+class Trie
+  jmp   8
+
+@new
+  res   Node
+  push
+  call
+  push
+  res   self
+  fld   root
+  res   self
+  ret
+  jmp   71
+
+@insert
+  push
+  tget  0
+  set   key
+  res
+  tget  1
+  set   value
+  res   self
+  push
+  res   key
+  push
+  res   self
+  get   root
+  push
+  tupl  2
+  call  find_node
+  push
+  tget  0
+  set   node
+  res
+  tget  1
+  set   index_last_char
+  res   index_last_char
+  not
+  ifn   2
+  res   0
+  set   index_last_char
+  res   key
+  push
+  res   key
+  get   len
+  push
+  res   index_last_char
+  push
+  tupl  2
+  call  substr
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   24
+  dup
+  call  next
+  push
+  tget  0
+  set   i
+  res
+  tget  1
+  set   char
+  res   Node
+  push
+  call
+  push
+  res   node
+  get   children
+  push
+  res   char
+  aset
+  res   node
+  get   children
+  push
+  res   char
+  aidx
+  set   node
+  jmp   -27
+  res
+  res   value
+  push
+  res   node
+  fld   value
+  ret
+  jmp   52
+
+@find_node
+  push
+  tget  0
+  set   node
+  res
+  tget  1
+  set   key
+  res   None
+  set   index_last_char
+  res   key
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   30
+  dup
+  call  next
+  push
+  tget  0
+  set   i
+  res
+  tget  1
+  set   char
+  res   node
+  get   children
+  push
+  res   char
+  call  __in__
+  if    9
+  res   i
+  set   index_last_char
+  res   index_last_char
+  push
+  res   node
+  push
+  tupl  2
+  ret
+  jmp   6
+  res   node
+  get   children
+  push
+  res   char
+  aidx
+  set   node
+  jmp   -33
+  res
+  res   index_last_char
+  push
+  res   node
+  push
+  tupl  2
+  ret
+  jmp   24
+
+@find
+  set   key
+  res   self
+  push
+  res   key
+  push
+  res   self
+  get   root
+  push
+  tupl  2
+  call  find_node
+  push
+  tget  0
+  set   node
+  res
+  tget  1
+  set   i
+  res   node
+  not
+  ifn   2
+  res   None
+  ret
+  res   node
+  get   value
+  ret
+  jmp   40
+
+@collect_child_values
+  set   node
+  res   node
+  get   value
+  ifn   5
+  res   node
+  get   value
+  push
+  anew  1
+  ret
+  anew
+  set   result
+  res   node
+  get   children
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   18
+  dup
+  call  next
+  push
+  tget  0
+  set   k
+  res
+  tget  1
+  set   child
+  res   child
+  ifn   7
+  res   result
+  push
+  res   self
+  push
+  res   child
+  call  collect_child_values
+  call  extend
+  jmp   -21
+  res
+  res   result
+  ret
+  jmp   37
+
+@find_by_prefix
+  set   key
+  res   self
+  push
+  res   key
+  push
+  res   self
+  get   root
+  push
+  tupl  2
+  call  find_node
+  push
+  tget  0
+  set   node
+  res
+  tget  1
+  set   i
+  res   node
+  not
+  ifn   2
+  anew
+  ret
+  res   i
+  ifn   9
+  res   i
+  push
+  res   key
+  get   len
+  push
+  lt
+  ifn   2
+  anew
+  ret
+  res   self
+  push
+  res   node
+  call  collect_child_values
+  ret
+  jmp   12
+
+@to_s
+  res   concat
+  push
+  res   ')'
+  push
+  res   self
+  get   root
+  push
+  res   'Trie('
+  push
+  tupl  3
+  call
   ret
 endclass
 

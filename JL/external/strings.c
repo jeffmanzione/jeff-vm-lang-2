@@ -13,6 +13,7 @@
 #include "external.h"
 #include "../arena/strings.h"
 #include "../class.h"
+#include "../codegen/tokenizer.h"
 #include "../element.h"
 #include "../error.h"
 #include "../datastructure/array.h"
@@ -41,7 +42,7 @@ Element stringify__(VM *vm, ExternalData *ed, Element argument) {
     break;
   }
   ASSERT(num_written > 0);
-  return string_create_len(vm, buffer, num_written);
+  return string_create_len_unescape(vm, buffer, num_written);
 }
 
 IMPL_ARRAYLIKE(String, char);
@@ -74,29 +75,37 @@ void String_append_cstr(String *string, const char src[], size_t len) {
   String_insert(string, string->num_elts, src, len);
 }
 
-String *String_of(const char *src, size_t len) {
+String *String_of(VM *vm, ExternalData *data, const char *src, size_t len) {
   ASSERT(NOT_NULL(src));
-  String *string = String_create();
-  String_append_cstr(string, src, len);
+  String *string = String_create_copy(src, len);
+  String_fill(vm, data, string);
   return string;
+}
+
+void String_fill(VM *vm, ExternalData *data, String *string) {
+  map_insert(&data->state, STRING_NAME, string);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
 }
 
 Element string_constructor(VM *vm, ExternalData *data, Element arg) {
   ASSERT(NOT_NULL(data));
-  String *string = String_create();
-  map_insert(&data->state, STRING_NAME, string);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY, create_int(0));
-
+  String *string;
   if (NONE == arg.type) {
+    string = String_create();
+    String_fill(vm, data, string);
     return data->object;
   }
   if (OBJECT != arg.type) {
+    string = String_create();
+    String_fill(vm, data, string);
     return throw_error(vm, "Non-object input to String()");
   }
   if (ISTYPE(arg, class_string)) {
-    String *tail = String_extract(arg);
-    String_append(string, tail);
+    string = String_copy(String_extract(arg));
+    String_fill(vm, data, string);
   } else if (ISTYPE(arg, class_array)) {
+    string = String_create();
     Array *arr = extract_array(arg);
     int i;
     for (i = 0; i < Array_size(arr); ++i) {
@@ -110,13 +119,11 @@ Element string_constructor(VM *vm, ExternalData *data, Element arg) {
         return throw_error(vm, "Invalid Array input to String()");
       }
     }
+    String_fill(vm, data, string);
   } else {
     return throw_error(vm, "Invalid Object input to String()");
   }
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-      create_int(String_size(string)));
   return data->object;
-
 }
 
 Element string_deconstructor(VM *vm, ExternalData *data, Element arg) {
@@ -128,7 +135,9 @@ Element string_deconstructor(VM *vm, ExternalData *data, Element arg) {
 }
 
 Element string_index(VM *vm, ExternalData *data, Element arg) {
-  ASSERT(arg.type == VALUE && arg.val.type == INT);
+  if (!is_value_type(&arg, INT)) {
+    return throw_error(vm, "Indexing String with something not an Int.");
+  }
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   return create_char(String_get(string, arg.val.int_val));
@@ -217,6 +226,95 @@ String *String_extract(Element elt) {
   return string;
 }
 
+Element string_ltrim(VM *vm, ExternalData *data, Element arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  int i = 0;
+  while (is_any_space(string->table[i])) {
+    ++i;
+  }
+  String_lshrink(string, i);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
+  return data->object;
+}
+
+Element string_rtrim(VM *vm, ExternalData *data, Element arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  int i = 0;
+  while (is_any_space(string->table[String_size(string) - 1 - i])) {
+    ++i;
+  }
+  String_rshrink(string, i);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
+  return data->object;
+}
+
+Element string_trim(VM *vm, ExternalData *data, Element arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  int i = 0;
+  while (is_any_space(string->table[i])) {
+    ++i;
+  }
+  String_lshrink(string, i);
+  i = 0;
+  while (is_any_space(string->table[String_size(string) - 1 - i])) {
+    ++i;
+  }
+  String_rshrink(string, i);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
+  return data->object;
+}
+
+Element string_lshrink(VM *vm, ExternalData *data, Element arg) {
+  if (!is_value_type(&arg, INT)) {
+    return throw_error(vm, "Trimming String with something not an Int.");
+  }
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  if (arg.val.int_val > String_size(string)) {
+    return throw_error(vm, "Cannot shrink more than the entire size.");
+  }
+  String_lshrink(string, arg.val.int_val);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
+  return data->object;
+}
+
+Element string_rshrink(VM *vm, ExternalData *data, Element arg) {
+  if (!is_value_type(&arg, INT)) {
+    return throw_error(vm, "Trimming String with something not an Int.");
+  }
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  if (arg.val.int_val > String_size(string)) {
+    return throw_error(vm, "Cannot shrink more than the entire size.");
+  }
+  String_rshrink(string, arg.val.int_val);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
+  return data->object;
+}
+
+Element string_clear(VM *vm, ExternalData *data, Element arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  String_clear(string);
+  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
+      create_int(String_size(string)));
+  return data->object;
+}
+
+//Element string_hash(VM *vm, ExternalData *data, Element arg) {
+//  String *string = map_lookup(&data->state, STRING_NAME);
+//  ASSERT(NOT_NULL(string));
+//  return create_int((int64_t) (int32_t) String_cstr(string));
+//}
+
 void merge_string_class(VM *vm, Element string_class) {
   merge_external_class(vm, string_class, string_constructor,
       string_deconstructor);
@@ -228,4 +326,16 @@ void merge_string_class(VM *vm, Element string_class) {
       string_find);
   add_external_function(vm, string_class, strings_intern("extend__"),
       string_extend);
+  add_external_function(vm, string_class, strings_intern("trim"), string_trim);
+  add_external_function(vm, string_class, strings_intern("ltrim"),
+      string_ltrim);
+  add_external_function(vm, string_class, strings_intern("rtrim"),
+      string_rtrim);
+  add_external_function(vm, string_class, strings_intern("lshrink"),
+      string_lshrink);
+  add_external_function(vm, string_class, strings_intern("rshrink"),
+      string_rshrink);
+  add_external_function(vm, string_class, strings_intern("clear"),
+      string_clear);
+//  add_external_function(vm, string_class, strings_intern("hash"), string_hash);
 }

@@ -287,6 +287,15 @@ class Array {
   }
 }
 
+def equals_range(a1, a1_start, a2, a2_start, length) {
+  if (a1_start + length) > a1.len return False
+  if (a2_start + length) > a2.len return False
+  for i=0, i < length, i=i+1 {
+    if a1[a1_start + i] != a2[a2_start+i] return False
+  }
+  True
+}
+
 class String {
   def hash() {
     hashval = 5381
@@ -386,6 +395,26 @@ class String {
   def iter() {
     IndexIterator(self)
   }
+  def substr(start, end) {
+    string = ''
+    for i = start, i < end, i = i + 1 {
+      string.append(self[i])
+    }
+    string
+  }
+  def split(del) {
+    del_len = del.len
+    parts = []
+    last_delim_end = 0
+    for i=0, i < self.len, i=i+1 {
+      if equals_range(self, i, delim, 0, del_len) {
+        parts.append(self.substr(last_delim_end, i))
+        i = i + delim_len
+        last_delim_end = i
+      }
+    }
+    return parts
+  }
 }
 
 class Iterator {
@@ -397,7 +426,7 @@ class Iterator {
 
 class IndexIterator : Iterator {
   def new(args) {
-    if args is Array {
+    if (args is Array) | (args is String) {
       self.indexable = args
       self.start = 0
       self.end = args.len

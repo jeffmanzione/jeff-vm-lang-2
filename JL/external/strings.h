@@ -19,7 +19,10 @@ void String_insert(String *string, int index_in_string, const char src[],
     size_t len);
 void String_append_cstr(String *string, const char src[], size_t len);
 void String_append_unescape(String *string, const char str[], size_t len);
-String *String_of(const char *src, size_t len);
+
+String *String_of(VM *vm, ExternalData *data, const char *src, size_t len);
+void String_fill(VM *vm, ExternalData *data, String *string);
+
 const char *String_cstr(const String * const string);
 
 String *String_extract(Element elt);

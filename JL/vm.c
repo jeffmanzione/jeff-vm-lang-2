@@ -386,6 +386,9 @@ Element vm_new_block(VM *vm, Element parent, Element new_this) {
   ASSERT(OBJECT == new_this.type);
   ASSERT_NOT_NULL(new_this.obj);
   Element old_block = current_block(vm);
+  // Save stack size for later for cleanup on ret.
+  memory_graph_set_field(vm->graph, old_block, STACK_SIZE_NAME,
+      create_int(Array_size(vm->stack.obj->array)));
 
   memory_graph_array_push(vm->graph, vm->saved_blocks, old_block);
 
@@ -405,6 +408,18 @@ Element vm_new_block(VM *vm, Element parent, Element new_this) {
 void vm_back(VM *vm) {
   ASSERT_NOT_NULL(vm);
   Element parent_block = memory_graph_array_pop(vm->graph, vm->saved_blocks);
+  // Remove accumulated stack.
+  // TODO: Maybe consider an increased stack a bug in the future.
+  Element old_stack_size = obj_get_field(parent_block, STACK_SIZE_NAME);
+  if (NONE != old_stack_size.type) {
+    ASSERT(ISVALUE(old_stack_size), INT == old_stack_size.val.type);
+    int i;
+    for (i = 0;
+        i < Array_size(vm->stack.obj->array) - old_stack_size.val.int_val;
+        ++i) {
+      vm_popstack(vm);
+    }
+  }
   memory_graph_set_field(vm->graph, vm->root, CURRENT_BLOCK, parent_block);
 }
 
@@ -601,7 +616,7 @@ bool execute_no_param(VM *vm, Ins ins) {
         create_int(1));
     catch_error(vm);
     // Counter shift forward at end of instruction execution.
-    vm_shift_ip(vm, -2);
+    vm_shift_ip(vm, -1);
     return true;
   case PUSH:
     vm_pushstack(vm, (Element) vm_get_resval(vm));

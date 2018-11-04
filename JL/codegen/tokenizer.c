@@ -175,6 +175,18 @@ bool is_alphanumeric(const char c) {
   return is_numeric(c) || is_alphabetic(c) || '_' == c || '$' == c;
 }
 
+bool is_any_space(const char c) {
+  switch (c) {
+  case ' ':
+  case '\t':
+  case '\n':
+  case '\r':
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool is_whitespace(const char c) {
   return ' ' == c || '\t' == c;
 }

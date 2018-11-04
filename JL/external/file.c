@@ -73,7 +73,7 @@ Element file_gets(VM *vm, ExternalData *data, Element arg) {
   ASSERT(is_value_type(&arg, INT));
   char *buf = ALLOC_ARRAY2(char, arg.val.int_val + 1);
   fgets(buf, arg.val.int_val + 1, file);
-  Element string = string_create(vm, buf);
+  Element string = string_create_len(vm, buf, arg.val.int_val);
   DEALLOC(buf);
   return string;
 }
@@ -97,12 +97,12 @@ Element file_getline(VM *vm, ExternalData *data, Element arg) {
   ASSERT(NOT_NULL(file));
   char *line = NULL;
   size_t len = 0;
-  ssize_t nread = getline(&line, &len, file);
+  int nread = getline(&line, &len, file);
   Element string;
   if (-1 == nread) {
     string = create_none();
   } else {
-    string = string_create(vm, line);
+    string = string_create_len(vm, line, nread);
   }
   if (line != NULL) {
     DEALLOC(line);

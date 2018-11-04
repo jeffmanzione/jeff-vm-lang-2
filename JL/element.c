@@ -153,7 +153,7 @@ Element create_array(MemoryGraph *graph) {
   return create_obj_of_class(graph, class_array);
 }
 
-Element string_create_len(VM *vm, const char *str, size_t len) {
+Element string_create_len_unescape(VM *vm, const char *str, size_t len) {
   Element elt = create_external_obj(vm, class_string);
   ASSERT(NONE != elt.type);
   string_constructor(vm, elt.obj->external_data, create_none());
@@ -168,8 +168,16 @@ Element string_create_len(VM *vm, const char *str, size_t len) {
   return elt;
 }
 
+Element string_create_len(VM *vm, const char *str, size_t len) {
+  Element elt = create_external_obj(vm, class_string);
+  ASSERT(NONE != elt.type);
+  String_of(vm, elt.obj->external_data, str, len);
+  elt.obj->external_data->deconstructor = string_deconstructor;
+  return elt;
+}
+
 Element string_create(VM *vm, const char *str) {
-  return string_create_len(vm, str, strlen(str));
+  return string_create_len_unescape(vm, str, strlen(str));
 }
 
 Element string_add(VM *vm, Element str1, Element str2) {

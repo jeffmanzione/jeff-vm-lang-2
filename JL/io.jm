@@ -1,7 +1,7 @@
 module io
 
 class FileInternal
-  jmp   35
+  jmp   55
 
 @new
   push
@@ -38,6 +38,26 @@ class FileInternal
   res   self
   fld   file
   res   self
+  get   file
+  get   success
+  not
+  ifn   15
+  push  Error
+  push  cat
+  push  ')'
+  push  binary
+  push  ','
+  push  a
+  push  ','
+  push  rw
+  push  ','
+  push  fn
+  push  'Failed to open file. FileInternal('
+  tupl  9
+  call
+  call
+  rais
+  res   self
   ret
   jmp   4
 
@@ -46,11 +66,13 @@ class FileInternal
   gtsh  file
   call  rewind__
   ret
-  jmp   4
+  jmp   6
 
 @gets
+  set   n
   res   self
   gtsh  file
+  res   n
   call  gets__
   ret
   jmp   4
@@ -214,9 +236,8 @@ endclass
 
   push  FileReader
   push  False
-  push  False
   push  '__STDIN__'
-  tupl  3
+  tupl  2
   call
   push
   res   self

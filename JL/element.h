@@ -89,6 +89,7 @@ Element create_external_obj(VM *vm, Element class);
 Element create_array(MemoryGraph *graph);
 
 Element string_create_len(VM *vm, const char *str, size_t len);
+Element string_create_len_unescape(VM *vm, const char *str, size_t len);
 Element string_create(VM *vm, const char *str);
 Element string_add(VM *vm, Element str1, Element str2);
 

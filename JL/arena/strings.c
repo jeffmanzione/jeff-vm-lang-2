@@ -72,6 +72,7 @@ char *HAS_NEXT_FN_NAME;
 char *OBJ_KEY;
 char *METHOD_KEY;
 char *CALL_KEY;
+char *STACK_SIZE_NAME;
 
 struct Chunk_ {
   char *block;
@@ -149,6 +150,7 @@ void strings_insert_constants() {
   OBJ_KEY = strings_intern("obj");
   METHOD_KEY = strings_intern("method");
   CALL_KEY = strings_intern("call");
+  STACK_SIZE_NAME = strings_intern("$stack_size");
 }
 
 void strings_init() {

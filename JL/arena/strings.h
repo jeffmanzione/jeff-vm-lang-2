@@ -62,6 +62,7 @@ extern char *HAS_NEXT_FN_NAME;
 extern char *OBJ_KEY;
 extern char *METHOD_KEY;
 extern char *CALL_KEY;
+extern char *STACK_SIZE_NAME;
 
 
 typedef struct Chunk_ Chunk;

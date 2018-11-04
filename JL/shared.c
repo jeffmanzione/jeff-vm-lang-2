@@ -7,7 +7,9 @@
 
 #include "shared.h"
 
+#include <errno.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "error.h"
@@ -148,7 +150,43 @@ int32_t string_comparator(const void *ptr1, const void *ptr2) {
   return strncmp((char *) lhs, (char *) rhs, sizeof(uint32_t));
 }
 
-size_t getline(char **lineptr, size_t *n, FILE *stream) {
+//int getline(char **lineptr, size_t *n, FILE *stream) {
+//  static char line[256];
+//  char *ptr;
+//  unsigned int len;
+//
+//  if (lineptr == NULL || n == NULL) {
+//    errno = EINVAL;
+//    return -1;
+//  }
+//
+//  if (ferror(stream))
+//    return -1;
+//
+//  if (feof(stream))
+//    return -1;
+//
+//  fgets(line, 256, stream);
+//
+//  ptr = strchr(line, '\n');
+//  if (ptr)
+//    *ptr = '\0';
+//
+//  len = strlen(line);
+//
+//  if ((len + 1) < 256) {
+//    ptr = realloc(*lineptr, 256);
+//    if (ptr == NULL)
+//      return (-1);
+//    *lineptr = ptr;
+//    *n = 256;
+//  }
+//
+//  strcpy(*lineptr, line);
+//  return (len);
+//}
+
+ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
   char *bufptr = NULL;
   char *p = bufptr;
   size_t size;
@@ -181,22 +219,22 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
   while (c != EOF) {
     if ((p - bufptr) > (size - 1)) {
       size = size + 128;
+      // Handle realloc
+      int offset = p - bufptr;
       bufptr = REALLOC(bufptr, char, size);
       if (bufptr == NULL) {
         return -1;
       }
+      p = bufptr + offset;
     }
-    *p++ = c;
+    *(p++) = c;
     if (c == '\n') {
       break;
-    }
-    if (c == '\r') {
-
     }
     c = fgetc(stream);
   }
 
-  *p++ = '\0';
+  *(p++) = '\0';
   *lineptr = bufptr;
   *n = size;
 

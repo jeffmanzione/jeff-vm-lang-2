@@ -489,7 +489,8 @@ ImplSyntax(try_statement,
 //    return expression \n
 ImplSyntax(jump_statement,
     Or(And(Type(RETURN), Type(ENDLINE)),
-        And(Type(RETURN), tuple_expression, Type(ENDLINE))));
+        And(Type(RETURN), tuple_expression, Type(ENDLINE)),
+        And(Type(RETURN), TypeLn(LPAREN), tuple_expression,  TypeLn(RPAREN))));
 
 // break_statement
 //    break \n

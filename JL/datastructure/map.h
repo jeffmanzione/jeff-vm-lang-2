@@ -13,7 +13,7 @@
 
 #include "../shared.h"
 
-#define DEFAULT_MAP_SZ 61
+#define DEFAULT_MAP_SZ 31
 
 #ifdef DEBUG
 extern int MAP__count;

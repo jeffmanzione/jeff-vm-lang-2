@@ -134,6 +134,8 @@ Token *token_create(TokenType type, int line, int col, const char text[]);
 Token *token_copy(Token *tok);
 void token_delete(Token *tok);
 
+bool is_whitespace(const char c);
+bool is_any_space(const char c);
 char char_unesc(char u);
 
 #endif /* TOKENIZER_H_ */

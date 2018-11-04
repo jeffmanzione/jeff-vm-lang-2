@@ -11,6 +11,7 @@ class Map {
   }
   def __set__(k, v) {
     hval = hash(k)
+    if hval < 0 hval = -hval
     pos = hval % self.sz
     if ~self.table[pos] {
       self.table[pos] = [(k,v)]
@@ -19,7 +20,7 @@ class Map {
     }
     entries = self.table[pos]
     for i=0, i<entries.len, i=i+1 {
-      if eq(k, entries[i][0]) {
+      if k == entries[i][0] {
         old_v = entries[i][1]
         entries[i] = (k,v)
         return old_v
@@ -57,12 +58,84 @@ class Set {
     self.map = Map(sz)
   }
   def insert(k) {
-    self.map.put(k, k)
+    self.map[k] = k
   }
   def __in__(k) {
-    self.map.get(k)
+    self.map[k]
   }
   def iter() {
     self.keys.iter()
+  }
+}
+
+class Node {
+  def new() {
+    self.children = Map(255)
+    self.value = None
+  }
+  def to_s() {
+    tos = 'Node('
+    if (self.value) {
+      tos.extend('value=').extend(self.value)
+    }
+    for k, v in self.children {
+      tos.extend(concat('(', k, '->', v, '),'))
+    }
+    tos.extend(')')
+  }
+}
+
+class Trie {
+  def new() {
+    self.root = Node()
+  }  
+  def insert(key, value) {
+    node, index_last_char = self.find_node(self.root, key)
+    if ~index_last_char {
+      index_last_char = 0
+    }
+    for (i, char) in key.substr(index_last_char, key.len) {
+      node.children[char] = Node()
+      node = node.children[char]
+    }
+    node.value = value
+  }
+  def find_node(node, key) {
+    index_last_char = None
+    for (i, char) in key {
+     if char in node.children {
+        node = node.children[char]
+      } else {
+        index_last_char = i
+        return (node, index_last_char)
+      }
+    }
+    (node, index_last_char)
+  }
+  def find(key) {
+    node, i = self.find_node(self.root, key)
+    if ~node return None
+    node.value
+  }
+  def collect_child_values(node) {
+    if node.value return [node.value]
+    result = []
+    for (k, child) in node.children {
+      if child {
+        result.extend(self.collect_child_values(child))
+      }
+    }
+    result
+  }
+  def find_by_prefix(key) {
+    node, i = self.find_node(self.root, key)
+    if (~node) return []
+    if i {
+      if i < key.len return []
+    }
+    self.collect_child_values(node)
+  }
+  def to_s() {
+    concat('Trie(', self.root, ')')
   }
 }

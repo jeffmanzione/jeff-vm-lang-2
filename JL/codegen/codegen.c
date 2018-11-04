@@ -265,8 +265,7 @@ int codegen_foreach(SyntaxTree *tree, Token *for_token, Tape *tape) {
       + tape_ins_no_arg(tape, PUSH, iter_token);
 
   Tape *tmp = tape_create();
-  int body_lines = tape_ins_no_arg(tmp, PEEK, var_token)
-      + tape_ins_no_arg(tmp, PUSH, var_token)
+  int body_lines = tape_ins_no_arg(tmp, DUP, var_token)
       + tape_ins_text(tmp, CALL, NEXT_FN_NAME, iter_token)
       + (is_leaf(var) ? tape_ins(tmp, SET, var_token) : codegen(var, tmp))
       + codegen(body, tmp);
@@ -589,9 +588,13 @@ int codegen_jump(SyntaxTree *tree, Tape *tape) {
 
   SyntaxTree *jump_type = tree->first;
   SyntaxTree *jump_value = tree->second;
-
   if (jump_type->token->type != RETURN) {
     ERROR("jump_statement not implemented");
+  }
+  // If surrounded in parens, then use what's inside.
+  if (!is_leaf(jump_value) && is_leaf(jump_value->first)
+      && LPAREN == jump_value->first->token->type) {
+    jump_value = jump_value->second->first;
   }
   return codegen(jump_value, tape)
       + tape_ins_no_arg(tape, RET, jump_type->token);
