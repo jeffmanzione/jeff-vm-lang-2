@@ -119,7 +119,10 @@ void catch_error(VM *vm) {
     if (0 == Array_size(vm->saved_blocks.obj->array)) {
       break;
     }
-    vm_back(vm);
+    if (!vm_back(vm)) {
+      ERROR("HOW DID I GET HERE?");
+      break;
+    }
   }
   if (catch_goto.type == NONE) {
     Element error_module = vm_lookup_module(vm, strings_intern("error"));
@@ -362,12 +365,17 @@ void vm_pushstack(VM *vm, Element element) {
   memory_graph_array_enqueue(vm->graph, vm->stack, element);
 }
 
-Element vm_popstack(VM *vm) {
+Element vm_popstack(VM *vm, bool *has_error) {
   ASSERT_NOT_NULL(vm);
   ASSERT(vm->stack.type == OBJECT);
   ASSERT(vm->stack.obj->type == ARRAY);
   ASSERT_NOT_NULL(vm->stack.obj->array);
-  ASSERT(!Array_is_empty(vm->stack.obj->array));
+  if (Array_is_empty(vm->stack.obj->array)) {
+    *has_error = true;
+//    vm_throw_error(vm, vm_current_ins(vm),
+//        "Attempted to pop from the empty stack.");
+    return create_none();
+  }
   return memory_graph_array_dequeue(vm->graph, vm->stack);
 }
 
@@ -396,31 +404,37 @@ Element vm_new_block(VM *vm, Element parent, Element new_this) {
 
   Element module = vm_get_module(vm);
   uint32_t ip = vm_get_ip(vm);
-//  Element resval = vm_get_resval(vm);
+
   memory_graph_set_field(vm->graph, vm->root, CURRENT_BLOCK, new_block);
   memory_graph_set_field(vm->graph, new_block, PARENT, parent);
   memory_graph_set_field(vm->graph, new_block, THIS, new_this);
-//  memory_graph_set_field(vm->graph, new_block, RESULT_VAL, resval);
   vm_set_module(vm, module, ip);
   return new_block;
 }
 
-void vm_back(VM *vm) {
+// Returns false if there is an error.
+bool vm_back(VM *vm) {
   ASSERT_NOT_NULL(vm);
   Element parent_block = memory_graph_array_pop(vm->graph, vm->saved_blocks);
   // Remove accumulated stack.
   // TODO: Maybe consider an increased stack a bug in the future.
   Element old_stack_size = obj_get_field(parent_block, STACK_SIZE_NAME);
+  bool has_error = false;
   if (NONE != old_stack_size.type) {
     ASSERT(ISVALUE(old_stack_size), INT == old_stack_size.val.type);
     int i;
     for (i = 0;
         i < Array_size(vm->stack.obj->array) - old_stack_size.val.int_val;
         ++i) {
-      vm_popstack(vm);
+      vm_popstack(vm, &has_error);
+      // TODO: Maybe return instead.
+      if (has_error) {
+        return false;
+      }
     }
   }
   memory_graph_set_field(vm->graph, vm->root, CURRENT_BLOCK, parent_block);
+  return true;
 }
 
 const MemoryGraph *vm_get_graph(const VM *vm) {
@@ -602,7 +616,8 @@ void execute_object_operation(VM *vm, Element lhs, Element rhs,
 }
 
 bool execute_no_param(VM *vm, Ins ins) {
-  Element elt, index, new_val, class;
+  Element elt, index, new_val, class, block;
+  bool has_error = false;
   switch (ins.op) {
   case NOP:
     return true;
@@ -616,13 +631,16 @@ bool execute_no_param(VM *vm, Ins ins) {
         create_int(1));
     catch_error(vm);
     // Counter shift forward at end of instruction execution.
-    vm_shift_ip(vm, -1);
+//    vm_shift_ip(vm, -2);
     return true;
   case PUSH:
     vm_pushstack(vm, (Element) vm_get_resval(vm));
     return true;
   case CALL:
-    elt = vm_popstack(vm);
+    elt = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
     if (ISOBJECT(elt)) {
       class = obj_get_field(elt, CLASS_KEY);
       if (inherits_from(class,
@@ -638,8 +656,14 @@ bool execute_no_param(VM *vm, Ins ins) {
     }
     return true;
   case ASET:
-    elt = vm_popstack(vm);
-    new_val = vm_popstack(vm);
+    elt = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
+    new_val = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
     if (elt.type != OBJECT) {
       vm_throw_error(vm, ins,
           "Cannot perform array operation on something not an Object.");
@@ -668,7 +692,10 @@ bool execute_no_param(VM *vm, Ins ins) {
     }
     return true;
   case AIDX:
-    elt = vm_popstack(vm);
+    elt = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
     index = vm_get_resval(vm);
     if (elt.type != OBJECT) {
       vm_throw_error(vm, ins, "Indexing on something not Arraylike.");
@@ -704,7 +731,11 @@ bool execute_no_param(VM *vm, Ins ins) {
     }
     return true;
   case RES:
-    vm_set_resval(vm, vm_popstack(vm));
+    elt = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
+    vm_set_resval(vm, elt);
     return true;
   case PEEK:
     vm_set_resval(vm, vm_peekstack(vm, 0));
@@ -713,8 +744,32 @@ bool execute_no_param(VM *vm, Ins ins) {
     elt = vm_peekstack(vm, 0);
     vm_pushstack(vm, elt);
     return true;
+  case NBLK:
+    vm_new_block(vm, current_block(vm), vm_lookup(vm, THIS));
+    memory_graph_set_field(vm->graph, current_block(vm), IS_ITERATOR_BLOCK_KEY,
+        create_int(1));
+    return true;
+  case BBLK:
+    block = current_block(vm);
+    if (!vm_back(vm)) {
+      vm_throw_error(vm, ins, "vm_back failed.");
+      return true;
+    }
+    vm_set_ip(vm, obj_get_field(block, IP_FIELD).val.int_val);
+    return true;
   case RET:
-    vm_back(vm);
+    // Clear all loops.
+    while (NONE != obj_get_field(current_block(vm), IS_ITERATOR_BLOCK_KEY).type) {
+      if (!vm_back(vm)) {
+        vm_throw_error(vm, ins, "vm_back failed.");
+        return true;
+      }
+    }
+    // Return to previous function call.
+    if (!vm_back(vm)) {
+      vm_throw_error(vm, ins, "vm_back (ret) failed.");
+      return true;
+    }
     return true;
   case PRNT:
     elt = vm_get_resval(vm);
@@ -745,8 +800,14 @@ bool execute_no_param(VM *vm, Ins ins) {
   }
 
   Element res;
-  Element rhs = vm_popstack(vm);
-  Element lhs = vm_popstack(vm);
+  Element rhs = vm_popstack(vm, &has_error);
+  if (has_error) {
+    return true;
+  }
+  Element lhs = vm_popstack(vm, &has_error);
+  if (has_error) {
+    return true;
+  }
   switch (ins.op) {
   case ADD:
     if ( ISTYPE(lhs, class_string) && ISTYPE(rhs, class_string)) {
@@ -825,7 +886,9 @@ bool execute_no_param(VM *vm, Ins ins) {
     }
     break;
   default:
-    ERROR("Instruction op was not a no_param");
+    DEBUGF("Weird op=%d", ins.op);
+    vm_throw_error(vm, ins, "Instruction op was not a no_param.");
+    return true;
   }
   vm_set_resval(vm, res);
 
@@ -847,7 +910,10 @@ bool execute_id_param(VM *vm, Ins ins) {
         vm_get_resval(vm));
     break;
   case FLD:
-    new_res_val = vm_popstack(vm);
+    new_res_val = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
     memory_graph_set_field(vm->graph, vm_get_resval(vm), ins.str, new_res_val);
     vm_set_resval(vm, new_res_val);
     break;
@@ -920,7 +986,10 @@ bool execute_id_param(VM *vm, Ins ins) {
     vm_set_resval(vm, new_res_val);
     break;
   case CALL:
-    obj = vm_popstack(vm);
+    obj = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
     if (obj.type == NONE) {
       vm_throw_error(vm, ins, "Cannot deference Nil.");
       return true;
@@ -950,7 +1019,10 @@ bool execute_id_param(VM *vm, Ins ins) {
     vm_set_resval(vm, module);
     break;
   case MCLL:
-    module = vm_popstack(vm);
+    module = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
     ASSERT(OBJECT == module.type, MODULE == module.obj->type)
     ;
     vm_new_block(vm, block, block);
@@ -985,8 +1057,9 @@ void execute_tget(VM *vm, Ins ins, Element tuple, int64_t index) {
 }
 
 bool execute_val_param(VM *vm, Ins ins) {
-  Element elt = val_to_elt(ins.val);
+  Element elt = val_to_elt(ins.val), popped;
   Element tuple, array;
+  bool has_error = false;
   int i;
   switch (ins.op) {
   case EXIT:
@@ -1002,7 +1075,11 @@ bool execute_val_param(VM *vm, Ins ins) {
     vm_set_resval(vm, vm_peekstack(vm, elt.val.int_val));
     break;
   case SINC:
-    vm_pushstack(vm, create_int(vm_popstack(vm).val.int_val + elt.val.int_val));
+    popped = vm_popstack(vm, &has_error);
+    if (has_error) {
+      return true;
+    }
+    vm_pushstack(vm, create_int(popped.val.int_val + elt.val.int_val));
     break;
   case TUPL:
     ASSERT(elt.type == VALUE, elt.val.type == INT)
@@ -1010,7 +1087,11 @@ bool execute_val_param(VM *vm, Ins ins) {
     tuple = create_tuple(vm->graph);
     vm_set_resval(vm, tuple);
     for (i = 0; i < elt.val.int_val; i++) {
-      memory_graph_tuple_add(vm->graph, tuple, vm_popstack(vm));
+      popped = vm_popstack(vm, &has_error);
+      if (has_error) {
+        return true;
+      }
+      memory_graph_tuple_add(vm->graph, tuple, popped);
     }
     break;
   case TGET:
@@ -1053,7 +1134,11 @@ bool execute_val_param(VM *vm, Ins ins) {
     array = create_array(vm->graph);
     vm_set_resval(vm, array);
     for (i = 0; i < elt.val.int_val; i++) {
-      memory_graph_array_enqueue(vm->graph, array, vm_popstack(vm));
+      popped = vm_popstack(vm, &has_error);
+      if (has_error) {
+        return true;
+      }
+      memory_graph_array_enqueue(vm->graph, array, popped);
     }
     break;
   case CTCH:

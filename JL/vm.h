@@ -22,7 +22,6 @@ struct VM_ {
   ArgStore *store;
   MemoryGraph *graph;
   Element root, stack,
-//  class_manager,
       saved_blocks, modules;
 };
 
@@ -40,14 +39,14 @@ void vm_throw_error(VM *vm, Ins ins, const char fmt[], ...);
 Ins vm_current_ins(const VM *vm);
 
 void vm_pushstack(VM *vm, Element element);
-Element vm_popstack(VM *vm);
+//Element vm_popstack(VM *vm);
 const Element vm_get_resval(VM *vm);
 Element vm_lookup(VM *vm, const char name[]);
 
 // Creates a block with the specified obj as the parent
 Element vm_new_block(VM *vm, Element parent, Element new_this);
 // goes back one block
-void vm_back(VM *vm);
+bool vm_back(VM *vm);
 
 bool execute(VM *vm);
 

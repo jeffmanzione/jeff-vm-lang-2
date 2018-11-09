@@ -31,8 +31,19 @@ Element file_constructor(VM *vm, ExternalData *data, Element arg) {
     mode = strings_intern("r");
   } else if (is_object_type(&arg, TUPLE)) {
     Tuple *args = arg.obj->tuple;
-    fn = string_to_cstr(tuple_get(args, 0));
-    mode = string_to_cstr(tuple_get(args, 1));
+    if (tuple_size(args) < 2) {
+      return throw_error(vm, "Too few arguments for File__ constructor.");
+    }
+    Element e_fn = tuple_get(args, 0);
+    if (!ISTYPE(e_fn, class_string)) {
+      return throw_error(vm, "File name not a String.");
+    }
+    Element e_mode = tuple_get(args, 1);
+    if (!ISTYPE(e_mode, class_string)) {
+      return throw_error(vm, "File mode not a String.");
+    }
+    fn = string_to_cstr(e_fn);
+    mode = string_to_cstr(e_mode);
   } else {
     ERROR("Unknown input.");
     return create_none();

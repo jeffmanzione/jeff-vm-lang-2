@@ -37,6 +37,8 @@ typedef enum {
   IF,
   IFN,
   JMP,
+  NBLK,
+  BBLK,
   RET,
   ADD,
   SUB,

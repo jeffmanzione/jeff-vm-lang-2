@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEFAULT_TABLE_SIZE 32
+#define DEFAULT_TABLE_SIZE 8
 
 #define DEFINE_ARRAYLIKE(name, type) \
   typedef struct name##_ name;\

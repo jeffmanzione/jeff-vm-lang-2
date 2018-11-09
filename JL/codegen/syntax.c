@@ -415,8 +415,8 @@ ImplSyntax(assignment_expression,
 //    function_argument_list
 //    ( function_argument_list )
 ImplSyntax(assignment_tuple,
-    Or(function_argument_list,
-       And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN))));
+    Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
+       function_argument_list));
 
 //expression
 //    assignment_expression
@@ -501,9 +501,13 @@ ImplSyntax(break_statement,
 // function_argument_list
 //    identifier | function_argument_list , identifier
 ImplSyntax(function_argument_list1,
-    Or(And(TypeLn(COMMA), identifier, function_argument_list1), Epsilon));
+    Or(And(TypeLn(COMMA), Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
+                                 identifier),
+           function_argument_list1), Epsilon));
 ImplSyntax(function_argument_list,
-    And(identifier, function_argument_list1));
+    And(Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
+           identifier),
+        function_argument_list1));
 
 // function_definition
 //    def identifier ( argument_list ) statement

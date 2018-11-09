@@ -43,7 +43,7 @@ class FileInternal
   not
   ifn   15
   push  Error
-  push  cat
+  push  concat
   push  ')'
   push  binary
   push  ','
@@ -146,11 +146,12 @@ class FileReader
   gtsh  fi
   call  getline
   ret
-  jmp   12
+  jmp   14
 
 @getlines
   res   ''
   set   lines
+  nblk
   push  self
   call  getline
   set   line
@@ -158,7 +159,8 @@ class FileReader
   push  lines
   res   line
   call  extend
-  jmp   -8
+  jmp   -9
+  bblck
   res   lines
   ret
   jmp   4

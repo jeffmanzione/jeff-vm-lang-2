@@ -358,28 +358,33 @@ TokenType resolve_type(const char word[], int word_len, int *in_comment) {
   return type;
 }
 
-int is_start_complex(const char c) {
-  switch (c) {
+bool is_complex(const char seq[]) {
+  const char sec = seq[1];
+  switch (seq[0]) {
   case '+':
-  case '-':
-  case '<':
-  case '>':
-  case '=':
-  case '!':
-    return true;
-  default:
+    if (sec == '+' || sec == '=')
+      return true;
     return false;
-  }
-}
-
-int is_second_complex(const char c) {
-  switch (c) {
-  case '+':
   case '-':
-  case '>':
+    if (sec == '-' || sec == '=' || sec == '>')
+      return true;
+    return false;
   case '<':
+    if (sec == '-' || sec == '=' || sec == '<' || sec == '>')
+      return true;
+    return false;
+  case '>':
+    if (sec == '=' || sec == '>')
+      return true;
+    return false;
   case '=':
-    return true;
+    if (sec == '=')
+      return true;
+    return false;
+  case '!':
+    if (sec == '=')
+      return true;
+    return false;
   default:
     return false;
   }
@@ -401,7 +406,7 @@ int read_word(char **ptr, char word[], int *word_len) {
   }
 
   if ((is_special_char(index[0]) || CODE_COMMENT_CH == index[0])) {
-    if (is_start_complex(index[0]) && is_second_complex(index[1])) {
+    if (is_complex(index)) {
       word[wrd_ln++] = index[0];
       index++;
     }

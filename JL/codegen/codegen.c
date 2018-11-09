@@ -130,7 +130,8 @@ int codegen_while(SyntaxTree *tree, Token *while_token, Tape *tape) {
   int num_lines = 0;
   SyntaxTree *condition_expression = tree->first;
   SyntaxTree *body = tree->second;
-  num_lines += codegen(condition_expression, tape);
+  num_lines += tape_ins_no_arg(tape, NBLK, while_token)
+      + codegen(condition_expression, tape);
 
   Tape *tmp_tape = tape_create();
   int lines_for_body = codegen(body, tmp_tape);
@@ -141,7 +142,7 @@ int codegen_while(SyntaxTree *tree, Token *while_token, Tape *tape) {
       continue;
     }
     if (c->ins.val.int_val == 0) {
-      c->ins.val.int_val = lines_for_body - i + 1;
+      c->ins.val.int_val = lines_for_body - i;
     } else if (c->ins.val.int_val == INT_MAX) {
       c->ins.val.int_val = -(i + 1);
     }
@@ -152,7 +153,8 @@ int codegen_while(SyntaxTree *tree, Token *while_token, Tape *tape) {
   tape_append(tape, tmp_tape);
   tape_delete(tmp_tape);
 
-  num_lines += tape_ins_int(tape, JMP, -(num_lines + 1), while_token);
+  num_lines += tape_ins_int(tape, JMP, -(num_lines + 1), while_token)
+      + tape_ins_no_arg(tape, BBLK, while_token);
 
   return num_lines;
 }
@@ -169,7 +171,7 @@ int codegen_for(SyntaxTree *tree, Token *for_token, Tape *tape) {
   SyntaxTree *init = condition_expression->first;
   SyntaxTree *condition = condition_expression->second->second->first;
   SyntaxTree *incremental = condition_expression->second->second->second->second;
-  num_lines += codegen(init, tape);
+  num_lines += tape_ins_no_arg(tape, NBLK, for_token) + codegen(init, tape);
   int lines_for_condition = codegen(condition, tape);
   num_lines += lines_for_condition;
 
@@ -183,10 +185,13 @@ int codegen_for(SyntaxTree *tree, Token *for_token, Tape *tape) {
     if (c->ins.op != JMP) {
       continue;
     }
+    // break
     if (c->ins.val.int_val == 0) {
-      c->ins.val.int_val = lines_for_body + lines_for_incremental - i + 1;
-    } else if (c->ins.val.int_val == INT_MAX) {
-      c->ins.val.int_val = -(num_lines + i + 2);
+      c->ins.val.int_val = lines_for_body + lines_for_incremental - i;
+    }
+    // continue
+    else if (c->ins.val.int_val == INT_MAX) {
+      c->ins.val.int_val = lines_for_body - i - 1;
     }
   }
 
@@ -198,52 +203,10 @@ int codegen_for(SyntaxTree *tree, Token *for_token, Tape *tape) {
 
   num_lines += tape_ins_int(tape, JMP,
       -(lines_for_body + lines_for_condition + lines_for_incremental + 1),
-      for_token);
+      for_token) + tape_ins_no_arg(tape, BBLK, for_token);
 
   return num_lines;
 }
-//
-//int codegen_foreach(SyntaxTree *tree, Token *for_token, Tape *tape) {
-//  int num_lines = 0;
-//  SyntaxTree *iterative = tree->first;
-//  SyntaxTree *body = tree->second;
-//  if (is_leaf(iterative->first) && LPAREN == iterative->first->token->type) {
-//    iterative = iterative->second->first;
-//  }
-//  SyntaxTree *var = iterative->first;
-//  SyntaxTree *range = iterative->second->second;
-//
-//  num_lines += codegen(range, tape)
-//      + tape_ins_no_arg(tape, PUSH, iterative->second->first->token)
-//      + tape_ins_int(tape, PUSH, 0, iterative->second->first->token);
-//
-//  Tape *tmp = tape_create();
-//  int body_lines = tape_ins_int(tmp, PEEK, 1, var->token)
-//      + tape_ins_no_arg(tmp, PUSH, var->token)
-//      + tape_ins_int(tmp, PEEK, 1, var->token)
-//      + tape_ins_no_arg(tmp, AIDX, var->token) + tape_ins(tmp, SET, var->token)
-//      + codegen(body, tmp)
-//      + tape_ins_int(tmp, SINC, 1, iterative->second->first->token);
-//
-//  int inc_lines = tape_ins_no_arg(tape, DUP, iterative->second->first->token)
-//      + tape_ins_int(tape, PEEK, 2, iterative->second->first->token)
-//      + tape_ins_text(tape, GET, LENGTH_KEY, iterative->second->first->token)
-//      + tape_ins_no_arg(tape, PUSH, iterative->second->first->token)
-//      + tape_ins_no_arg(tape, LT, iterative->second->first->token)
-//      + tape_ins_int(tape, IFN, body_lines + 1,
-//          iterative->second->first->token);
-//
-//  tape_append(tape, tmp);
-//  tape_delete(tmp);
-//
-//  num_lines += body_lines + inc_lines
-//      + tape_ins_int(tape, JMP, -(inc_lines + body_lines + 1),
-//          iterative->second->first->token)
-//      + tape_ins_no_arg(tape, RES, iterative->second->first->token)
-//      + tape_ins_no_arg(tape, RES, iterative->second->first->token);
-//
-//  return num_lines;
-//}
 
 int codegen_foreach(SyntaxTree *tree, Token *for_token, Tape *tape) {
   int num_lines = 0;
@@ -260,7 +223,8 @@ int codegen_foreach(SyntaxTree *tree, Token *for_token, Tape *tape) {
   SyntaxTree *iterable = iterative->second->second;
   Token *iter_token = iterative->second->first->token;
 
-  num_lines += codegen(iterable, tape) + tape_ins_no_arg(tape, PUSH, iter_token)
+  num_lines += tape_ins_no_arg(tape, NBLK, for_token) + codegen(iterable, tape)
+      + tape_ins_no_arg(tape, PUSH, iter_token)
       + tape_ins_text(tape, CALL, ITER_FN_NAME, iter_token)
       + tape_ins_no_arg(tape, PUSH, iter_token);
 
@@ -274,13 +238,29 @@ int codegen_foreach(SyntaxTree *tree, Token *for_token, Tape *tape) {
       + tape_ins_text(tape, CALL, HAS_NEXT_FN_NAME, iter_token)
       + tape_ins_int(tape, IFN, body_lines + 1, iter_token);
 
+  int i;
+  for (i = 0; i < tape_len(tmp); ++i) {
+    InsContainer *c = tape_get_mutable(tmp, i);
+    if (c->ins.op != JMP) {
+      continue;
+    }
+    // break
+    if (c->ins.val.int_val == 0) {
+      c->ins.val.int_val = body_lines - i;
+    }
+    // continue
+    else if (c->ins.val.int_val == INT_MAX) {
+      c->ins.val.int_val = body_lines - i - 1;
+    }
+  }
+
   tape_append(tape, tmp);
   tape_delete(tmp);
 
   num_lines += body_lines + inc_lines
       + tape_ins_int(tape, JMP, -(inc_lines + body_lines + 1), iter_token)
-      + tape_ins_no_arg(tape, RES, iter_token);
-
+      + tape_ins_no_arg(tape, RES, iter_token)
+      + tape_ins_no_arg(tape, BBLK, for_token);
   return num_lines;
 }
 
@@ -316,6 +296,8 @@ int codegen_tuple(SyntaxTree *tree, int *num_args, Tape *tape) {
   return num_lines;
 }
 
+int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape);
+
 int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
   //DEBUGF("codegen_function_args");
   int num_lines = 0;
@@ -323,7 +305,30 @@ int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
   if (prod != function_argument_list1) {
     ERROR("Not a function_argument_list1");
   }
-  if (is_leaf(tree->second)
+  if (!is_leaf(tree->second) && is_leaf(tree->second->first)
+      && tree->second->first->token->type == LPAREN) {
+    Token *tok = tree->second->first->token;
+    num_lines += tape_ins_no_arg(tape, RES, tok)
+        + tape_ins_no_arg(tape, PUSH, tok)
+        + tape_ins_int(tape, TGET, argument_index, tok)
+        + codegen_function_arguments_list(tree->second->second->first, tape);
+  } else if (!is_leaf(tree->second) && !is_leaf(tree->second->first)
+      && !is_leaf(tree->second->first->second)) {
+    Token *tok = tree->second->first->first->token;
+    num_lines += tape_ins_no_arg(tape, RES, tok)
+        + tape_ins_no_arg(tape, PUSH, tok)
+        + tape_ins_int(tape, TGET, argument_index, tok)
+        + codegen_function_arguments_list(tree->second->first->second->first,
+            tape);
+    tok =
+        is_leaf(tree->second->first) ?
+            tree->second->first->token : tree->second->first->first->token;
+    num_lines += tape_ins_no_arg(tape, RES, tok)
+        + tape_ins_no_arg(tape, PUSH, tok)
+        + tape_ins_int(tape, TGET, argument_index, tok)
+        + (is_leaf(tree->second->first) ? tape_ins(tape, SET, tok) : 0)
+        + codegen_function_args(tree->second->second, argument_index + 1, tape);
+  } else if (is_leaf(tree->second)
       || tree->second->second->expression != function_argument_list1) {
     Token *tok =
         is_leaf(tree->second) ?
@@ -332,24 +337,38 @@ int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
         + tape_ins_int(tape, TGET, argument_index, tok)
         + tape_ins(tape, SET, tok);
   } else {
-    num_lines += tape_ins_no_arg(tape, RES, tree->second->first->token)
-        + tape_ins_no_arg(tape, PUSH, tree->second->first->token)
-        + tape_ins_int(tape, TGET, argument_index, tree->second->first->token)
-        + tape_ins(tape, SET, tree->second->first->token)
+    Token *tok =
+        is_leaf(tree->second->first) ?
+            tree->second->first->token : tree->second->first->first->token;
+    num_lines += tape_ins_no_arg(tape, RES, tok)
+        + tape_ins_no_arg(tape, PUSH, tok)
+        + tape_ins_int(tape, TGET, argument_index, tok)
+        + (is_leaf(tree->second->first) ? tape_ins(tape, SET, tok) : 0)
         + codegen_function_args(tree->second->second, argument_index + 1, tape);
   }
   return num_lines;
 }
 
 int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape) {
-  return tape_ins_no_arg(tape, PUSH, tree->first->token)
-      + tape_ins_int(tape, TGET, 0, tree->first->token)
-      + tape_ins(tape, SET, tree->first->token)
-      + codegen_function_args(tree->second, 1, tape);
+  int num_lines = 0;
+  if (is_leaf(tree->first) && LPAREN != tree->first->token->type) {
+    num_lines += tape_ins_no_arg(tape, PUSH, tree->first->token)
+        + tape_ins_int(tape, TGET, 0, tree->first->token)
+        + tape_ins(tape, SET, tree->first->token);
+  } else if (!is_leaf(tree->first) && is_leaf(tree->first->first)) {
+    num_lines += tape_ins_no_arg(tape, PUSH, tree->first->first->token)
+        + tape_ins_int(tape, TGET, 0, tree->first->first->token)
+        + codegen_function_arguments_list(tree->first->second->first, tape);
+  }
+  if (is_leaf(tree->first) && !is_leaf(tree->second->first)
+      && tree->second->first->expression == function_argument_list) {
+    num_lines += codegen_function_arguments_list(tree->second->first, tape);
+  }
+  return num_lines + codegen_function_args(tree->second, 1, tape);
 }
 
 int codegen_class(SyntaxTree *tree, Tape *tape) {
-  //DEBUGF("codegen_class");
+//DEBUGF("codegen_class");
   int num_lines = 0;
   SyntaxTree *class_inner = tree->second;
   SyntaxTree *class_body = class_inner->second;
@@ -388,7 +407,7 @@ int codegen_class(SyntaxTree *tree, Tape *tape) {
 }
 
 int codegen_import(SyntaxTree *tree, Tape *tape) {
-  //DEBUGF("codegen_import");
+//DEBUGF("codegen_import");
   if (!is_leaf(tree->first) || tree->first->token->type != IMPORT) {
     ERROR("Unknown import expression");
   }
@@ -591,7 +610,7 @@ int codegen_jump(SyntaxTree *tree, Tape *tape) {
   if (jump_type->token->type != RETURN) {
     ERROR("jump_statement not implemented");
   }
-  // If surrounded in parens, then use what's inside.
+// If surrounded in parens, then use what's inside.
   if (!is_leaf(jump_value) && is_leaf(jump_value->first)
       && LPAREN == jump_value->first->token->type) {
     jump_value = jump_value->second->first;
@@ -681,13 +700,13 @@ int codegen_try(SyntaxTree *tree, Tape *tape) {
   Tape *catch_body_tape = tape_create();
   int catch_lines = codegen(catch_body, catch_body_tape);
 
-  int goto_pos = try_lines + 1;
+  int goto_pos = try_lines - 1;
 
   num_lines += tape_ins_int(tape, CTCH, goto_pos, tree->first->token);
   num_lines += try_lines;
   tape_append(tape, try_body_tape);
   num_lines += tape_ins_int(tape, JMP, catch_lines + 1, tree->first->token);
-  // Expect error to be in resval
+// Expect error to be in resval
   num_lines += tape_ins(tape, SET, error_identifier->token);
   num_lines += catch_lines;
   tape_append(tape, catch_body_tape);

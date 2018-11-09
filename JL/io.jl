@@ -11,7 +11,7 @@ class FileInternal {
     }
     self.file = File__(fn, mode)
     if ~self.file.success {
-      raise Error(cat('Failed to open file. FileInternal(',
+      raise Error(concat('Failed to open file. FileInternal(',
                       fn, ',', rw, ',', a, ',', binary,')'))
     }
   }

@@ -49,8 +49,13 @@ class Error {
   def new(msg) {
     self.msg = if (msg is String) then msg else concat(msg)
     self.stack_lines = []
-    for i=0, i<$root.$saved_blocks.len, i=i+1 {
+    ; Start at 1 since 0-th block will be this loop.
+    for i=1, i<$root.$saved_blocks.len, i=i+1 {
       block = $root.$saved_blocks[i]
+      ; Skip non-function call blocks
+      if block.$is_iterator_block {
+        continue
+      }
       self.stack_lines.append(StackLine(block))
     }
   }

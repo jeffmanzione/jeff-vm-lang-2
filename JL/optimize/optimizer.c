@@ -7,6 +7,7 @@
 
 #include "optimizer.h"
 
+#include "../error.h"
 
 void add_adjustment(OptimizeHelper *oh, Adjustment *a, int index) {
   int i = expando_append(oh->adjustments, a);

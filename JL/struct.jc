@@ -29,7 +29,7 @@ class Map
   fld   keys
   res   self
   ret
-  jmp   126
+  jmp   128
 
 @__set__
   push
@@ -94,6 +94,7 @@ class Map
   res   pos
   aidx
   set   entries
+  nblk
   res   0
   set   i
   res   i
@@ -142,6 +143,7 @@ class Map
   add
   set   i
   jmp   -45
+  bblck
   res   entries
   push
   res   v
@@ -158,7 +160,7 @@ class Map
   res   None
   ret
   ret
-  jmp   70
+  jmp   72
 
 @__index__
   set   k
@@ -189,6 +191,7 @@ class Map
   res   pos
   aidx
   set   entries
+  nblk
   res   0
   set   i
   res   i
@@ -228,6 +231,7 @@ class Map
   add
   set   i
   jmp   -36
+  bblck
   res   None
   ret
   ret
@@ -326,7 +330,7 @@ class Node
   fld   value
   res   self
   ret
-  jmp   53
+  jmp   55
 
 @to_s
   res   'Node('
@@ -342,6 +346,7 @@ class Node
   res   self
   get   value
   call  extend
+  nblk
   res   self
   get   children
   push
@@ -377,6 +382,7 @@ class Node
   call  extend
   jmp   -29
   res
+  bblck
   res   tos
   push
   res   ')'
@@ -397,7 +403,7 @@ class Trie
   fld   root
   res   self
   ret
-  jmp   71
+  jmp   73
 
 @insert
   push
@@ -426,6 +432,7 @@ class Trie
   ifn   2
   res   0
   set   index_last_char
+  nblk
   res   key
   push
   res   key
@@ -466,12 +473,13 @@ class Trie
   set   node
   jmp   -27
   res
+  bblck
   res   value
   push
   res   node
   fld   value
   ret
-  jmp   52
+  jmp   54
 
 @find_node
   push
@@ -482,6 +490,7 @@ class Trie
   set   key
   res   None
   set   index_last_char
+  nblk
   res   key
   push
   call  iter
@@ -520,6 +529,7 @@ class Trie
   set   node
   jmp   -33
   res
+  bblck
   res   index_last_char
   push
   res   node
@@ -553,7 +563,7 @@ class Trie
   res   node
   get   value
   ret
-  jmp   40
+  jmp   42
 
 @collect_child_values
   set   node
@@ -567,6 +577,7 @@ class Trie
   ret
   anew
   set   result
+  nblk
   res   node
   get   children
   push
@@ -594,6 +605,7 @@ class Trie
   call  extend
   jmp   -21
   res
+  bblck
   res   result
   ret
   jmp   37

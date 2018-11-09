@@ -73,6 +73,7 @@ char *OBJ_KEY;
 char *METHOD_KEY;
 char *CALL_KEY;
 char *STACK_SIZE_NAME;
+char *IS_ITERATOR_BLOCK_KEY;
 
 struct Chunk_ {
   char *block;
@@ -151,6 +152,7 @@ void strings_insert_constants() {
   METHOD_KEY = strings_intern("method");
   CALL_KEY = strings_intern("call");
   STACK_SIZE_NAME = strings_intern("$stack_size");
+  IS_ITERATOR_BLOCK_KEY = strings_intern("$is_iterator_block");
 }
 
 void strings_init() {
