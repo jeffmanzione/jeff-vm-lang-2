@@ -9,6 +9,7 @@
 #define STRINGS_H_
 
 #include "../datastructure/set.h"
+#include "../threads/thread_interface.h"
 
 extern char *ROOT;
 extern char *RESULT_VAL;
@@ -28,10 +29,11 @@ extern char *TRUE_KEYWORD;
 extern char *FALSE_KEYWORD;
 extern char *NIL_KEYWORD;
 extern char *LENGTH_KEY;
-extern char *THIS;
+extern char *SELF;
 extern char *MODULE_FIELD;
 extern char *MODULES;
 extern char *CLASS_KEY;
+extern char *CLASSES_KEY;
 extern char *CONSTRUCTOR_KEY;
 extern char *DECONSTRUCTOR_KEY;
 extern char *PARENT_KEY;
@@ -65,13 +67,13 @@ extern char *CALL_KEY;
 extern char *STACK_SIZE_NAME;
 extern char *IS_ITERATOR_BLOCK_KEY;
 
-
 typedef struct Chunk_ Chunk;
 
 typedef struct {
   char *tail, *end;
   Chunk *chunk, *last;
   Set strings;
+  ThreadHandle mutex;
 } Strings;
 
 extern Strings strings;

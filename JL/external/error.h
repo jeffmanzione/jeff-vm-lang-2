@@ -10,6 +10,6 @@
 
 #include "../element.h"
 
-Element token__(VM *vm, ExternalData *ed, Element argument);
+Element token__(VM *vm, Thread *t, ExternalData *ed, Element argument);
 
 #endif /* EXTERNAL_ERROR_H_ */

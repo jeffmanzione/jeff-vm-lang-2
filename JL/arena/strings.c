@@ -38,10 +38,11 @@ char *TRUE_KEYWORD;
 char *FALSE_KEYWORD;
 char *NIL_KEYWORD;
 char *LENGTH_KEY;
-char *THIS;
+char *SELF;
 char *MODULE_FIELD;
 char *MODULES;
 char *CLASS_KEY;
+char *CLASSES_KEY;
 char *CONSTRUCTOR_KEY;
 char *DECONSTRUCTOR_KEY;
 char *PARENT_KEY;
@@ -117,10 +118,11 @@ void strings_insert_constants() {
   FALSE_KEYWORD = strings_intern("False");
   NIL_KEYWORD = strings_intern("Nil");
   LENGTH_KEY = strings_intern("len");
-  THIS = strings_intern("self");
+  SELF = strings_intern("self");
   MODULE_FIELD = strings_intern("$module");
   MODULES = strings_intern("$modules");
   CLASS_KEY = strings_intern("class");
+  CLASSES_KEY = strings_intern("classes");
   CONSTRUCTOR_KEY = strings_intern("new");
   DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
   PARENT_KEY = strings_intern("parents");
@@ -156,6 +158,7 @@ void strings_insert_constants() {
 }
 
 void strings_init() {
+  strings.mutex = create_mutex(NULL);
   strings.chunk = strings.last = chunk_create();
   strings.tail = strings.chunk->block;
   strings.end = strings.tail + strings.chunk->sz;
@@ -167,6 +170,7 @@ void strings_init() {
 void strings_finalize() {
   set_finalize(&strings.strings);
   chunk_delete(strings.chunk);
+  close_mutex(strings.mutex);
 }
 
 char *strings_intern_range(const char str[], int start, int end) {
@@ -179,8 +183,10 @@ char *strings_intern_range(const char str[], int start, int end) {
 }
 
 char *strings_intern(const char str[]) {
+  wait_for_mutex(strings.mutex, INFINITE);
   char *str_lookup = (char *) set_lookup(&strings.strings, str);
   if (NULL != str_lookup) {
+    release_mutex(strings.mutex);
     return str_lookup;
   }
   uint32_t len = strlen(str);
@@ -194,5 +200,6 @@ char *strings_intern(const char str[]) {
   memmove(strings.tail, str, len + 1);
   strings.tail += (len + 1);
   set_insert(&strings.strings, to_return);
+  release_mutex(strings.mutex);
   return to_return;
 }

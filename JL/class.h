@@ -31,6 +31,7 @@ extern Element class_external_function;
 extern Element class_method;
 extern Element class_methodinstance;
 extern Element class_module;
+extern Element class_thread;
 
 void class_init(VM *vm);
 void class_fill_unsafe(VM *vm, Element class, const char class_name[],

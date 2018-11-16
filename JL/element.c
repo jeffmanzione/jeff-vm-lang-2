@@ -22,6 +22,7 @@
 #include "external/strings.h"
 #include "graph/memory_graph.h"
 #include "module.h"
+#include "threads/thread_interface.h"
 #include "vm.h"
 
 Element create_obj_of_class_unsafe_inner(MemoryGraph *graph, Map *objs,
@@ -156,7 +157,7 @@ Element create_array(MemoryGraph *graph) {
 Element string_create_len_unescape(VM *vm, const char *str, size_t len) {
   Element elt = create_external_obj(vm, class_string);
   ASSERT(NONE != elt.type);
-  string_constructor(vm, elt.obj->external_data, create_none());
+  string_constructor(vm, NULL, elt.obj->external_data, create_none());
   elt.obj->external_data->deconstructor = string_deconstructor;
   String *string = String_extract(elt);
 
@@ -272,6 +273,7 @@ void obj_set_field(Element elt, const char field_name[], Element field_val) {
   }
   Element *elt_ptr = ARENA_ALLOC(Element);
   *elt_ptr = field_val;
+
   map_insert(&elt.obj->fields, field_name, elt_ptr);
 }
 
@@ -296,10 +298,11 @@ void obj_delete_ptr(Object *obj, bool free_mem) {
     ASSERT(NOT_NULL(obj->external_data));
     if (NULL != obj->external_data->deconstructor) {
       obj->external_data->deconstructor(externaldata_vm(obj->external_data),
-          obj->external_data, create_none());
+      NULL, obj->external_data, create_none());
     }
     externaldata_delete(obj->external_data);
   }
+//  close_rwlock(&obj->rwlock);
   if (free_mem) {
     void dealloc_elts(Pair *kv) {
       ARENA_DEALLOC(Element, kv->value);
@@ -524,11 +527,11 @@ void elt_to_str(Element elt, FILE *file) {
 }
 
 Element element_true(VM *vm) {
-  return vm_lookup(vm, TRUE_KEYWORD);
+  return obj_get_field(vm->root, TRUE_KEYWORD);
 }
 
 Element element_false(VM *vm) {
-  return vm_lookup(vm, FALSE_KEYWORD);
+  return obj_get_field(vm->root, FALSE_KEYWORD);
 }
 
 Element element_not(VM *vm, Element elt) {

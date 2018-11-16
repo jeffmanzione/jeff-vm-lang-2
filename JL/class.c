@@ -26,6 +26,7 @@ Element class_method;
 Element class_methodinstance;
 Element class_module;
 Element class_error;
+Element class_thread;
 
 void class_fill(VM *vm, Element class, const char class_name[],
     Element parent_class);
@@ -44,6 +45,7 @@ void class_init(VM *vm) {
   class_methodinstance = create_class_stub(vm->graph);
   class_module = create_class_stub(vm->graph);
   class_error = create_class_stub(vm->graph);
+  class_thread = create_class_stub(vm->graph);
 
   class_fill(vm, class_object, OBJECT_NAME, create_none());
   class_fill(vm, class_class, CLASS_NAME, class_object);
@@ -58,6 +60,7 @@ void class_init(VM *vm) {
   class_fill(vm, class_methodinstance, METHOD_INSTANCE_NAME, class_object);
   class_fill(vm, class_module, MODULE_NAME, class_object);
   class_fill(vm, class_error, ERROR_NAME, class_object);
+  class_fill(vm, class_thread, strings_intern("Thread"), class_object);
   merge_object_class(vm);
 }
 

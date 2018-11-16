@@ -9,12 +9,14 @@
 #define ELEMENT_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
 #include "datastructure/expando.h"
 #include "datastructure/map.h"
 #include "datastructure/set.h"
+#include "threads/thread_interface.h"
 
 #define VALUE_OF(val) (((val).type==INT) ? val.int_val : (((val).type==FLOAT) ? val.float_val : val.char_val))
 
@@ -26,9 +28,10 @@ typedef struct MemoryGraph_ MemoryGraph;
 typedef struct Node_ Node;
 
 typedef struct Element_ Element;
+typedef struct Thread_ Thread;
 
 typedef struct ExternalData_ ExternalData;
-typedef Element (*ExternalFunction)(VM *, ExternalData *, Element);
+typedef Element (*ExternalFunction)(VM *, Thread *, ExternalData *, Element);
 
 typedef enum {
   OBJ, ARRAY, TUPLE, MODULE
@@ -41,6 +44,8 @@ typedef struct Object_ {
   Map fields;
   bool is_external;
   Expando *parent_objs;
+
+//  RWLock rwlock;
 
   union {
     Array *array;

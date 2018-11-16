@@ -56,9 +56,7 @@ int main(int argc, const char *argv[]) {
     }
   }
   set_iterate(&modules, load_module);
-
-  vm_set_module(vm, main_element, 0);
-  vm_maybe_initialize_and_execute(vm, main_element.obj->module);
+  vm_start_execution(vm, main_element);
 
 //  memory_graph_print(vm_get_graph(vm), stdout);
 //  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));

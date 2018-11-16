@@ -27,6 +27,7 @@ typedef struct MemoryGraph_ {
   uint32_t id_counter;
   Set/*<Node>*/nodes;
   Set/*<Node>*/roots;
+  ThreadHandle access_mutex;
 } MemoryGraph;
 
 NodeID new_id(MemoryGraph* graph) {
@@ -58,6 +59,7 @@ int32_t node_comparator(const void *n1, const void *n2) {
 
 MemoryGraph *memory_graph_create() {
   MemoryGraph *graph = ALLOC2(MemoryGraph);
+  graph->access_mutex = create_mutex(NULL);
   set_init_default(&graph->nodes);
   set_init(&graph->roots, DEFAULT_TABLE_SZ, default_hasher, default_comparator);
   graph->rand_seeded = false;
@@ -83,8 +85,10 @@ int32_t node_edge_comparator(const void *ptr1, const void *ptr2) {
 Node *node_create(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
   Node *node = ARENA_ALLOC(Node);
+  wait_for_mutex(graph->access_mutex, INFINITE);
   node->id = new_id(graph);
   set_insert(&graph->nodes, node);
+  release_mutex(graph->access_mutex);
   set_init(&node->parents, DEFAULT_TABLE_SZ, node_edge_hasher,
       node_edge_comparator);
   set_init(&node->children, DEFAULT_TABLE_SZ, node_edge_hasher,
@@ -144,6 +148,7 @@ void memory_graph_delete(MemoryGraph *graph) {
   fflush(stdout);
 #endif
   set_finalize(&graph->nodes);
+  close_mutex(graph->access_mutex);
   DEALLOC(graph);
 }
 
@@ -153,6 +158,7 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   node->obj.node = node;
   node->obj.type = OBJ;
   node->obj.is_external = false;
+//  node->obj.rwlock = create_rwlock();
   map_init_default(&node->obj.fields);
   node->obj.parent_objs = expando(Object *, 4);
   Element e = { .type = OBJECT, .obj = &node->obj, };

@@ -10,7 +10,7 @@
 
 #include "../element.h"
 
-Element log__(VM *vm, ExternalData *ed, Element argument);
-Element pow__(VM *vm, ExternalData *ed, Element argument);
+Element log__(VM *vm, Thread *t, ExternalData *ed, Element argument);
+Element pow__(VM *vm, Thread *t, ExternalData *ed, Element argument);
 
 #endif /* EXTERNAL_MATH_H_ */

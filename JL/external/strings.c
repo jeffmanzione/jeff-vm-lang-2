@@ -24,7 +24,7 @@
 #include "../graph/memory_graph.h"
 #include "../vm.h"
 
-Element stringify__(VM *vm, ExternalData *ed, Element argument) {
+Element stringify__(VM *vm, Thread *t, ExternalData *ed, Element argument) {
   ASSERT(argument.type == VALUE);
   Value val = argument.val;
   static const int BUFFER_SIZE = 128;
@@ -88,7 +88,7 @@ void String_fill(VM *vm, ExternalData *data, String *string) {
       create_int(String_size(string)));
 }
 
-Element string_constructor(VM *vm, ExternalData *data, Element arg) {
+Element string_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   ASSERT(NOT_NULL(data));
   String *string;
   if (NONE == arg.type) {
@@ -99,7 +99,7 @@ Element string_constructor(VM *vm, ExternalData *data, Element arg) {
   if (OBJECT != arg.type) {
     string = String_create();
     String_fill(vm, data, string);
-    return throw_error(vm, "Non-object input to String()");
+    return throw_error(vm, t, "Non-object input to String()");
   }
   if (ISTYPE(arg, class_string)) {
     string = String_copy(String_extract(arg));
@@ -116,17 +116,17 @@ Element string_constructor(VM *vm, ExternalData *data, Element arg) {
         String *tail = String_extract(e);
         String_append(string, tail);
       } else {
-        return throw_error(vm, "Invalid Array input to String()");
+        return throw_error(vm, t, "Invalid Array input to String()");
       }
     }
     String_fill(vm, data, string);
   } else {
-    return throw_error(vm, "Invalid Object input to String()");
+    return throw_error(vm, t, "Invalid Object input to String()");
   }
   return data->object;
 }
 
-Element string_deconstructor(VM *vm, ExternalData *data, Element arg) {
+Element string_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   String *string = map_lookup(&data->state, STRING_NAME);
   if (NULL != string) {
     String_delete(string);
@@ -134,30 +134,30 @@ Element string_deconstructor(VM *vm, ExternalData *data, Element arg) {
   return create_none();
 }
 
-Element string_index(VM *vm, ExternalData *data, Element arg) {
+Element string_index(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (!is_value_type(&arg, INT)) {
-    return throw_error(vm, "Indexing String with something not an Int.");
+    return throw_error(vm, t, "Indexing String with something not an Int.");
   }
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   return create_char(String_get(string, arg.val.int_val));
 }
 
-Element string_find(VM *vm, ExternalData *data, Element arg) {
+Element string_find(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (!is_object_type(&arg, TUPLE)) {
-    return throw_error(vm, "Expected more than one arg.");
+    return throw_error(vm, t, "Expected more than one arg.");
   }
   Tuple *args = arg.obj->tuple;
   if (tuple_size(args) != 2) {
-    return throw_error(vm, "Expected 2 arguments.");
+    return throw_error(vm, t, "Expected 2 arguments.");
   }
   Element string_arg = tuple_get(args, 0);
   Element index = tuple_get(args, 1);
   if (!ISTYPE(string_arg, class_string)) {
-    return throw_error(vm, "Only a String can be in a String.");
+    return throw_error(vm, t, "Only a String can be in a String.");
   }
   if (!is_value_type(&index, INT)) {
-    return throw_error(vm, "Expected a starting index.");
+    return throw_error(vm, t, "Expected a starting index.");
   }
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
@@ -165,7 +165,7 @@ Element string_find(VM *vm, ExternalData *data, Element arg) {
   ASSERT(NOT_NULL(substr));
 
   if ((index.val.int_val + String_size(substr)) > String_size(string)) {
-    return throw_error(vm, "Expected a starting index.");
+    return throw_error(vm, t, "Expected a starting index.");
   }
   char *start_index = string->table + index.val.int_val;
   size_t size_after_start = String_size(string) - index.val.int_val;
@@ -178,7 +178,7 @@ Element string_find(VM *vm, ExternalData *data, Element arg) {
   return create_int((int64_t) (found_index - start_index));
 }
 
-Element string_set(VM *vm, ExternalData *data, Element arg) {
+Element string_set(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (!is_object_type(&arg, TUPLE)) {
     ERROR("Unknown input.");
     return create_none();
@@ -205,9 +205,9 @@ Element string_set(VM *vm, ExternalData *data, Element arg) {
   return create_none();
 }
 
-Element string_extend(VM *vm, ExternalData *data, Element arg) {
+Element string_extend(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (!ISTYPE(arg, class_string)) {
-    return throw_error(vm, "Cannot extend something not a String.");
+    return throw_error(vm, t, "Cannot extend something not a String.");
   }
   String *head = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(head));
@@ -226,7 +226,7 @@ String *String_extract(Element elt) {
   return string;
 }
 
-Element string_ltrim(VM *vm, ExternalData *data, Element arg) {
+Element string_ltrim(VM *vm, Thread *t, ExternalData *data, Element arg) {
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   int i = 0;
@@ -239,7 +239,7 @@ Element string_ltrim(VM *vm, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element string_rtrim(VM *vm, ExternalData *data, Element arg) {
+Element string_rtrim(VM *vm, Thread *t, ExternalData *data, Element arg) {
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   int i = 0;
@@ -252,7 +252,7 @@ Element string_rtrim(VM *vm, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element string_trim(VM *vm, ExternalData *data, Element arg) {
+Element string_trim(VM *vm, Thread *t, ExternalData *data, Element arg) {
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   int i = 0;
@@ -270,14 +270,14 @@ Element string_trim(VM *vm, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element string_lshrink(VM *vm, ExternalData *data, Element arg) {
+Element string_lshrink(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (!is_value_type(&arg, INT)) {
-    return throw_error(vm, "Trimming String with something not an Int.");
+    return throw_error(vm, t, "Trimming String with something not an Int.");
   }
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   if (arg.val.int_val > String_size(string)) {
-    return throw_error(vm, "Cannot shrink more than the entire size.");
+    return throw_error(vm, t, "Cannot shrink more than the entire size.");
   }
   String_lshrink(string, arg.val.int_val);
   memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
@@ -285,14 +285,14 @@ Element string_lshrink(VM *vm, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element string_rshrink(VM *vm, ExternalData *data, Element arg) {
+Element string_rshrink(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (!is_value_type(&arg, INT)) {
-    return throw_error(vm, "Trimming String with something not an Int.");
+    return throw_error(vm, t, "Trimming String with something not an Int.");
   }
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   if (arg.val.int_val > String_size(string)) {
-    return throw_error(vm, "Cannot shrink more than the entire size.");
+    return throw_error(vm, t, "Cannot shrink more than the entire size.");
   }
   String_rshrink(string, arg.val.int_val);
   memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
@@ -300,7 +300,7 @@ Element string_rshrink(VM *vm, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element string_clear(VM *vm, ExternalData *data, Element arg) {
+Element string_clear(VM *vm, Thread *t, ExternalData *data, Element arg) {
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   String_clear(string);

@@ -19,21 +19,21 @@
 #include "../vm.h"
 #include "external.h"
 
-Element token__(VM *vm, ExternalData *ed, Element argument) {
+Element token__(VM *vm, Thread *t, ExternalData *ed, Element argument) {
   if (!is_object_type(&argument, TUPLE)) {
-    return throw_error(vm, "Argument to token__ must be a tuple.");
+    return throw_error(vm, t, "Argument to token__ must be a tuple.");
   }
   Tuple *args = argument.obj->tuple;
   if (tuple_size(args) != 2) {
-    return throw_error(vm, "Argument to token__ must be a size 2 tuple.");
+    return throw_error(vm, t, "Argument to token__ must be a size 2 tuple.");
   }
   Element module = tuple_get(args, 0);
   Element ip = tuple_get(args, 1);
   if (!is_object_type(&module, MODULE)) {
-    return throw_error(vm, "First argument to token__ must be a Module.");
+    return throw_error(vm, t, "First argument to token__ must be a Module.");
   }
   if (!is_value_type(&ip, INT)) {
-    return throw_error(vm, "Second argument to token__ must be an int.");
+    return throw_error(vm, t, "Second argument to token__ must be an int.");
   }
   const InsContainer *c = module_insc(module.obj->module, ip.val.int_val);
   const FileInfo *fi = module_fileinfo(module.obj->module);

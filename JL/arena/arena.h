@@ -10,6 +10,8 @@
 
 #include <stddef.h>
 
+#include "../threads/thread_interface.h"
+
 #ifdef DEBUG
 #include <stdint.h>
 #endif
@@ -31,6 +33,7 @@ typedef struct {
   size_t alloc_sz;
   void *next, *end;
   void *last_freed;
+  ThreadHandle mutex;
 #ifdef DEBUG
   uint32_t requests, removes;
 #endif
@@ -45,7 +48,6 @@ void arena_init(Arena *arena, size_t sz);
 void arena_finalize(Arena *arena);
 void *arena_alloc(Arena *arena);
 void arena_dealloc(Arena *arena, void *ptr);
-
 
 void arenas_init();
 void arenas_finalize();

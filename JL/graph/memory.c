@@ -11,12 +11,12 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "../datastructure/set.h"
 #include "../error.h"
 #include "../shared.h"
+#include "../threads/thread_interface.h"
 
 typedef struct {
   uint32_t elt_size;
@@ -30,12 +30,14 @@ typedef struct {
 static bool is_verbose = false;
 static Set *in_mem = NULL;
 static bool alloc_busy = false;
+static ThreadHandle alloc_mutex = NULL;
 
 void alloc_init() {
   alloc_busy = true;
   ASSERT_NULL(in_mem);
   in_mem = set_create(32781, default_hasher, default_comparator);
   alloc_busy = false;
+  alloc_mutex = create_mutex(NULL);
 }
 
 AllocInfo alloc_info(uint32_t elt_size, uint32_t count, uint32_t line,
@@ -76,11 +78,13 @@ void alloc_finalize() {
   }
   set_iterate(in_mem, embarrass_me);
   set_delete(in_mem);
+  close_mutex(alloc_mutex);
   alloc_busy = alloc_val;
 }
 
 void alloc_register(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
     const char func[], const char file[], const char type_name[]) {
+  wait_for_mutex(alloc_mutex, INFINITE);
   if (!alloc_busy) {
     alloc_busy = true;
     if (!set_insert(in_mem, ptr)) {
@@ -88,13 +92,14 @@ void alloc_register(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
           "Attempting to allocate %p(%sx%d), but it is already allocated.\n",
           ptr, type_name, count);
     }
-
     alloc_busy = false;
   }
+  release_mutex(alloc_mutex);
 }
 
 void alloc_unregister(void *ptr, uint32_t line, const char func[],
     const char file[]) {
+  wait_for_mutex(alloc_mutex, INFINITE);
   if (!alloc_busy) {
     alloc_busy = true;
     if (!set_remove(in_mem, ptr)) {
@@ -103,6 +108,7 @@ void alloc_unregister(void *ptr, uint32_t line, const char func[],
     }
     alloc_busy = false;
   }
+  release_mutex(alloc_mutex);
 }
 
 void alloc_set_verbose(bool verbose) {

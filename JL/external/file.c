@@ -8,7 +8,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 
 #include "../arena/strings.h"
 #include "../class.h"
@@ -19,11 +18,11 @@
 #include "../graph/memory.h"
 #include "../graph/memory_graph.h"
 #include "../shared.h"
-#include "../vm.h"
+#include "../threads/thread_interface.h"
 #include "external.h"
 #include "strings.h"
 
-Element file_constructor(VM *vm, ExternalData *data, Element arg) {
+Element file_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   ASSERT(arg.type == OBJECT);
   char *fn, *mode;
   if (ISTYPE(arg, class_string)) {
@@ -32,15 +31,15 @@ Element file_constructor(VM *vm, ExternalData *data, Element arg) {
   } else if (is_object_type(&arg, TUPLE)) {
     Tuple *args = arg.obj->tuple;
     if (tuple_size(args) < 2) {
-      return throw_error(vm, "Too few arguments for File__ constructor.");
+      return throw_error(vm, t, "Too few arguments for File__ constructor.");
     }
     Element e_fn = tuple_get(args, 0);
     if (!ISTYPE(e_fn, class_string)) {
-      return throw_error(vm, "File name not a String.");
+      return throw_error(vm, t, "File name not a String.");
     }
     Element e_mode = tuple_get(args, 1);
     if (!ISTYPE(e_mode, class_string)) {
-      return throw_error(vm, "File mode not a String.");
+      return throw_error(vm, t, "File mode not a String.");
     }
     fn = string_to_cstr(e_fn);
     mode = string_to_cstr(e_mode);
@@ -65,12 +64,14 @@ Element file_constructor(VM *vm, ExternalData *data, Element arg) {
       (NULL == file) ? create_none() : create_int(1));
 
   if (NULL != file) {
+    ThreadHandle write_mutex = create_mutex(NULL);
     map_insert(&data->state, strings_intern("file"), file);
+    map_insert(&data->state, strings_intern("mutex"), write_mutex);
   }
   return data->object;
 }
 
-Element file_deconstructor(VM *vm, ExternalData *data, Element arg) {
+Element file_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
   if (NULL != file && stdin != file && stdout != file && stderr != file) {
     fclose(file);
@@ -78,7 +79,7 @@ Element file_deconstructor(VM *vm, ExternalData *data, Element arg) {
   return create_none();
 }
 
-Element file_gets(VM *vm, ExternalData *data, Element arg) {
+Element file_gets(VM *vm, Thread *t, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
   ASSERT(NOT_NULL(file));
   ASSERT(is_value_type(&arg, INT));
@@ -89,21 +90,24 @@ Element file_gets(VM *vm, ExternalData *data, Element arg) {
   return string;
 }
 
-Element file_puts(VM *vm, ExternalData *data, Element arg) {
+Element file_puts(VM *vm, Thread *t, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
-  ASSERT(NOT_NULL(file));
+  ThreadHandle mutex = map_lookup(&data->state, strings_intern("mutex"));
+  ASSERT(NOT_NULL(file), NOT_NULL(mutex));
   if (arg.type == NONE || !ISTYPE(arg, class_string)) {
     return create_none();
   }
 //  char *cstr = string_to_cstr(arg);
   String *string = String_extract(arg);
+  wait_for_mutex(mutex, INFINITE);
   fprintf(file, "%*s", String_size(string), String_cstr(string));
 //  fputs(cstr, file);
   fflush(file);
+  release_mutex(mutex);
   return create_none();
 }
 
-Element file_getline(VM *vm, ExternalData *data, Element arg) {
+Element file_getline(VM *vm, Thread *t, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
   ASSERT(NOT_NULL(file));
   char *line = NULL;
@@ -121,7 +125,7 @@ Element file_getline(VM *vm, ExternalData *data, Element arg) {
   return string;
 }
 
-Element file_rewind(VM *vm, ExternalData *data, Element arg) {
+Element file_rewind(VM *vm, Thread *t, ExternalData *data, Element arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
   ASSERT(NOT_NULL(file));
   rewind(file);

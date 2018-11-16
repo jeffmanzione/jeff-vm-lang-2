@@ -13,7 +13,8 @@
 #include "../file_load.h"
 #include "../vm.h"
 
-Element load_module__(VM *vm, ExternalData *ed, Element argument) {
+Element load_module__(VM *vm, Thread *thread, ExternalData *ed,
+    Element argument) {
   ASSERT(ISTYPE(argument, class_string));
   Module *module = load_fn(string_to_cstr(argument), vm->store);
   return vm_add_module(vm, module);

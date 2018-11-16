@@ -8,8 +8,11 @@
 #ifndef EXTERNAL_H_
 #define EXTERNAL_H_
 
+#include <stdbool.h>
+
 #include "../datastructure/map.h"
 #include "../element.h"
+#include "../vm.h"
 
 // Protect with methods
 typedef struct ExternalData_ {
@@ -42,6 +45,6 @@ void merge_object_class(VM *vm);
 bool is_value_type(const Element *e, int type);
 bool is_object_type(const Element *e, int type);
 
-Element throw_error(VM *vm, const char msg[]);
+Element throw_error(VM *vm, Thread *t, const char msg[]);
 
 #endif /* EXTERNAL_H_ */

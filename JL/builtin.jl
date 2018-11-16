@@ -139,7 +139,7 @@ class MethodInstance {
 }
 
 class Module {
-  def to_s() 'Module(' + self.name + ')'
+  def to_s() concat('Module(', self.name, ')')
 }
 
 class Tuple {

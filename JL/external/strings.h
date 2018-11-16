@@ -11,7 +11,7 @@
 #include "../element.h"
 #include "../datastructure/arraylike.h"
 
-Element stringify__(VM *vm, ExternalData *ed, Element argument);
+Element stringify__(VM *vm, Thread *t, ExternalData *ed, Element argument);
 
 DEFINE_ARRAYLIKE(String, char);
 
@@ -28,7 +28,7 @@ const char *String_cstr(const String * const string);
 String *String_extract(Element elt);
 
 void merge_string_class(VM *vm, Element string_class);
-Element string_constructor(VM *vm, ExternalData *data, Element arg);
-Element string_deconstructor(VM *vm, ExternalData *data, Element arg);
+Element string_constructor(VM *vm, Thread *t, ExternalData *data, Element arg);
+Element string_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg);
 
 #endif /* EXTERNAL_STRINGS_H_ */

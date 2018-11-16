@@ -50,8 +50,8 @@ class Error {
     self.msg = if (msg is String) then msg else concat(msg)
     self.stack_lines = []
     ; Start at 1 since 0-th block will be this loop.
-    for i=1, i<$root.$saved_blocks.len, i=i+1 {
-      block = $root.$saved_blocks[i]
+    for i=1, i<$thread.$saved_blocks.len, i=i+1 {
+      block = $thread.$saved_blocks[i]
       ; Skip non-function call blocks
       if block.$is_iterator_block {
         continue

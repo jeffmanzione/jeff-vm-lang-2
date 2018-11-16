@@ -507,7 +507,7 @@ int codegen_new(SyntaxTree *tree, Tape *tape) {
   int lines_for_func = 0;
 
   lines_for_func += codegen_function_helper(arg_begin, token, tmp_tape);
-  lines_for_func += tape_ins_text(tmp_tape, RES, THIS, token);
+  lines_for_func += tape_ins_text(tmp_tape, RES, SELF, token);
   lines_for_func += tape_ins_no_arg(tmp_tape, RET, token);
 
   num_lines += tape_ins_int(tape, JMP, lines_for_func, token);
