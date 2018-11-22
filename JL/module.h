@@ -12,6 +12,7 @@
 
 #include "codegen/tokenizer.h"
 #include "datastructure/map.h"
+#include "error.h"
 #include "instruction.h"
 #include "tape.h"
 
@@ -22,7 +23,11 @@ typedef struct Module_ Module;
 Module *module_create_tape(FileInfo *fi, Tape *tape);
 const char *module_filename(const Module const *m);
 void module_set_filename(Module *m, const char fn[]);
-const char *module_name(const Module const *m);
+
+//const char *module_name(const Module const *m);
+DEB_FN(const char *, module_name, const Module const *m);
+#define module_name(...) CALL_FN(module_name__, __VA_ARGS__)
+
 FileInfo *module_fileinfo(const Module const *m);
 //void module_load(Module *m);
 Ins module_ins(const Module *m, uint32_t index);

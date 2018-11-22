@@ -29,6 +29,8 @@ void add_io_external(VM *vm, Element builtin);
 
 Element add_external_function(VM *vm, Element parent, const char fn_name[],
     ExternalFunction fn);
+Element add_external_method(VM *vm, Element class, const char fn_name[],
+    ExternalFunction fn);
 Element add_global_external_function(VM *vm, Element parent,
     const char fn_name[], ExternalFunction fn);
 

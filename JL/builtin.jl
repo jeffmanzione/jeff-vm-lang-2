@@ -124,6 +124,16 @@ class Method : Function {
   }
 }
 
+class ExternalMethod {
+  def to_s() concat(self.class.name, '(', self.method_path(), ')')
+  def method_path() concat(self.module.name, '.',
+                           self.parent_class.name, '.',
+                           self.Function.name)
+  def call(obj, args) {
+    obj.$lookup(self.Function.name)(args)
+  }
+}
+
 class MethodInstance {
   def new(obj, method) {
     self.obj = obj
@@ -415,6 +425,16 @@ class String {
     }
     return parts
   }
+}
+
+; Immutable String
+class Immutable {
+  def new(mo) {
+    self.mo = mo
+  }
+  def __index__(i) self.mo[i]
+  def __in__(o) o in self.mo
+  def to_s() self.mo.to_s()
 }
 
 class Iterator {

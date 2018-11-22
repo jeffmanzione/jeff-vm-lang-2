@@ -65,7 +65,7 @@ Element create_obj_unsafe_base(MemoryGraph *graph) {
 void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
     Element class) {
   memory_graph_set_field(graph, element, CLASS_KEY, class);
-  Element parents = obj_get_field(class, PARENT_KEY);
+  Element parents = obj_lookup(class.obj, CKey_parent);
 // Object class
   if (NONE == parents.type) {
     return;
@@ -85,7 +85,7 @@ void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
       expando_append(element.obj->parent_objs, &obj);
     }
     // Add it as a member with the class name as the field name.
-    Element name = obj_get_field(parent_class, NAME_KEY);
+    Element name = obj_lookup(parent_class.obj, CKey_name);
     if (NONE != name.type) {
       memory_graph_set_field(graph, element, string_to_cstr(name),
           element_for_obj(obj));
@@ -240,6 +240,21 @@ Element create_method(VM *vm, Element module, uint32_t ins, Element class,
   return elt;
 }
 
+Element create_external_method(VM *vm, Element class, const char name[],
+    ExternalFunction external_fn) {
+  DEBUGF("name=%s", name);
+  Element elt = create_obj_of_class(vm->graph, class_external_method);
+  elt.obj->external_fn = external_fn;
+
+  // ExternalMethod -> ExternalFunction -> Function
+  Object *function_object = *((Object **) expando_get(
+      (*((Object **) expando_get(elt.obj->parent_objs, 0)))->parent_objs, 0));
+  decorate_function(vm, element_for_obj(function_object),
+      obj_get_field(class, PARENT_MODULE), -1, name);
+  memory_graph_set_field(vm->graph, elt, PARENT_CLASS, class);
+  return elt;
+}
+
 Element create_method_instance(MemoryGraph *graph, Element object,
     Element method) {
   ASSERT(ISOBJECT(object));
@@ -265,6 +280,12 @@ Element val_to_elt(Value val) {
 void obj_set_field(Element elt, const char field_name[], Element field_val) {
   ASSERT(elt.type == OBJECT);
   ASSERT_NOT_NULL(elt.obj);
+
+  CommonKey key = CKey_lookup_key(field_name);
+  if (key >= 0) {
+    elt.obj->ltable[key] = field_val;
+  }
+
   Element *old;
   if (NULL != (old = map_lookup(&elt.obj->fields, field_name))) {
     *old = field_val;
@@ -275,8 +296,16 @@ void obj_set_field(Element elt, const char field_name[], Element field_val) {
   map_insert(&elt.obj->fields, field_name, elt_ptr);
 }
 
+Element obj_lookup(Object *obj, CommonKey key) {
+  return obj->ltable[key];
+}
+
 Element obj_get_field_obj(Object *obj, const char field_name[]) {
   ASSERT_NOT_NULL(obj);
+//  CommonKey key = CKey_lookup_key(field_name);
+//  if (key >= 0) {
+//    return obj->ltable[key];
+//  }
   Element *to_return = map_lookup(&obj->fields, field_name);
 
   if (NULL == to_return) {
@@ -383,7 +412,7 @@ void class_parents_action(Element child_class, ObjectActionUntil process) {
     if (process(class_obj)) {
       break;
     }
-    Element parents = obj_get_field_obj(class_obj, PARENT_KEY);
+    Element parents = obj_lookup(class_obj, CKey_parent);
     if (NONE == parents.type) {
       continue;
     }
@@ -455,10 +484,10 @@ void obj_to_str(Object *obj, FILE *file) {
             String_cstr(String_extract(element_from_obj(obj))));
         fflush(file);
       }
-      fprintf(file, "%s", string_to_cstr(obj_get_field(class, NAME_KEY)));
+      fprintf(file, "%s", string_to_cstr(obj_lookup(class.obj, CKey_name)));
     }
     fflush(file);
-    name = obj_get_field_obj(obj, NAME_KEY);
+    name = obj_lookup(obj, CKey_name);
     if (NONE != name.type
         && OBJECT == name.type /*&& ARRAY == name.obj->type*/) {
       fprintf(file, "[%s]", string_to_cstr(name));
@@ -470,10 +499,10 @@ void obj_to_str(Object *obj, FILE *file) {
       Element *field_val = (Element *) pair->value;
       Element to_print = *field_val;
       if (ISOBJECT(*field_val)) {
-        Element field_class = obj_get_field(*field_val, CLASS_KEY);
+        Element field_class = obj_lookup(field_val->obj, CKey_class);
         to_print = field_class;
         if (ISOBJECT(field_class)) {
-          Element class_name = obj_get_field(field_class, NAME_KEY);
+          Element class_name = obj_lookup(field_class.obj, CKey_name);
           to_print = class_name;
         }
       }

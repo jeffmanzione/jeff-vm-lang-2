@@ -33,7 +33,7 @@ typedef void (*EntryAction)(MEntry *me);
 void resize_table(Map *map);
 
 Map *map_create(uint32_t size, Hasher hasher, Comparator comparator) {
-  Map *map = ALLOC(Map);
+  Map *map = ALLOC2(Map);
   map_init(map, size, hasher, comparator);
   return map;
 }
