@@ -27,5 +27,9 @@ void optimizer_RetRet(OptimizeHelper *oh, const Tape * const tape, int start,
     int end);
 //void optimizer_Increment(OptimizeHelper *oh, const Tape * const tape, int start,
 //    int end);
+void optimizer_SetEmpty(OptimizeHelper *oh, const Tape * const tape, int start,
+    int end);
+void optimizer_PushResEmpty(OptimizeHelper *oh, const Tape * const tape, int start,
+    int end);
 
 #endif /* OPTIMIZERS_H_ */

@@ -75,6 +75,34 @@ Module *load_fn_jm(const char fn[], const ArgStore *store) {
   return module;
 }
 
+int load_fileinfo_jl_line(Parser *p, VM *vm, Element m,  Tape *t,
+    void (*fn)(VM *vm, Element m, Tape *tape, int num_ins)) {
+  SyntaxTree st = file_level_statement(p);
+  int num_ins = codegen(&st, t);
+  fn(vm, m, t, num_ins);
+  expression_tree_delete(&st);
+  return num_ins;
+}
+
+int load_file_jl(FILE *f, VM *vm, void (*fn)(VM *vm, Element m, Tape *tape, int num_ins)) {
+  FileInfo *fi = file_info_file(f);
+  Parser p;
+  parser_init(&p, fi);
+  Tape *tape = tape_create();
+  Module *module = module_create_tape(fi, tape);
+  Element module_element = create_module(vm, module);
+  int num_ins = 0;
+  while (true) {
+    num_ins += load_fileinfo_jl_line(&p, vm, module_element,  tape, fn);
+    if (tape_get(tape, tape_len(tape) - 1)->ins.op == EXIT) {
+      break;
+    }
+  }
+  parser_finalize(&p);
+  module_delete(module);
+  return num_ins;
+}
+
 Module *load_fn_jl(const char fn[], const ArgStore* store) {
   bool should_optimize = argstore_lookup_bool(store, ArgKey__OPTIMIZE);
   bool out_machine = argstore_lookup_bool(store, ArgKey__OUT_MACHINE);

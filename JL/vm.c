@@ -1045,6 +1045,8 @@ bool execute_id_param(VM *vm, Ins ins) {
   case RMDL:
     module = vm_lookup_module(vm, ins.str);
     vm_set_resval(vm, module);
+    // TODO: Why do I need this for interpreter mode?
+    memory_graph_set_field(vm->graph, block, ins.str, module);
     break;
   case MCLL:
     module = vm_popstack(vm, &has_error);

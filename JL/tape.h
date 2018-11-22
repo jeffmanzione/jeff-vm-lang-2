@@ -59,6 +59,7 @@ void insc_to_str(const InsContainer *c, FILE *file);
 // Destroys tail.
 void tape_append(Tape *head, Tape *tail);
 void tape_read(Tape * const tape, Queue *tokens);
+void tape_write_range(const Tape * const tape, int start, int end, FILE *file);
 void tape_write(const Tape * const tape, FILE *file);
 void tape_read_binary(Tape * const tape, FILE *file);
 void tape_write_binary(const Tape * const tape, FILE *file);

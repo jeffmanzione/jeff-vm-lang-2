@@ -23,6 +23,27 @@
 #include "optimize/optimize.h"
 #include "vm.h"
 
+void execute_code(VM *vm, Element m, Tape *tape, int num_ins) {
+  vm_set_module(vm, m, tape_len(tape) - num_ins);
+#ifdef DEBUG
+  tape_write_range(tape, tape_len(tape) - num_ins, tape_len(tape), stdout);
+  fflush(stdout);
+#endif
+  do {
+//    ins_to_str(vm_current_ins(vm), stdout);
+//    printf("\n");
+//    fflush(stdout);
+    if (!execute(vm)) {
+      break;
+    }
+  } while (vm_get_ip(vm) < tape_len(module_tape(vm_get_module(vm).obj->module)));
+
+  printf("<-- ");
+  elt_to_str(vm_get_resval(vm), stdout);
+  printf("\n");
+  fflush(stdout);
+}
+
 int main(int argc, const char *argv[]) {
   alloc_init();
   //  alloc_set_verbose(true);
@@ -57,8 +78,16 @@ int main(int argc, const char *argv[]) {
   }
   set_iterate(&modules, load_module);
 
-  vm_set_module(vm, main_element, 0);
-  vm_maybe_initialize_and_execute(vm, main_element.obj->module);
+  if (argstore_lookup_bool(store, ArgKey__EXECUTE)) {
+    vm_set_module(vm, main_element, 0);
+    vm_maybe_initialize_and_execute(vm, main_element.obj->module);
+  }
+  if (argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
+    printf(
+        "Starting Interpreter.\nWrite code below. Press enter to evaluate.\n");
+    fflush(stdout);
+    load_file_jl(stdin, vm, execute_code);
+  }
 
 //  memory_graph_print(vm_get_graph(vm), stdout);
 //  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));

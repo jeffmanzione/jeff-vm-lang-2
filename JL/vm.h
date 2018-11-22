@@ -21,8 +21,7 @@ typedef struct Module_ Module;
 struct VM_ {
   ArgStore *store;
   MemoryGraph *graph;
-  Element root, stack,
-      saved_blocks, modules;
+  Element root, stack, saved_blocks, modules;
 };
 
 VM *vm_create(ArgStore *store);
@@ -37,6 +36,8 @@ void vm_add_string_class(VM *vm);
 
 void vm_throw_error(VM *vm, Ins ins, const char fmt[], ...);
 Ins vm_current_ins(const VM *vm);
+Element vm_get_module(const VM *vm);
+uint32_t vm_get_ip(const VM *vm);
 
 void vm_pushstack(VM *vm, Element element);
 //Element vm_popstack(VM *vm);

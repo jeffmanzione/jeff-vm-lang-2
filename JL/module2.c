@@ -192,7 +192,9 @@ void module_delete(Module *m) {
   if (NULL != m->fi) {
     file_info_delete(m->fi);
   }
-  tape_delete(m->tape);
+  if (NULL != m->tape) {
+    tape_delete(m->tape);
+  }
   DEALLOC(m);
 }
 
