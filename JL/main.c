@@ -14,35 +14,13 @@
 #include "command/commandlines.h"
 #include "datastructure/map.h"
 #include "datastructure/set.h"
-#include "external/strings.h"
 #include "element.h"
 #include "error.h"
 #include "file_load.h"
 #include "graph/memory.h"
-#include "module.h"
+#include "interpreter/interpreter.h"
 #include "optimize/optimize.h"
 #include "vm.h"
-
-void execute_code(VM *vm, Element m, Tape *tape, int num_ins) {
-  vm_set_module(vm, m, tape_len(tape) - num_ins);
-#ifdef DEBUG
-  tape_write_range(tape, tape_len(tape) - num_ins, tape_len(tape), stdout);
-  fflush(stdout);
-#endif
-  do {
-//    ins_to_str(vm_current_ins(vm), stdout);
-//    printf("\n");
-//    fflush(stdout);
-    if (!execute(vm)) {
-      break;
-    }
-  } while (vm_get_ip(vm) < tape_len(module_tape(vm_get_module(vm).obj->module)));
-
-  printf("<-- ");
-  elt_to_str(vm_get_resval(vm), stdout);
-  printf("\n");
-  fflush(stdout);
-}
 
 int main(int argc, const char *argv[]) {
   alloc_init();
@@ -86,7 +64,7 @@ int main(int argc, const char *argv[]) {
     printf(
         "Starting Interpreter.\nWrite code below. Press enter to evaluate.\n");
     fflush(stdout);
-    load_file_jl(stdin, vm, execute_code);
+    interpret_from_file(stdin, "stdin", vm, interpret_statement);
   }
 
 //  memory_graph_print(vm_get_graph(vm), stdout);

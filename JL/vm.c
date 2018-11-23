@@ -1214,11 +1214,6 @@ bool execute_str_param(VM *vm, Ins ins) {
 // returns whether or not the program should continue
 bool execute(VM *vm) {
   ASSERT_NOT_NULL(vm);
-  Element has_error = obj_get_field(current_block(vm), ERROR_KEY);
-  if (NONE != has_error.type) {
-    catch_error(vm);
-    return true;
-  }
 
   Ins ins = vm_current_ins(vm);
 //  fprintf(stdout, "module(%s) ", module_name(vm_get_module(vm).obj->module));
@@ -1241,7 +1236,15 @@ bool execute(VM *vm) {
   default:
     status = execute_no_param(vm, ins);
   }
+  if (NONE != obj_get_field(current_block(vm), ERROR_KEY).type) {
+    while (NONE != obj_get_field(current_block(vm), ERROR_KEY).type) {
+      catch_error(vm);
+    }
+    return true;
+  }
+
   vm_shift_ip(vm, 1);
+
   return status;
 }
 
