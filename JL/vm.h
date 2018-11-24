@@ -46,6 +46,7 @@ void vm_pushstack(VM *vm, Thread *t, Element element);
 //Element vm_popstack(VM *vm);
 const Element vm_get_resval(VM *vm, Thread *t);
 Element vm_lookup(VM *vm, Thread *t, const char name[]);
+void vm_set_resval(VM *vm, Thread *t, const Element elt);
 
 // Creates a block with the specified obj as the parent
 Element vm_new_block(VM *vm, Thread *t, Element parent, Element new_this);

@@ -71,7 +71,7 @@ void class_init(VM *vm) {
 void class_fill_base(VM *vm, Element class, const char class_name[],
     Element parents_array) {
   //DEBUGF("class_fill_base begin %s", class_name);
-  memory_graph_set_field(vm->graph, class, PARENT_KEY, parents_array);
+  memory_graph_set_field(vm->graph, class, PARENTS_KEY, parents_array);
   memory_graph_set_field(vm->graph, class, NAME_KEY,
       string_create(vm, class_name));
   memory_graph_set_field(vm->graph, vm->root, class_name, class);

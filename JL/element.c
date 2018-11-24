@@ -67,7 +67,7 @@ Element create_obj_unsafe_base(MemoryGraph *graph) {
 void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
     Element class) {
   memory_graph_set_field(graph, element, CLASS_KEY, class);
-  Element parents = obj_lookup(class.obj, CKey_parent);
+  Element parents = obj_lookup(class.obj, CKey_parents);
 // Object class
   if (NONE == parents.type) {
     return;
@@ -244,7 +244,6 @@ Element create_method(VM *vm, Element module, uint32_t ins, Element class,
 
 Element create_external_method(VM *vm, Element class, const char name[],
     ExternalFunction external_fn) {
-  DEBUGF("name=%s", name);
   Element elt = create_obj_of_class(vm->graph, class_external_method);
   elt.obj->external_fn = external_fn;
 
@@ -416,7 +415,7 @@ void class_parents_action(Element child_class, ObjectActionUntil process) {
     if (process(class_obj)) {
       break;
     }
-    Element parents = obj_lookup(class_obj, CKey_parent);
+    Element parents = obj_lookup(class_obj, CKey_parents);
     if (NONE == parents.type) {
       continue;
     }

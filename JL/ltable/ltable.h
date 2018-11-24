@@ -15,6 +15,7 @@ typedef enum {
   CKey_name,
   CKey_class,
   CKey_parent,
+  CKey_parents,
   CKey_parent_class,
   CKey_END,
 } CommonKey;

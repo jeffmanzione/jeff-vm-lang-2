@@ -63,7 +63,8 @@ void ltable_fill() {
   CKey_set(CKey_resval, RESULT_VAL);
   CKey_set(CKey_name, NAME_KEY);
   CKey_set(CKey_class, CLASS_KEY);
-  CKey_set(CKey_parent, PARENT_KEY);
+  CKey_set(CKey_parent, PARENT);
+  CKey_set(CKey_parents, PARENTS_KEY);
   CKey_set(CKey_parent_class, PARENT_CLASS);
 }
 

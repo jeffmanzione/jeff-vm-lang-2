@@ -36,7 +36,7 @@ extern char *CLASS_KEY;
 extern char *CLASSES_KEY;
 extern char *CONSTRUCTOR_KEY;
 extern char *DECONSTRUCTOR_KEY;
-extern char *PARENT_KEY;
+extern char *PARENTS_KEY;
 extern char *NAME_KEY;
 extern char *CLASS_NAME;
 extern char *OBJECT_NAME;

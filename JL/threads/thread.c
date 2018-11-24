@@ -7,7 +7,7 @@
 
 #include "thread.h"
 
-#include <stdint.h>
+#include <stddef.h>
 
 #include "../arena/strings.h"
 #include "../class.h"
@@ -15,10 +15,11 @@
 #include "../datastructure/tuple.h"
 #include "../error.h"
 #include "../external/external.h"
+#include "../external/strings.h"
 #include "../graph/memory.h"
 #include "../graph/memory_graph.h"
+#include "../ltable/ltable.h"
 #include "../vm.h"
-#include "thread_interface.h"
 
 static int64_t THREAD_COUNT = 0;
 
@@ -50,27 +51,18 @@ void thread_init(Thread *t, Element self, VM *vm) {
 }
 
 void thread_start(Thread *t) {
-  DEBUGF("t=%d HERE1", t->id);
   ASSERT(NOT_NULL(t));
   Element fn = obj_get_field(t->self, strings_intern("fn"));
   Element arg = obj_get_field(t->self, strings_intern("arg"));
-
-  DEBUGF("t=%d HERE2", t->id);
-  memory_graph_set_field(t->vm->graph, t->self, RESULT_VAL, arg);
+  vm_set_resval(t->vm, t, arg);
   Element current_block = vm_current_block(t->vm, t);
 
-//  DEBUGF("t=%d HERE3", t->id);
   if (inherits_from(obj_get_field(fn, CLASS_KEY),
       class_function) || ISTYPE(fn, class_methodinstance)) {
-//    DEBUGF("t=%d HERE3 1", t->id);
     Element parent_module = obj_get_field(fn, PARENT_MODULE);
-//    DEBUGF("t=%d HERE3 2", t->id);
     vm_set_module(t->vm, t, parent_module, 0);
-//    DEBUGF("t=%d HERE3 3", t->id);
     vm_call_fn(t->vm, t, parent_module, fn);
-//    DEBUGF("t=%d HERE3 4", t->id);
     vm_shift_ip(t->vm, t, 1);
-//    DEBUGF("t=%d HERE3 5", t->id);
   } else {
     ERROR("NOOOOOOOOOO");
 //    if (ISTYPE(fn, class_class)) {
@@ -78,20 +70,14 @@ void thread_start(Thread *t) {
 //    vm_call_new(t->vm, t, fn);
   }
 
-//  DEBUGF("t=%d HERE4", t->id);
   while (execute(t->vm, t)) {
-//    DEBUGF("t=%d HERE5", t->id);
     if (current_block.obj == vm_current_block(t->vm, t).obj) {
-//      DEBUGF("t=%d HERE6", t->id);
       break;
     }
   }
-//  DEBUGF("t=%d HERE7", t->id);
   Element result = vm_get_resval(t->vm, t);
-//  DEBUGF("t=%d HERE8", t->id);
   memory_graph_set_field(t->vm->graph, t->self, strings_intern("result"),
       result);
-//  DEBUGF("t=%d HERE9", t->id);
 }
 
 unsigned __stdcall thread_start_wrapper(void *ptr) {
@@ -123,7 +109,11 @@ Element Thread_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   Element e_fn = tuple_get(args, 0);
   if (!ISTYPE(e_fn, class_function) && !ISTYPE(e_fn, class_methodinstance)
   && !ISTYPE(e_fn, class_method) && !ISTYPE(e_fn, class_class)) {
-    DEBUGF("NEVER HERE.");
+//    Element class_name = obj_lookup(obj_lookup(e_fn.obj, CKey_class).obj,
+//        CKey_name);
+//    DEBUGF("NEVER HERE. class_name=%*s",
+//        String_size(String_extract(class_name)),
+//        String_cstr(String_extract(class_name)));
     return throw_error(vm, t, "Thread must be passed a function or class.");
   }
   Element e_arg = tuple_get(args, 1);

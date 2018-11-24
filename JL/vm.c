@@ -519,7 +519,7 @@ Element vm_lookup(VM *vm, Thread *t, const char name[]) {
   Element lookup;
   while (NONE != block.type
       && NONE == (lookup = obj_get_field(block, name)).type) {
-    block = obj_get_field(block, PARENT);
+    block = obj_lookup(block.obj, CKey_parent);
     //////DEBUGF("Looking for '%s'", name);
   }
 

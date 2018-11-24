@@ -42,7 +42,7 @@ void alloc_finalize();
 
 //char *string_copy(const char src[]);
 //char *string_copy_after(const char src[], int start_index);
-char *string_copy_range(const char src[], int start_index, int end_index);
+//char *string_copy_range(const char src[], int start_index, int end_index);
 //void string_prepend(char **src, const char head[]);
 //void string_append(char **src, const char tail[]);
 //char *string_concat(int num_args, ...);

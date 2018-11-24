@@ -45,7 +45,7 @@ char *CLASS_KEY;
 char *CLASSES_KEY;
 char *CONSTRUCTOR_KEY;
 char *DECONSTRUCTOR_KEY;
-char *PARENT_KEY;
+char *PARENTS_KEY;
 char *NAME_KEY;
 char *CLASS_NAME;
 char *OBJECT_NAME;
@@ -127,7 +127,7 @@ void strings_insert_constants() {
   CLASSES_KEY = strings_intern("classes");
   CONSTRUCTOR_KEY = strings_intern("new");
   DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
-  PARENT_KEY = strings_intern("parents");
+  PARENTS_KEY = strings_intern("parents");
   NAME_KEY = strings_intern("name");
   CLASS_NAME = strings_intern("Class");
   OBJECT_NAME = strings_intern("Object");
