@@ -135,13 +135,13 @@ Element file_rewind(VM *vm, Thread *t, ExternalData *data, Element arg) {
 Element create_file_class(VM *vm, Element module) {
   Element file_class = create_external_class(vm, module,
       strings_intern("File__"), file_constructor, file_deconstructor);
-  add_external_function(vm, file_class, strings_intern("gets__"), file_gets);
-  add_external_function(vm, file_class, strings_intern("puts__"), file_puts);
-  add_external_function(vm, file_class, strings_intern("getline__"),
+  add_external_method(vm, file_class, strings_intern("gets__"), file_gets);
+  add_external_method(vm, file_class, strings_intern("puts__"), file_puts);
+  add_external_method(vm, file_class, strings_intern("getline__"),
       file_getline);
-  add_external_function(vm, file_class, strings_intern("rewind__"),
+  add_external_method(vm, file_class, strings_intern("rewind__"),
       file_rewind);
-  add_external_function(vm, file_class, strings_intern("close__"),
+  add_external_method(vm, file_class, strings_intern("close__"),
       file_deconstructor);
   return file_class;
 }

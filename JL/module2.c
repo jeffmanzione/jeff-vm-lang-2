@@ -87,7 +87,7 @@ FileInfo *module_fileinfo(const Module const *m) {
 //  m->name = strings_intern(name);
 //}
 
-const char *module_name(const Module const *m) {
+DEB_FN(const char *, module_name, const Module const *m) {
   ASSERT_NOT_NULL(m);
   return tape_modulename(m->tape);
 }
@@ -192,7 +192,9 @@ void module_delete(Module *m) {
   if (NULL != m->fi) {
     file_info_delete(m->fi);
   }
-  tape_delete(m->tape);
+  if (NULL != m->tape) {
+    tape_delete(m->tape);
+  }
   DEALLOC(m);
 }
 

@@ -23,6 +23,7 @@ Element class_tuple;
 Element class_function;
 Element class_external_function;
 Element class_method;
+Element class_external_method;
 Element class_methodinstance;
 Element class_module;
 Element class_error;
@@ -41,6 +42,7 @@ void class_init(VM *vm) {
   class_tuple = create_class_stub(vm->graph);
   class_function = create_class_stub(vm->graph);
   class_external_function = create_class_stub(vm->graph);
+  class_external_method = create_class_stub(vm->graph);
   class_method = create_class_stub(vm->graph);
   class_methodinstance = create_class_stub(vm->graph);
   class_module = create_class_stub(vm->graph);
@@ -56,6 +58,8 @@ void class_init(VM *vm) {
   class_fill(vm, class_function, FUNCTION_NAME, class_object);
   class_fill(vm, class_external_function, EXTERNAL_FUNCTION_NAME,
       class_function);
+  class_fill(vm, class_external_method, EXTERNAL_METHOD_NAME,
+      class_external_function);
   class_fill(vm, class_method, METHOD_NAME, class_function);
   class_fill(vm, class_methodinstance, METHOD_INSTANCE_NAME, class_object);
   class_fill(vm, class_module, MODULE_NAME, class_object);

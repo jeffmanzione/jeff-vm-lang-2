@@ -21,6 +21,7 @@ typedef enum {
   ArgKey__OUT_UNOPTIMIZED,
   ArgKey__OPTIMIZE,
   ArgKey__EXECUTE,
+  ArgKey__INTERPRETER,
   ArgKey__END,
 } ArgKey;
 

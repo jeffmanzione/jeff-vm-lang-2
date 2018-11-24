@@ -28,6 +28,8 @@ typedef struct Parser_ {
   Map *exp_names;
 } Parser;
 
+void parser_init(Parser *parser, FileInfo *src);
+bool parser_finalize(Parser *parser);
 SyntaxTree parse_file(FileInfo *src);
 Token *parser_next__(Parser *parser, Token **target);
 Token *parser_next_skip_ln__(Parser *parser, Token **target);

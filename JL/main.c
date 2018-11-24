@@ -14,12 +14,11 @@
 #include "command/commandlines.h"
 #include "datastructure/map.h"
 #include "datastructure/set.h"
-#include "external/strings.h"
 #include "element.h"
 #include "error.h"
 #include "file_load.h"
 #include "graph/memory.h"
-#include "module.h"
+#include "interpreter/interpreter.h"
 #include "optimize/optimize.h"
 #include "vm.h"
 
@@ -56,7 +55,16 @@ int main(int argc, const char *argv[]) {
     }
   }
   set_iterate(&modules, load_module);
-  vm_start_execution(vm, main_element);
+
+  if (argstore_lookup_bool(store, ArgKey__EXECUTE)) {
+    vm_start_execution(vm, main_element);
+  }
+  if (argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
+    printf(
+        "Starting Interpreter.\nWrite code below. Press enter to evaluate.\n");
+    fflush(stdout);
+    interpret_from_file(stdin, "stdin", vm, interpret_statement);
+  }
 
 //  memory_graph_print(vm_get_graph(vm), stdout);
 //  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));

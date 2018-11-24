@@ -195,7 +195,7 @@ Element string_set(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (val.type == VALUE && val.val.type == CHAR) {
     String_set(string, index.val.int_val, val.val.char_val);
   } else if (OBJECT == val.type
-      && obj_get_field(val, CLASS_KEY).obj == class_string.obj) {
+      && obj_lookup(val.obj, CKey_class).obj == class_string.obj) {
     String_append(string, String_extract(val));
   } else {
     ERROR("BAD STRING.");
@@ -220,7 +220,7 @@ Element string_extend(VM *vm, Thread *t, ExternalData *data, Element arg) {
 }
 
 String *String_extract(Element elt) {
-  ASSERT(obj_get_field(elt, CLASS_KEY).obj == class_string.obj);
+  ASSERT(obj_lookup(elt.obj, CKey_class).obj == class_string.obj);
   String *string = map_lookup(&elt.obj->external_data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   return string;
@@ -318,24 +318,19 @@ Element string_clear(VM *vm, Thread *t, ExternalData *data, Element arg) {
 void merge_string_class(VM *vm, Element string_class) {
   merge_external_class(vm, string_class, string_constructor,
       string_deconstructor);
-  add_external_function(vm, string_class, strings_intern("__index__"),
+  add_external_method(vm, string_class, strings_intern("__index__"),
       string_index);
-  add_external_function(vm, string_class, strings_intern("__set__"),
-      string_set);
-  add_external_function(vm, string_class, strings_intern("find__"),
-      string_find);
-  add_external_function(vm, string_class, strings_intern("extend__"),
+  add_external_method(vm, string_class, strings_intern("__set__"), string_set);
+  add_external_method(vm, string_class, strings_intern("find__"), string_find);
+  add_external_method(vm, string_class, strings_intern("extend__"),
       string_extend);
-  add_external_function(vm, string_class, strings_intern("trim"), string_trim);
-  add_external_function(vm, string_class, strings_intern("ltrim"),
-      string_ltrim);
-  add_external_function(vm, string_class, strings_intern("rtrim"),
-      string_rtrim);
-  add_external_function(vm, string_class, strings_intern("lshrink"),
+  add_external_method(vm, string_class, strings_intern("trim"), string_trim);
+  add_external_method(vm, string_class, strings_intern("ltrim"), string_ltrim);
+  add_external_method(vm, string_class, strings_intern("rtrim"), string_rtrim);
+  add_external_method(vm, string_class, strings_intern("lshrink"),
       string_lshrink);
-  add_external_function(vm, string_class, strings_intern("rshrink"),
+  add_external_method(vm, string_class, strings_intern("rshrink"),
       string_rshrink);
-  add_external_function(vm, string_class, strings_intern("clear"),
-      string_clear);
+  add_external_method(vm, string_class, strings_intern("clear"), string_clear);
 //  add_external_function(vm, string_class, strings_intern("hash"), string_hash);
 }

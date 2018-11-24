@@ -18,7 +18,9 @@
 #include "../datastructure/map.h"
 #include "../datastructure/tuple.h"
 #include "../error.h"
+#include "../ltable/ltable.h"
 #include "../shared.h"
+#include "../threads/thread_interface.h"
 #include "memory.h"
 
 typedef struct MemoryGraph_ {
@@ -57,6 +59,14 @@ int32_t node_comparator(const void *n1, const void *n2) {
   return ((Node *) n1)->id.int_id - ((Node *) n2)->id.int_id;
 }
 
+void ltable_fill() {
+  CKey_set(CKey_resval, RESULT_VAL);
+  CKey_set(CKey_name, NAME_KEY);
+  CKey_set(CKey_class, CLASS_KEY);
+  CKey_set(CKey_parent, PARENT_KEY);
+  CKey_set(CKey_parent_class, PARENT_CLASS);
+}
+
 MemoryGraph *memory_graph_create() {
   MemoryGraph *graph = ALLOC2(MemoryGraph);
   graph->access_mutex = create_mutex(NULL);
@@ -65,6 +75,8 @@ MemoryGraph *memory_graph_create() {
   graph->rand_seeded = false;
   graph->use_rand = false;
   graph->id_counter = 0;
+  CKey_init();
+  ltable_fill();
   return graph;
 }
 
@@ -116,6 +128,7 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
 }
 
 void memory_graph_delete(MemoryGraph *graph) {
+  CKey_finalize();
   ASSERT_NOT_NULL(graph);
 #ifdef DEBUG
   int node_count = 0;
@@ -159,6 +172,8 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   node->obj.type = OBJ;
   node->obj.is_external = false;
 //  node->obj.rwlock = create_rwlock();
+  // Set to none.
+//  memset(node->obj.ltable, 0x0, sizeof(Element) * CKey_END);
   map_init_default(&node->obj.fields);
   node->obj.parent_objs = expando(Object *, 4);
   Element e = { .type = OBJECT, .obj = &node->obj, };

@@ -35,8 +35,10 @@ Element token__(VM *vm, Thread *t, ExternalData *ed, Element argument) {
   if (!is_value_type(&ip, INT)) {
     return throw_error(vm, t, "Second argument to token__ must be an int.");
   }
+
   const InsContainer *c = module_insc(module.obj->module, ip.val.int_val);
   const FileInfo *fi = module_fileinfo(module.obj->module);
+
   const LineInfo *li =
       (fi == NULL || c == NULL || c->token == NULL) ?
           NULL : file_info_lookup(fi, c->token->line);

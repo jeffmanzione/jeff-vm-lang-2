@@ -318,7 +318,8 @@ void tape_clear_mappings(Map *i_to_refs, Map *i_to_class_starts,
   map_finalize(i_to_class_ends);
 }
 
-void tape_write(const Tape * const tape, FILE *file) {
+
+void tape_write_range(const Tape * const tape, int start, int end, FILE *file) {
   ASSERT(NOT_NULL(tape), NOT_NULL(file));
   Map i_to_refs, i_to_class_starts, i_to_class_ends;
   tape_populate_mappings(tape, &i_to_refs, &i_to_class_starts,
@@ -327,7 +328,7 @@ void tape_write(const Tape * const tape, FILE *file) {
     fprintf(file, "module %s\n", tape->module_name);
   }
   uint32_t i;
-  for (i = 0; i < tape_len(tape); i++) {
+  for (i = start; i < end; i++) {
     char *text = NULL;
     if (map_lookup(&i_to_class_ends, (void *) i)) {
       fprintf(file, "endclass\n\n");
@@ -351,6 +352,11 @@ void tape_write(const Tape * const tape, FILE *file) {
     fprintf(file, "\n");
   }
   tape_clear_mappings(&i_to_refs, &i_to_class_starts, &i_to_class_ends);
+}
+
+void tape_write(const Tape * const tape, FILE *file) {
+  ASSERT(NOT_NULL(tape), NOT_NULL(file));
+  tape_write_range(tape, 0, tape_len(tape), file);
 }
 
 Token *next_token_skip_ln(Queue *queue) {

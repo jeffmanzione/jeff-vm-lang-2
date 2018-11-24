@@ -1,2 +1,67 @@
 module sync
+
+class AtomicInt
+  jmp   11
+
+@new
+  set   orig
+  push  orig
+  res   self
+  fld   value
+  push  Mutex
+  call
+  push
+  res   self
+  fld   mutex
+  res   self
+  ret
+  jmp   9
+
+@set
+  set   v
+  push  mutex
+  call  acquire
+  push  v
+  res   self
+  fld   value
+  push  mutex
+  call  release
+  ret
+  jmp   9
+
+@get
+  push  mutex
+  call  acquire
+  res   self
+  get   value
+  set   cpy
+  push  mutex
+  call  release
+  res   cpy
+  ret
+  jmp   20
+
+@to_s
+  push  mutex
+  call  acquire
+  push  concat
+  push  ')'
+  push  str
+  res   self
+  get   value
+  call
+  push
+  push  '('
+  res   self
+  get   class
+  gtsh  name
+  tupl  4
+  call
+  set   tos
+  push  mutex
+  call  release
+  res   tos
+  ret
+endclass
+
   exit  0

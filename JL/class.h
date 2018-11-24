@@ -11,13 +11,14 @@
 #include <stdbool.h>
 
 #include "element.h"
+#include "ltable/ltable.h"
 
 #define ISOBJECT(elt) ((elt).type == OBJECT)
-#define ISCLASS_OBJ(cobj) (class_class.obj == obj_get_field_obj((cobj), CLASS_KEY).obj)
+#define ISCLASS_OBJ(cobj) (class_class.obj == obj_lookup((cobj), CKey_class).obj)
 #define ISCLASS(elt) (ISOBJECT(elt) && class_class.obj ==                      \
-                                         obj_get_field((elt), CLASS_KEY).obj)
+                                         obj_lookup((elt).obj, CKey_class).obj)
 #define ISTYPE(elt, class) (ISCLASS(class) && ISOBJECT(elt) &&                 \
-                               obj_get_field((elt), CLASS_KEY).obj == (class).obj)
+                               obj_lookup((elt).obj, CKey_class).obj == (class).obj)
 #define ISVALUE(elt) ((elt).type == VALUE)
 
 extern Element class_class;
@@ -29,6 +30,7 @@ extern Element class_tuple;
 extern Element class_function;
 extern Element class_external_function;
 extern Element class_method;
+extern Element class_external_method;
 extern Element class_methodinstance;
 extern Element class_module;
 extern Element class_thread;

@@ -5,8 +5,8 @@
  *      Author: Jeff
  */
 
-#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "../datastructure/map.h"
 #include "../instruction.h"
@@ -127,7 +127,6 @@ void optimizer_RetRet(OptimizeHelper *oh, const Tape * const tape, int start,
   }
 }
 
-
 void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
     int start, int end) {
 
@@ -161,3 +160,34 @@ void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
 //    }
 //  }
 //}
+
+void optimizer_SetEmpty(OptimizeHelper *oh, const Tape * const tape, int start,
+    int end) {
+  int i;
+  for (i = start + 1; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 1);
+    const InsContainer *second = tape_get(tape, i);
+    if (TGET == first->ins.op && VAL_PARAM == first->ins.param
+        && SET == second->ins.op && ID_PARAM == second->ins.param
+        && 0 == strncmp(second->ins.id, "_", 2)
+        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+      o_Remove(oh, i - 1);
+      o_Remove(oh, i);
+    }
+  }
+}
+
+void optimizer_PushResEmpty(OptimizeHelper *oh, const Tape * const tape, int start,
+    int end) {
+  int i;
+  for (i = start + 1; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 1);
+    const InsContainer *second = tape_get(tape, i);
+    if (PUSH == first->ins.op && NO_PARAM == first->ins.param
+        && RES == second->ins.op && NO_PARAM == second->ins.param
+        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+      o_Remove(oh, i - 1);
+      o_Remove(oh, i);
+    }
+  }
+}

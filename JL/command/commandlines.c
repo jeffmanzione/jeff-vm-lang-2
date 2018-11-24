@@ -23,4 +23,5 @@ void argconfig_compile(ArgConfig * const config) {
 void argconfig_run(ArgConfig * const config) {
   ASSERT(NOT_NULL(config));
   argconfig_add(config, ArgKey__EXECUTE, "ex", arg_bool(true));
+  argconfig_add(config, ArgKey__INTERPRETER, "i", arg_bool(false));
 }

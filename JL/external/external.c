@@ -79,6 +79,23 @@ Element add_external_function(VM *vm, Element parent, const char fn_name[],
   return external_function;
 }
 
+Element add_external_method(VM *vm, Element class, const char fn_name[],
+    ExternalFunction fn) {
+  const char *fn_name_str = strings_intern(fn_name);
+  Element external_function = create_external_method(vm, class, fn_name_str,
+      fn);
+  memory_graph_set_field(vm->graph, class, fn_name_str, external_function);
+
+  Element methods_array;
+  if (NONE == (methods_array = obj_get_field(class, METHODS_KEY)).type) {
+    memory_graph_set_field(vm->graph, class, METHODS_KEY, (methods_array =
+        create_array(vm->graph)));
+  }
+  memory_graph_array_enqueue(vm->graph, methods_array, external_function);
+
+  return external_function;
+}
+
 Element add_global_external_function(VM *vm, Element parent,
     const char fn_name[], ExternalFunction fn) {
   Element external_function = add_external_function(vm, parent, fn_name, fn);
@@ -89,8 +106,8 @@ Element add_global_external_function(VM *vm, Element parent,
 void merge_external_class(VM *vm, Element class, ExternalFunction constructor,
     ExternalFunction deconstructor) {
   memory_graph_set_field(vm->graph, class, IS_EXTERNAL_KEY, create_int(1));
-  add_external_function(vm, class, CONSTRUCTOR_KEY, constructor);
-  add_external_function(vm, class, DECONSTRUCTOR_KEY, deconstructor);
+  add_external_method(vm, class, CONSTRUCTOR_KEY, constructor);
+  add_external_method(vm, class, DECONSTRUCTOR_KEY, deconstructor);
 }
 
 Element create_external_class(VM *vm, Element module, const char class_name[],
@@ -112,7 +129,7 @@ Element object_lookup(VM *vm, Thread *t, ExternalData *data, Element arg) {
 }
 
 void merge_object_class(VM *vm) {
-  add_external_function(vm, class_object, "$lookup", object_lookup);
+  add_external_method(vm, class_object, "$lookup", object_lookup);
 }
 
 bool is_value_type(const Element *e, int type) {

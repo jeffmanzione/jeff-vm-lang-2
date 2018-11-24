@@ -1,7 +1,10 @@
 #ifndef THREADS_THREAD_H_
 #define THREADS_THREAD_H_
 
+#include <stdint.h>
+
 #include "../element.h"
+#include "thread_interface.h"
 
 typedef struct VM_ VM;
 

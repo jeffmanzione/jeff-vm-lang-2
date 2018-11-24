@@ -16,7 +16,7 @@
 #include "datastructure/expando.h"
 #include "datastructure/map.h"
 #include "datastructure/set.h"
-#include "threads/thread_interface.h"
+#include "ltable/ltable.h"
 
 #define VALUE_OF(val) (((val).type==INT) ? val.int_val : (((val).type==FLOAT) ? val.float_val : val.char_val))
 
@@ -29,32 +29,9 @@ typedef struct Node_ Node;
 
 typedef struct Element_ Element;
 typedef struct Thread_ Thread;
-
+typedef struct Object_ Objectt;
 typedef struct ExternalData_ ExternalData;
 typedef Element (*ExternalFunction)(VM *, Thread *, ExternalData *, Element);
-
-typedef enum {
-  OBJ, ARRAY, TUPLE, MODULE
-} ObjectType;
-
-typedef struct Object_ {
-  char type;
-  // Pointer to node owner.
-  Node *node;
-  Map fields;
-  bool is_external;
-  Expando *parent_objs;
-
-//  RWLock rwlock;
-
-  union {
-    Array *array;
-    Tuple *tuple;
-    const Module *module;
-    ExternalFunction external_fn;
-    ExternalData *external_data;
-  };
-} Object;
 
 // Do not manually access any of these =(
 typedef enum {
@@ -74,10 +51,34 @@ typedef struct Element_ {
     NONE, OBJECT, VALUE
   } type;
   union {
-    Object *obj;
+    struct Object_ *obj;
     Value val;
   };
 } Element;
+
+typedef enum {
+  OBJ, ARRAY, TUPLE, MODULE
+} ObjectType;
+
+typedef struct Object_ {
+  char type;
+  // Pointer to node owner.
+  Node *node;
+  Element ltable[CKey_END];
+  Map fields;
+  bool is_external;
+  Expando *parent_objs;
+
+//  RWLock rwlock;
+
+  union {
+    Array *array;
+    Tuple *tuple;
+    const Module *module;
+    ExternalFunction external_fn;
+    ExternalData *external_data;
+  };
+} Object;
 
 Element create_none();
 Element create_int(int64_t val);
@@ -103,6 +104,8 @@ Element create_module(VM *vm, const Module *module);
 Element create_function(VM *vm, Element module, uint32_t ins, const char name[]);
 Element create_external_function(VM *vm, Element module, const char name[],
     ExternalFunction external_fn);
+Element create_external_method(VM *vm, Element class, const char name[],
+    ExternalFunction external_fn);
 Element create_method(VM *vm, Element module, uint32_t ins, Element class,
     const char name[]);
 Element create_method_instance(MemoryGraph *graph, Element object,
@@ -110,6 +113,8 @@ Element create_method_instance(MemoryGraph *graph, Element object,
 
 Element val_to_elt(Value val);
 Value value_negate(Value val);
+
+Element obj_lookup(Object *obj, CommonKey key);
 void obj_set_field(Element elt, const char field_name[], Element field_val);
 Element obj_get_field_obj(Object *obj, const char field_name[]);
 Element obj_get_field(Element elt, const char field_name[]);

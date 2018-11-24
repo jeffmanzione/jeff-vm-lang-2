@@ -14,7 +14,7 @@
 #include "command/commandline.h"
 #include "element.h"
 #include "instruction.h"
-#include "threads/thread.h"
+#include "threads/thread_interface.h"
 
 typedef struct MemoryGraph_ MemoryGraph;
 typedef struct Module_ Module;
@@ -40,6 +40,7 @@ void vm_add_string_class(VM *vm);
 void vm_throw_error(VM *vm, Thread *t, Ins ins, const char fmt[], ...);
 Ins vm_current_ins(const VM *vm, Thread *t);
 Element vm_current_block(const VM *vm, const Thread *t);
+uint32_t vm_get_ip(const VM *vm, Thread *t);
 
 void vm_pushstack(VM *vm, Thread *t, Element element);
 //Element vm_popstack(VM *vm);
