@@ -15,8 +15,9 @@
 #include "../error.h"
 #include "../graph/memory.h"
 
-#define ARGSTORE_LOOKUP(typet)                                          \
-  bool argstore_lookup_##typet(const ArgStore *store, ArgKey key) {     \
+
+#define ARGSTORE_LOOKUP_RETVAL(typet, retval)                           \
+  retval argstore_lookup_##typet(const ArgStore *store, ArgKey key) {   \
     const Arg *arg = argstore_get(store, key);                          \
     if (!arg->used) {                                                   \
       ERROR("Store did not have key: %d", key);                         \
@@ -26,6 +27,8 @@
     }                                                                   \
     return arg->typet##_val;                                            \
   }
+
+#define ARGSTORE_LOOKUP(typet) ARGSTORE_LOOKUP_RETVAL(typet, typet)
 
 struct __Argstore {
   const ArgConfig *config;
@@ -76,10 +79,11 @@ const Arg *argstore_get(const ArgStore *store, ArgKey key) {
   }
   return arg;
 }
-ARGSTORE_LOOKUP(bool);
+
 ARGSTORE_LOOKUP(int);
 ARGSTORE_LOOKUP(float);
-ARGSTORE_LOOKUP(string);
+ARGSTORE_LOOKUP_RETVAL(bool, _Bool);
+ARGSTORE_LOOKUP_RETVAL(string, const char *);
 
 const Set *argstore_sources(const ArgStore * const store) {
   ASSERT(NOT_NULL(store));

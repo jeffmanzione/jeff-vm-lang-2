@@ -1,7 +1,7 @@
 module sync
 
-class AtomicInt
-  jmp   13
+class NonAtomicInt
+  jmp   7
 
 @new
   set   orig
@@ -9,50 +9,27 @@ class AtomicInt
   push
   res   self
   fld   value
-  res   Mutex
-  push
-  call
-  push
-  res   self
-  fld   mutex
   res   self
   ret
-  jmp   12
+  jmp   6
 
 @set
   set   v
-  res   mutex
-  push
-  call  acquire
   res   v
   push
   res   self
   fld   value
-  res   mutex
-  push
-  call  release
   ret
-  jmp   12
+  jmp   4
 
 @get
-  res   mutex
-  push
-  call  acquire
   res   self
   get   value
-  set   cpy
-  res   mutex
-  push
-  call  release
-  res   cpy
   ret
   ret
-  jmp   28
+  jmp   20
 
 @to_s
-  res   mutex
-  push
-  call  acquire
   res   concat
   push
   res   ')'
@@ -71,6 +48,72 @@ class AtomicInt
   push
   tupl  4
   call
+  ret
+  ret
+endclass
+
+
+class AtomicInt,NonAtomicInt
+  jmp   14
+
+@new
+  set   orig
+  res   self
+  get   NonAtomicInt
+  push
+  res   orig
+  call  new
+  res   Mutex
+  push
+  call
+  push
+  res   self
+  fld   mutex
+  res   self
+  ret
+  jmp   13
+
+@set
+  set   v
+  res   mutex
+  push
+  call  acquire
+  res   self
+  get   NonAtomicInt
+  push
+  res   v
+  call  set
+  res   mutex
+  push
+  call  release
+  ret
+  jmp   14
+
+@get
+  res   mutex
+  push
+  call  acquire
+  res   self
+  get   NonAtomicInt
+  push
+  call  get
+  set   cpy
+  res   mutex
+  push
+  call  release
+  res   cpy
+  ret
+  ret
+  jmp   14
+
+@to_s
+  res   mutex
+  push
+  call  acquire
+  res   self
+  get   NonAtomicInt
+  push
+  call  to_s
   set   tos
   res   mutex
   push

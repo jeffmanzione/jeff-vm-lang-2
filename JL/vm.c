@@ -101,6 +101,11 @@ void vm_throw_error(VM *vm, Thread *t, Ins ins, const char fmt[], ...) {
   Element error_module = vm_lookup_module(vm, strings_intern("error"));
   Element error_class = obj_get_field(error_module, strings_intern("Error"));
   Element curr_block = vm_current_block(vm, t);
+
+  // TODO: Why do I need to do this? It should automatically init the module.
+  vm_maybe_initialize_and_execute(vm, t,
+      vm_lookup_module(vm, strings_intern("io")).obj->module);
+
   memory_graph_set_field(vm->graph, curr_block, ERROR_KEY, create_int(1));
   vm_set_resval(vm, t, error_msg);
   vm_call_new(vm, t, error_class);
@@ -130,8 +135,11 @@ void catch_error(VM *vm, Thread *t) {
     Element error_module = vm_lookup_module(vm, strings_intern("error"));
     Element raise_error = obj_get_field(error_module,
         strings_intern("raise_error"));
-    // Simulate instruction advance.
-//    vm_shift_ip(vm, 1);
+
+    // TODO: Why do I need to do this? It should automatically init the module.
+    vm_maybe_initialize_and_execute(vm, t,
+        vm_lookup_module(vm, strings_intern("io")).obj->module);
+
     vm_call_fn(vm, t, error_module, raise_error);
     vm_shift_ip(vm, t, 1);
     return;
@@ -615,6 +623,8 @@ void vm_call_new(VM *vm, Thread *t, Element class) {
   if (NONE != new_func.type) {
     vm_call_fn(vm, t, new_obj, new_func);
   } else {
+    vm_maybe_initialize_and_execute(vm, t,
+        obj_get_field(class, PARENT_MODULE).obj->module);
     vm_set_resval(vm, t, new_obj);
   }
 }
@@ -681,7 +691,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         create_int(1));
     catch_error(vm, t);
     // Counter shift forward at end of instruction execution.
-//    vm_shift_ip(vm, -2);
+    vm_shift_ip(vm, t, -1);
     return true;
   case PUSH:
     vm_pushstack(vm, t, (Element) vm_get_resval(vm, t));
@@ -1240,14 +1250,14 @@ bool execute(VM *vm, Thread *t) {
   ASSERT_NOT_NULL(vm);
 
   Ins ins = vm_current_ins(vm, t);
-//  wait_for_mutex(vm->debug_mutex, INFINITE);
-//  fprintf(stdout, "module(%s,t=%d) ",
-//      module_name(vm_get_module(vm, t).obj->module), (int) t->id);
-//  fflush(stdout);
-//  ins_to_str(ins, stdout);
-//  fprintf(stdout, "\n");
-//  fflush(stdout);
-//  release_mutex(vm->debug_mutex);
+  wait_for_mutex(vm->debug_mutex, INFINITE);
+  fprintf(stdout, "module(%s,t=%d) ",
+      module_name(vm_get_module(vm, t).obj->module), (int) t->id);
+  fflush(stdout);
+  ins_to_str(ins, stdout);
+  fprintf(stdout, "\n");
+  fflush(stdout);
+  release_mutex(vm->debug_mutex);
 
   bool status;
   switch (ins.param) {
@@ -1264,9 +1274,10 @@ bool execute(VM *vm, Thread *t) {
     status = execute_no_param(vm, t, ins);
   }
   if (NONE != obj_get_field(vm_current_block(vm, t), ERROR_KEY).type) {
-    while (NONE != obj_get_field(vm_current_block(vm, t), ERROR_KEY).type) {
-      catch_error(vm, t);
-    }
+//    // TODO: Does this need to be a loop?
+//    while (NONE != obj_get_field(vm_current_block(vm, t), ERROR_KEY).type) {
+    catch_error(vm, t);
+//    }
     return true;
   }
 

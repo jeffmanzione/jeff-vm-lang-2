@@ -11,8 +11,11 @@
 #include "../datastructure/set.h"
 #include "commandline_arg.h"
 
-#define ARGSTORE_TEMPLATE(type) \
-  bool argstore_lookup_##type(const ArgStore *store, ArgKey key)
+
+#define ARGSTORE_TEMPLATE_RETVAL(type, retval) \
+  retval argstore_lookup_##type(const ArgStore *store, ArgKey key)
+
+#define ARGSTORE_TEMPLATE(type) ARGSTORE_TEMPLATE_RETVAL(type, type)
 
 typedef enum {
   ArgKey__NONE = 0,
@@ -39,10 +42,10 @@ ArgStore *commandline_parse_args(ArgConfig *config, int argc,
 
 const Set *argstore_sources(const ArgStore * const store);
 
-ARGSTORE_TEMPLATE(bool);
 ARGSTORE_TEMPLATE(int);
 ARGSTORE_TEMPLATE(float);
-ARGSTORE_TEMPLATE(string);
+ARGSTORE_TEMPLATE_RETVAL(bool, _Bool);
+ARGSTORE_TEMPLATE_RETVAL(string, const char *);
 
 void argstore_delete(ArgStore *store);
 
