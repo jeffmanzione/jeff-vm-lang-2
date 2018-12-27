@@ -448,7 +448,7 @@ int codegen_import(SyntaxTree *tree, Tape *tape) {
 }
 
 int codegen_function_params(SyntaxTree *arg_begin, SyntaxTree **function_body,
-    Tape *tape) {
+bool *is_const, Tape *tape) {
   int lines_for_func = 0;
   bool no_args = is_leaf(arg_begin->first)
       && arg_begin->first->token->type == RPAREN;
@@ -474,13 +474,20 @@ int codegen_function_params(SyntaxTree *arg_begin, SyntaxTree **function_body,
 //    lines_for_func += codegen((*function_body)->first, tape);
 //    *function_body = (*function_body)->second;
 //  }
+
+  if (!is_leaf(*function_body) && is_leaf((*function_body)->first)
+      && (*function_body)->first->token->type == CONST_T) {
+    *is_const = true;
+    *function_body = (*function_body)->second;
+  }
   return lines_for_func;
 }
 
 int codegen_function_helper(SyntaxTree *arg_begin, const Token *token,
-    Tape* tape) {
+bool *is_const, Tape* tape) {
   SyntaxTree *function_body = NULL;
-  int lines_for_func = codegen_function_params(arg_begin, &function_body, tape);
+  int lines_for_func = codegen_function_params(arg_begin, &function_body,
+      is_const, tape);
 
   lines_for_func += codegen(function_body, tape);
   return lines_for_func;
@@ -494,7 +501,12 @@ int codegen_anon_function(SyntaxTree *tree, Tape *tape) {
   int lines_for_func = 0;
   SyntaxTree *arg_begin = tree->second->second;
 
-  lines_for_func += codegen_function_helper(arg_begin, token, tmp_tape);
+  bool is_const = false;
+  lines_for_func += codegen_function_helper(arg_begin, token, &is_const,
+      tmp_tape);
+  if (is_const) {
+    lines_for_func += tape_ins_no_arg(tmp_tape, CNST, token);
+  }
   lines_for_func += tape_ins_no_arg(tmp_tape, RET, token);
 
   num_lines += tape_ins_int(tape, JMP, lines_for_func, token);
@@ -514,7 +526,13 @@ int codegen_function(SyntaxTree *tree, Tape *tape) {
   int num_lines = tape_label(tmp_tape, token);
   int lines_for_func = 0;
 
-  lines_for_func += codegen_function_helper(arg_begin, token, tmp_tape);
+  bool is_const = false;
+  lines_for_func += codegen_function_helper(arg_begin, token, &is_const,
+      tmp_tape);
+  printf("is_const=%d\n", is_const);
+  if (is_const) {
+    lines_for_func += tape_ins_no_arg(tmp_tape, CNST, token);
+  }
   lines_for_func += tape_ins_no_arg(tmp_tape, RET, token);
 
   num_lines += tape_ins_int(tape, JMP, lines_for_func, token);
@@ -534,8 +552,13 @@ int codegen_new(SyntaxTree *tree, Tape *tape) {
   int num_lines = tape_label(tmp_tape, token);
   int lines_for_func = 0;
 
-  lines_for_func += codegen_function_helper(arg_begin, token, tmp_tape);
+  bool is_const = false;
+  lines_for_func += codegen_function_helper(arg_begin, token, &is_const,
+      tmp_tape);
   lines_for_func += tape_ins_text(tmp_tape, RES, SELF, token);
+  if (is_const) {
+    lines_for_func += tape_ins_no_arg(tmp_tape, CNST, token);
+  }
   lines_for_func += tape_ins_no_arg(tmp_tape, RET, token);
 
   num_lines += tape_ins_int(tape, JMP, lines_for_func, token);

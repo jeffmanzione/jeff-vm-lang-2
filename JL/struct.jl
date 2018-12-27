@@ -9,7 +9,7 @@ class Map {
     self.table[self.sz] = None
     self.keys = []
   }
-  def __set__(k, v) {
+  def __set__(const k, const v) {
     hval = hash(k)
     if hval < 0 hval = -hval
     pos = hval % self.sz
@@ -30,7 +30,7 @@ class Map {
     self.keys.append(k)
     return None
   }
-  def __index__(k) {
+  def __index__(const k) {
     hval = hash(k)
     pos = hval % self.sz
     if ~self.table[pos] {
@@ -44,11 +44,11 @@ class Map {
     }
     return None
   }
-  def __in__(k) {
+  def __in__(const k) {
     self.__index__(k) != None
   }
   
-  def iter() {
+  def iter() const {
     KVIterator(self.keys.iter(), self)
   }
 }

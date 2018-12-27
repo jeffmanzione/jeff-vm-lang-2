@@ -401,7 +401,7 @@ ImplSyntax(conditional_expression,
     Or(And(TypeLn(IF_T), Ln(is_expression), Opt(TypeLn(THEN)), Ln(conditional_expression), TypeLn(ELSE), conditional_expression), And(TypeLn(IF_T), Ln(is_expression), Opt(TypeLn(THEN)), conditional_expression), is_expression));
 
 ImplSyntax(anon_function,
-    Or(And(Type(AT), Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), statement),
+    Or(And(Type(AT), Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), Opt(Type(CONST_T)), statement),
         conditional_expression));
 
 // assignment_expression
@@ -519,7 +519,7 @@ ImplSyntax(function_argument_list,
 // function_definition
 //    def identifier ( argument_list ) statement
 ImplSyntax(function_definition,
-    And(Type(DEF), identifier, Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), statement));
+    And(Type(DEF), identifier, Type(LPAREN), Opt(function_argument_list), TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
 
 // field_statement
 //    field function_argument_lsit

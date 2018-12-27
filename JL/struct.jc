@@ -29,15 +29,17 @@ class Map
   fld   keys
   res   self
   ret
-  jmp   128
+  jmp   130
 
 @__set__
   push
   tget  0
-  set   k
+  cnst
+  setc  k
   res
   tget  1
-  set   v
+  cnst
+  setc  v
   res   hash
   push
   res   k
@@ -248,7 +250,7 @@ class Map
   push
   neq
   ret
-  jmp   12
+  jmp   13
 
 @iter
   res   KVIterator
@@ -262,6 +264,7 @@ class Map
   push
   tupl  2
   call
+  cnst
   ret
 endclass
 
