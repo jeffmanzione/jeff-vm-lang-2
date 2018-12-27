@@ -99,6 +99,7 @@ typedef enum {
   EXIT_T,
   IN,
   NOTIN,
+  CONST_T,
 } TokenType;
 
 typedef struct {

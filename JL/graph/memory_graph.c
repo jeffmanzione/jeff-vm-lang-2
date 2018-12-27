@@ -176,8 +176,9 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   // Set to none.
 //  memset(node->obj.ltable, 0x0, sizeof(Element) * CKey_END);
   map_init_default(&node->obj.fields);
+  map_init_default(&node->obj.consts);
   node->obj.parent_objs = expando(Object *, 4);
-  Element e = { .type = OBJECT, .obj = &node->obj, };
+  Element e = { .type = OBJECT, .is_const = false, .obj = &node->obj, };
   memory_graph_set_field(graph, e, ADDRESS_KEY, create_int((int32_t) e.obj));
   return e;
 }

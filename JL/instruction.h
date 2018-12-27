@@ -68,6 +68,8 @@ typedef enum {
   ASET,
   //
   MDST,
+  CNST,
+  SETC,
   // NOT A REAL OP
   OP_BOUND,
 } Op;

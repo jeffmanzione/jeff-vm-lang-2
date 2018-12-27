@@ -298,70 +298,96 @@ int codegen_tuple(SyntaxTree *tree, int *num_args, Tape *tape) {
 
 int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape);
 
-int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
-  //DEBUGF("codegen_function_args");
+int codegen_function_single_arg(SyntaxTree *tree, Tape *tape, int index,
+bool is_last) {
+//  printf("codegen_function_single_arg ");
+//  expression_tree_to_str(tree, NULL, stdout);
+//  printf("\n");
+//  fflush(stdout);
+
   int num_lines = 0;
+  const bool is_undecorated_single_arg = is_leaf(tree)
+      && LPAREN != tree->token->type;
+  const bool arg_is_const_single_arg = !is_leaf(tree) && is_leaf(tree->first)
+      && tree->first->token->type == CONST_T;
+  const bool arg_is_complex = !arg_is_const_single_arg && !is_leaf(tree)
+      && is_leaf(tree->first);
+
+  Token * arg_token =
+      arg_is_complex ? tree->first->token :
+      arg_is_const_single_arg ? tree->first->token : tree->token;
+  num_lines += (is_last ? 0 : tape_ins_no_arg(tape, PUSH, arg_token))
+      + tape_ins_int(tape, TGET, index, arg_token);
+
+  if (is_undecorated_single_arg) {
+    num_lines += tape_ins(tape, SET, tree->token);
+  } else if (arg_is_const_single_arg) {
+    const bool is_complex = !is_leaf(tree->second);
+    if (is_complex) {
+      num_lines += codegen_function_arguments_list(tree->second, tape);
+    } else {
+      num_lines += tape_ins_no_arg(tape, CNST, tree->first->token)
+          + tape_ins(tape, SETC, tree->second->token);
+    }
+  } else if (arg_is_complex) {
+    num_lines += codegen_function_arguments_list(tree->second->first, tape);
+  }
+
+  return num_lines;
+}
+
+int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
+  //  printf("codegen_function_args ");
+  //  expression_tree_to_str(tree, NULL, stdout);
+  //  printf("\n");
+  //  fflush(stdout);
+
+  int num_lines = 0;
+
   ParseExpression prod = tree->expression;
   if (prod != function_argument_list1) {
     ERROR("Not a function_argument_list1");
   }
-  if (!is_leaf(tree->second) && is_leaf(tree->second->first)
-      && tree->second->first->token->type == LPAREN) {
-    Token *tok = tree->second->first->token;
-    num_lines += tape_ins_no_arg(tape, RES, tok)
-        + tape_ins_no_arg(tape, PUSH, tok)
-        + tape_ins_int(tape, TGET, argument_index, tok)
-        + codegen_function_arguments_list(tree->second->second->first, tape);
-  } else if (!is_leaf(tree->second) && !is_leaf(tree->second->first)
-      && !is_leaf(tree->second->first->second)) {
-    Token *tok = tree->second->first->first->token;
-    num_lines += tape_ins_no_arg(tape, RES, tok)
-        + tape_ins_no_arg(tape, PUSH, tok)
-        + tape_ins_int(tape, TGET, argument_index, tok)
-        + codegen_function_arguments_list(tree->second->first->second->first,
-            tape);
-    tok =
-        is_leaf(tree->second->first) ?
-            tree->second->first->token : tree->second->first->first->token;
-    num_lines += tape_ins_no_arg(tape, RES, tok)
-        + tape_ins_no_arg(tape, PUSH, tok)
-        + tape_ins_int(tape, TGET, argument_index, tok)
-        + (is_leaf(tree->second->first) ? tape_ins(tape, SET, tok) : 0)
-        + codegen_function_args(tree->second->second, argument_index + 1, tape);
-  } else if (is_leaf(tree->second)
-      || tree->second->second->expression != function_argument_list1) {
-    Token *tok =
-        is_leaf(tree->second) ?
-            tree->second->token : tree->second->first->token;
-    num_lines += tape_ins_no_arg(tape, RES, tok)
-        + tape_ins_int(tape, TGET, argument_index, tok)
-        + tape_ins(tape, SET, tok);
+
+  SyntaxTree *arg = tree->second;
+  if (!is_leaf(arg) && arg->expression == function_argument_list) {
+    num_lines += tape_ins_no_arg(tape, RES, tree->first->token)
+        + codegen_function_single_arg(arg->first, tape, argument_index, /*is_last=*/
+        false) + codegen_function_args(arg->second, argument_index + 1, tape);
   } else {
-    Token *tok =
-        is_leaf(tree->second->first) ?
-            tree->second->first->token : tree->second->first->first->token;
-    num_lines += tape_ins_no_arg(tape, RES, tok)
-        + tape_ins_no_arg(tape, PUSH, tok)
-        + tape_ins_int(tape, TGET, argument_index, tok)
-        + (is_leaf(tree->second->first) ? tape_ins(tape, SET, tok) : 0)
-        + codegen_function_args(tree->second->second, argument_index + 1, tape);
+    num_lines += tape_ins_no_arg(tape, RES, tree->first->token)
+        + codegen_function_single_arg(arg, tape, argument_index, /*is_last=*/
+        true);
   }
   return num_lines;
 }
 
 int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape) {
+//  printf("codegen_function_arguments_list ");
+//  expression_tree_to_str(tree, NULL, stdout);
+//  printf("\n");
+//  fflush(stdout);
+
   int num_lines = 0;
-  if (is_leaf(tree->first) && LPAREN != tree->first->token->type) {
-    num_lines += tape_ins_no_arg(tape, PUSH, tree->first->token)
-        + tape_ins_int(tape, TGET, 0, tree->first->token)
-        + tape_ins(tape, SET, tree->first->token);
-  } else if (!is_leaf(tree->first) && is_leaf(tree->first->first)) {
-    num_lines += tape_ins_no_arg(tape, PUSH, tree->first->first->token)
-        + tape_ins_int(tape, TGET, 0, tree->first->first->token)
-        + codegen_function_arguments_list(tree->first->second->first, tape);
+
+  // Strip parents in necessary
+  if (!is_leaf(tree) && is_leaf(tree->first)
+      && LPAREN == tree->first->token->type) {
+    tree = tree->second->first;
   }
-  if (is_leaf(tree->first) && !is_leaf(tree->second->first)
-      && tree->second->first->expression == function_argument_list) {
+//  if (!is_leaf(tree) && is_leaf(tree->second)
+//      && RPAREN == tree->second->token->type) {
+//    tree = tree->first;
+//  }
+
+  num_lines += codegen_function_single_arg(tree->first, tape, 0, /*is_last=*/
+  false);
+
+  const bool has_additional_complex_args = is_leaf(tree->first)
+      && !is_leaf(tree->second) && !is_leaf(tree->second->first)
+      && tree->second->first->expression == function_argument_list;
+
+  if (has_additional_complex_args) {
     num_lines += codegen_function_arguments_list(tree->second->first, tape);
   }
   return num_lines + codegen_function_args(tree->second, 1, tape);
@@ -429,7 +455,9 @@ int codegen_function_params(SyntaxTree *arg_begin, SyntaxTree **function_body,
   if (no_args) {
     *function_body = arg_begin->second;
   } else if (arg_begin->first->expression != function_argument_list) {
-    lines_for_func += tape_ins(tape, SET, arg_begin->first->token);
+    bool is_const = arg_begin->first->expression == const_expression;
+    SyntaxTree *id = is_const ? arg_begin->first->second : arg_begin->first;
+    lines_for_func += tape_ins(tape, SET, id->token);
     if (is_leaf(arg_begin->second)) {
       *function_body = NULL;
     }
@@ -797,6 +825,8 @@ int codegen_assignment(SyntaxTree *lhs, Token *eq_sign, SyntaxTree* rhs,
   int num_lines = codegen(rhs, tape);
   if (is_leaf(lhs)) {
     num_lines += tape_ins(tape, SET, lhs->token);
+  } else if (prod == const_expression) {
+    num_lines += tape_ins(tape, SETC, lhs->second->token);
   } else if (prod == postfix_expression) {
     num_lines +=
         (tape_ins_no_arg(tape, PUSH, eq_sign) + codegen(lhs->first, tape)
@@ -837,6 +867,9 @@ int codegen_unary(SyntaxTree* tree, Tape *tape) {
     num_lines += tape_ins_no_arg(tape, PUSH, unary_tok)
         + tape_ins_int(tape, PUSH, -1, unary_tok)
         + tape_ins_no_arg(tape, MULT, unary_tok);
+    break;
+  case CONST_T:
+    num_lines += tape_ins_no_arg(tape, CNST, unary_tok);
     break;
   default:
     ERROR("Unknown unary");

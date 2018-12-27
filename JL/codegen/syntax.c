@@ -292,12 +292,14 @@ ImplSyntax(range_expression,
 //    - unary_expression
 //    ++ unary_expression
 //    -- unary_expression
+//    const unary_expression
 ImplSyntax(unary_expression,
     Or(And(Type(TILDE), unary_expression),
        And(Type(EXCLAIM), unary_expression),
        And(Type(MINUS), unary_expression),
 //       And(Type(INC), unary_expression),
 //       And(Type(DEC), unary_expression),
+       And(Type(CONST_T), unary_expression),
        range_expression));
 
 // multiplicative_expression
@@ -408,7 +410,7 @@ ImplSyntax(anon_function,
 //    unary_expression = assignment_expression
 ImplSyntax(assignment_expression,
     Or(And(assignment_tuple, Type(EQUALS), assignment_expression),
-        And(unary_expression, Type(EQUALS), assignment_expression),
+        And(Opt(TypeLn(CONST_T)), unary_expression, Type(EQUALS), assignment_expression),
         anon_function));
 
 // assignment_tuple
@@ -498,15 +500,20 @@ ImplSyntax(jump_statement,
 ImplSyntax(break_statement,
     And(Or(Type(BREAK), Type(CONTINUE)), Type(ENDLINE)));
 
+ImplSyntax(const_expression,
+    And(Opt(TypeLn(CONST_T)), Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
+                                 identifier)));
+
 // function_argument_list
 //    identifier | function_argument_list , identifier
 ImplSyntax(function_argument_list1,
-    Or(And(TypeLn(COMMA), Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
-                                 identifier),
-           function_argument_list1), Epsilon));
+    Or(And(TypeLn(COMMA), function_argument_list), Epsilon));
+
+
 ImplSyntax(function_argument_list,
     And(Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
-           identifier),
+        const_expression,
+        identifier),
         function_argument_list1));
 
 // function_definition

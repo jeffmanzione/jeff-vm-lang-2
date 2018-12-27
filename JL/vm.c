@@ -724,6 +724,10 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
     if (has_error) {
       return true;
     }
+    if (elt.is_const) {
+      vm_throw_error(vm, t, ins, "Cannot modify const Object.");
+      return true;
+    }
     if (elt.type != OBJECT) {
       vm_throw_error(vm, t, ins,
           "Cannot perform array operation on something not an Object.");
@@ -856,6 +860,9 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
     }
     vm_set_resval(vm, t, create_int((int32_t) elt.obj));
     return true;
+  case CNST:
+    vm_set_resval(vm, t, make_const(vm_get_resval(vm, t)));
+    return true;
   default:
     break;
   }
@@ -959,24 +966,43 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
 bool execute_id_param(VM *vm, Thread *t, Ins ins) {
   ASSERT_NOT_NULL(ins.str);
   Element block = vm_current_block(vm, t);
-  Element module, new_res_val, obj;
+  Element module, resval, new_res_val, obj;
   int32_t ip;
   bool has_error = false;
   switch (ins.op) {
   case SET:
+    if (is_const_ref(block.obj, ins.str)) {
+      vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
+      return true;
+    }
     memory_graph_set_field(vm->graph, block, ins.str, vm_get_resval(vm, t));
     break;
   case MDST:
     memory_graph_set_field(vm->graph, vm_get_module(vm, t), ins.str,
         vm_get_resval(vm, t));
     break;
+  case CNST:
+    make_const_ref(block.obj, ins.id);
+    break;
+  case SETC:
+    if (is_const_ref(block.obj, ins.str)) {
+      vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
+      return true;
+    }
+    memory_graph_set_field(vm->graph, block, ins.str, vm_get_resval(vm, t));
+    make_const_ref(block.obj, ins.id);
+    break;
   case FLD:
+    resval = vm_get_resval(vm, t);
+    if (resval.is_const) {
+      vm_throw_error(vm, t, ins, "Cannot modify const Object.");
+      return true;
+    }
     new_res_val = vm_popstack(vm, t, &has_error);
     if (has_error) {
       return true;
     }
-    memory_graph_set_field(vm->graph, vm_get_resval(vm, t), ins.str,
-        new_res_val);
+    memory_graph_set_field(vm->graph, resval, ins.str, new_res_val);
     vm_set_resval(vm, t, new_res_val);
     break;
   case PUSH:
@@ -1250,14 +1276,15 @@ bool execute(VM *vm, Thread *t) {
   ASSERT_NOT_NULL(vm);
 
   Ins ins = vm_current_ins(vm, t);
-  wait_for_mutex(vm->debug_mutex, INFINITE);
-  fprintf(stdout, "module(%s,t=%d) ",
-      module_name(vm_get_module(vm, t).obj->module), (int) t->id);
-  fflush(stdout);
-  ins_to_str(ins, stdout);
-  fprintf(stdout, "\n");
-  fflush(stdout);
-  release_mutex(vm->debug_mutex);
+
+//  wait_for_mutex(vm->debug_mutex, INFINITE);
+//  fprintf(stdout, "module(%s,t=%d) ",
+//      module_name(vm_get_module(vm, t).obj->module), (int) t->id);
+//  fflush(stdout);
+//  ins_to_str(ins, stdout);
+//  fprintf(stdout, "\n");
+//  fflush(stdout);
+//  release_mutex(vm->debug_mutex);
 
   bool status;
   switch (ins.param) {

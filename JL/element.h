@@ -46,10 +46,13 @@ typedef struct Value_ {
   };
 } Value;
 
+typedef enum {
+  NONE, OBJECT, VALUE
+} ElementType;
+
 typedef struct Element_ {
-  enum {
-    NONE, OBJECT, VALUE
-  } type;
+  ElementType type;
+  bool is_const;
   union {
     struct Object_ *obj;
     Value val;
@@ -65,7 +68,7 @@ typedef struct Object_ {
   // Pointer to node owner.
   Node *node;
   Element ltable[CKey_END];
-  Map fields;
+  Map fields, consts;
   bool is_external;
   Expando *parent_objs;
 
@@ -142,5 +145,9 @@ bool is_true(Element elt);
 bool is_false(Element elt);
 
 char *string_to_cstr(Element str);
+
+Element make_const(Element elt);
+void make_const_ref(Object *obj, const char field_name[]);
+bool is_const_ref(Object *obj, const char field_name[]);
 
 #endif /* ELEMENT_H_ */

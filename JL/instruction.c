@@ -17,7 +17,7 @@ const char *instructions[] = { "nop", "exit", "res", "tget", "set", "push",
     "or", "xor", "if", "ifn", "jmp", "nblk", "bblck", "ret", "add", "sub",
     "mult", "div", "mod", "inc", "dec", "sinc", "call", "tupl", "dup", "goto",
     "prnt", "rmdl", "mcll", "get", "gtsh", "fld", "is", "adr", "rais", "ctch",
-    "anew", "aidx", "aset", "mdst" };
+    "anew", "aidx", "aset", "mdst", "cnst", "setc" };
 
 Op op_type(const char word[]) {
   int i;

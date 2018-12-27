@@ -32,31 +32,25 @@ Element create_method_instance(MemoryGraph *graph, Element object,
     Element method);
 
 Element create_int(int64_t val) {
-  Element to_return;
-  to_return.type = VALUE;
-  to_return.val.type = INT;
-  to_return.val.int_val = val;
+  Element to_return = { .type = VALUE, .is_const = false, .val.type = INT,
+      .val.int_val = val };
   return to_return;
 }
 
 Element create_float(double val) {
-  Element to_return;
-  to_return.type = VALUE;
-  to_return.val.type = FLOAT;
-  to_return.val.float_val = val;
+  Element to_return = { .type = VALUE, .is_const = false, .val.type = FLOAT,
+      .val.float_val = val };
   return to_return;
 }
 
 Element create_char(int8_t val) {
-  Element to_return;
-  to_return.type = VALUE;
-  to_return.val.type = CHAR;
-  to_return.val.char_val = val;
+  Element to_return = { .type = VALUE, .is_const = false, .val.type = CHAR,
+      .val.char_val = val };
   return to_return;
 }
 
 Element element_for_obj(Object *obj) {
-  Element e = { .type = OBJECT, .obj = obj };
+  Element e = { .type = OBJECT, .is_const = false, .obj = obj };
   return e;
 }
 
@@ -339,6 +333,7 @@ void obj_delete_ptr(Object *obj, bool free_mem) {
     map_iterate(&obj->fields, dealloc_elts);
   }
   map_finalize(&obj->fields);
+  map_finalize(&obj->consts);
 
   ASSERT(NOT_NULL(obj->parent_objs));
   expando_delete(obj->parent_objs);
@@ -578,4 +573,17 @@ bool is_false(Element elt) {
 Element element_from_obj(Object * const obj) {
   Element e = { .type = OBJECT, .obj = obj };
   return e;
+}
+
+Element make_const(Element elt) {
+  elt.is_const = true;
+  return elt;
+}
+
+void make_const_ref(Object *obj, const char field_name[]) {
+  map_insert(&obj->consts, field_name, (void *) true);
+}
+
+bool is_const_ref(Object *obj, const char field_name[]) {
+  return map_lookup(&obj->consts, field_name) != NULL;
 }
