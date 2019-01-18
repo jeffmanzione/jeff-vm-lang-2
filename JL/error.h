@@ -18,12 +18,12 @@ extern const char *FUNC_NAME__;
 extern const char *FILE_NAME__;
 
 #ifdef DEBUG
-#define DEB_FN(ret, fn, ...)         \
-	ret fn##__(int LINE_NUM__,       \
-		   const char FUNC_NAME__[], \
-	       const char FILE_NAME__[], \
-		   bool NEST_DEBUG__,        \
-	       __VA_ARGS__)
+#define DEB_FN(ret, fn, ...)           \
+	ret fn##__(int LINE_NUM__,           \
+		         const char FUNC_NAME__[], \
+	           const char FILE_NAME__[], \
+		         bool NEST_DEBUG__,        \
+	           __VA_ARGS__)
 #define CALL_FN(fn, ...) \
     fn(__LINE__, __func__, __FILE__, true, __VA_ARGS__)
 #else
@@ -33,15 +33,20 @@ extern const char *FILE_NAME__;
 	fn(__VA_ARGS__)
 #endif
 
+#ifdef DEBUG
 #define DEBUGF(fmt, ...) debugf(__LINE__, __func__, __FILE__, fmt, ##__VA_ARGS__)
-#define ERROR(fmt, ...) do {                                     \
-	if (NEST_DEBUG__) {                                          \
-		error_nest(__LINE__, __func__, __FILE__,                 \
-                   LINE_NUM__, FUNC_NAME__, FILE_NAME__,         \
-				   fmt, ##__VA_ARGS__);                          \
-	} else {                                                     \
-		error(__LINE__, __func__, __FILE__, fmt, ##__VA_ARGS__); \
-	}                                                            \
+#else
+#define DEBUGF(fmt, ...) do {} while(0);
+#endif
+
+#define ERROR(fmt, ...) do {                                   \
+    if (NEST_DEBUG__) {                                        \
+      error_nest(__LINE__, __func__, __FILE__,                 \
+                     LINE_NUM__, FUNC_NAME__, FILE_NAME__,     \
+             fmt, ##__VA_ARGS__);                              \
+    } else {                                                   \
+      error(__LINE__, __func__, __FILE__, fmt, ##__VA_ARGS__); \
+    }                                                          \
   } while (0)
 
 #define GET_MACRO(_1,_2,_3,_4,NAME,...) NAME
@@ -53,8 +58,6 @@ extern const char *FILE_NAME__;
 #define NOT_NULL(exp) (NULL != (exp))
 #define ASSERT_NOT_NULL(exp) ASSERT(NOT_NULL(exp))
 #define ASSERT_NULL(exp) ASSERT(IS_NULL(exp))
-
-//#define ASSERT(...) S_ASSERT(__VA_ARGS__)
 
 #ifdef DEBUG
 #define ASSERT(...) S_ASSERT(__VA_ARGS__)

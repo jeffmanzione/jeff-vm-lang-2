@@ -37,7 +37,7 @@ void alloc_init() {
   ASSERT_NULL(in_mem);
   in_mem = set_create(32781, default_hasher, default_comparator);
   alloc_busy = false;
-  alloc_mutex = create_mutex(NULL);
+  alloc_mutex = mutex_create(NULL);
 }
 
 AllocInfo alloc_info(uint32_t elt_size, uint32_t count, uint32_t line,
@@ -78,13 +78,14 @@ void alloc_finalize() {
   }
   set_iterate(in_mem, embarrass_me);
   set_delete(in_mem);
-  close_mutex(alloc_mutex);
+  mutex_close(alloc_mutex);
   alloc_busy = alloc_val;
 }
 
 void alloc_register(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
     const char func[], const char file[], const char type_name[]) {
- if (!alloc_busy) {
+  mutex_await(alloc_mutex, INFINITE);
+  if (!alloc_busy) {
     alloc_busy = true;
     if (!set_insert(in_mem, ptr)) {
       error(line, func, file,
@@ -93,10 +94,12 @@ void alloc_register(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
     }
     alloc_busy = false;
   }
+  mutex_release(alloc_mutex);
 }
 
 void alloc_unregister(void *ptr, uint32_t line, const char func[],
     const char file[]) {
+  mutex_await(alloc_mutex, INFINITE);
   if (!alloc_busy) {
     alloc_busy = true;
     if (!set_remove(in_mem, ptr)) {
@@ -105,6 +108,7 @@ void alloc_unregister(void *ptr, uint32_t line, const char func[],
     }
     alloc_busy = false;
   }
+  mutex_release(alloc_mutex);
 }
 
 void alloc_set_verbose(bool verbose) {
@@ -126,7 +130,6 @@ void log_alloc(uint32_t line, const char func[], const char file[],
 
 void *alloc__(uint32_t elt_size, uint32_t count, uint32_t line,
     const char func[], const char file[], const char type_name[]) {
-  wait_for_mutex(alloc_mutex, INFINITE);
   if (0 == elt_size || 0 == count) {
     error(line, func, file, "Either allocated array is of 0 elements or it is"
         " an array of type sizeof(0).");
@@ -147,14 +150,12 @@ void *alloc__(uint32_t elt_size, uint32_t count, uint32_t line,
   alloc_register(ptr, elt_size, count, line, func, file, type_name);
   log_alloc(line, func, file, "Allocated a %s[%d] at %p", type_name, count,
       ptr);
-
-  release_mutex(alloc_mutex);
   return ptr;
 }
 
 void *realloc__(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
     const char func[], const char file[]) {
-  wait_for_mutex(alloc_mutex, INFINITE);
+  mutex_await(alloc_mutex, INFINITE);
   if (NULL == ptr) {
     error(line, func, file, "Pointer argument was null.");
   }
@@ -172,7 +173,6 @@ void *realloc__(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
   int old_size = old_info.elt_size * old_info.count;
 
   void *new_info_ptr = realloc(info_ptr, info_space + new_size);
-  ASSERT(NOT_NULL(new_info_ptr));
 
   if (NULL == new_info_ptr) {
     error(line, func, file, "Failed to reallocate memory.");
@@ -196,12 +196,12 @@ void *realloc__(void *ptr, uint32_t elt_size, uint32_t count, uint32_t line,
       ((AllocInfo *) new_info_ptr)->type_name);
   log_alloc(line, func, file, "Reallocated memory from %p to %p.", ptr,
       new_ptr);
-  release_mutex(alloc_mutex);
+  mutex_release(alloc_mutex);
   return new_ptr;
 }
 
 void dealloc__(void **ptr, uint32_t line, const char func[], const char file[]) {
-  wait_for_mutex(alloc_mutex, INFINITE);
+  mutex_await(alloc_mutex, INFINITE);
   if (NULL == ptr || NULL == *ptr) {
     error(line, func, file, "Pointer argument was null.");
   }
@@ -216,20 +216,5 @@ void dealloc__(void **ptr, uint32_t line, const char func[], const char file[]) 
 
   log_alloc(line, func, file, "Deallocated memory from %p", *ptr);
   *ptr = NULL;
-  release_mutex(alloc_mutex);
+  mutex_release(alloc_mutex);
 }
-
-//char *string_copy_range(const char src[], int start_index, int end_index) {
-//  ASSERT(NOT_NULL(src), start_index >= 0, end_index >= 0,
-//      end_index >= start_index);
-//  const int src_len = strlen(src);
-//  const int end = min(src_len, end_index);
-//  int new_str_len = end - start_index;
-//  ASSERT(new_str_len >= 0);
-//  char *target = ALLOC_ARRAY(char, new_str_len + 1);
-//  if (new_str_len > 0) {
-//    memmove(target, src + start_index, new_str_len);
-//  }
-//  target[new_str_len] = '\0';
-//  return target;
-//}

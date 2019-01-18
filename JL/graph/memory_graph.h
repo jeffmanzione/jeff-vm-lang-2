@@ -13,6 +13,7 @@
 
 #include "../datastructure/set.h"
 #include "../element.h"
+#include "../threads/thread_interface.h"
 
 typedef struct MemoryGraph_ MemoryGraph;
 
@@ -26,14 +27,13 @@ typedef struct Node_ {
   Object obj;
   Set parents;
   Set children;
+  ThreadHandle access_mutex;
 } Node;
 // Needed in header for arenas.
 typedef struct {
   Node *node;
   uint32_t ref_count;
 } NodeEdge;
-
-
 
 // Creates a memory graph
 MemoryGraph *memory_graph_create();
@@ -59,6 +59,9 @@ void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
     const Element element);
 Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent);
 
+Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
+    int index);
+
 Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
     const Element a2);
 
@@ -70,5 +73,13 @@ void memory_graph_free_space(MemoryGraph *memory_graph);
 void memory_graph_print(const MemoryGraph *graph, FILE *file);
 
 Array *extract_array(Element element);
+
+Mutex memory_graph_mutex(const MemoryGraph *graph);
+
+//Element memory_graph_new_thread();
+
+const Node *node_for(const Element *e);
+void acquire_all_mutex(const Node * const n1, const Node * const n2);
+void release_all_mutex(const Node * const n1, const Node * const n2);
 
 #endif /* MEMORY_GRAPH_H_ */

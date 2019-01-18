@@ -10,25 +10,19 @@
 
 #include "../datastructure/expando.h"
 #include "../element.h"
+#include "../tape.h"
 #include "syntax.h"
 #include "tokenizer.h"
 
 typedef struct ExpressionTree_ ExpressionTree;
 
-#define DefineExpression(name) typedef struct Expression_##name##_ Expression_##name; \
-                               void claim_##name(const SyntaxTree *tree, Expression_##name *name); \
+#define DefineExpression(name) typedef struct Expression_##name##_ Expression_##name;                  \
+                               void Transform_##name(const SyntaxTree *tree, Expression_##name *name); \
+                               int Produce_##name(Expression_##name *name, Tape *tape);                \
                                struct Expression_##name##_
 
 DefineExpression(identifier) {
   Token *id;
-};
-
-DefineExpression(tuple_expression) {
-  Expando *list;
-};
-
-DefineExpression(array_declaration) {
-  Expando *list;
 };
 
 DefineExpression(constant) {
@@ -40,5 +34,15 @@ DefineExpression(string_literal) {
   Token *token;
   const char *str;
 };
+
+DefineExpression(tuple_expression) {
+  Token *token;
+  Expando *list;
+};
+
+DefineExpression(array_declaration) {
+  Expando *list;
+};
+
 
 #endif /* CODEGEN_EXPRESSION_H_ */

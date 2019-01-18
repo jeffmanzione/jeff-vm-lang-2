@@ -293,15 +293,12 @@ void obj_set_field(Element elt, const char field_name[], Element field_val) {
 }
 
 Element obj_lookup(Object *obj, CommonKey key) {
-  return obj->ltable[key];
+  Element e = obj->ltable[key];
+  return e;
 }
 
 Element obj_get_field_obj(Object *obj, const char field_name[]) {
   ASSERT_NOT_NULL(obj);
-//  CommonKey key = CKey_lookup_key(field_name);
-//  if (key >= 0) {
-//    return obj->ltable[key];
-//  }
   Element *to_return = map_lookup(&obj->fields, field_name);
 
   if (NULL == to_return) {
@@ -467,6 +464,7 @@ char *string_to_cstr(Element elt_str) {
 #define VALTYPE_NAME(val) (((val).type==INT) ? "Int" : (((val).type==FLOAT) ? "Float" : "Char"))
 
 void obj_to_str(Object *obj, FILE *file) {
+  mutex_await(obj->node->access_mutex, INFINITE);
   Element name, class = obj_get_field_obj(obj, CLASS_KEY);
   int i;
   switch (obj->type) {
@@ -535,6 +533,7 @@ void obj_to_str(Object *obj, FILE *file) {
     fflush(file);
     break;
   }
+  mutex_release(obj->node->access_mutex);
 }
 
 void elt_to_str(Element elt, FILE *file) {

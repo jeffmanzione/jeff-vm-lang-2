@@ -82,27 +82,11 @@ FileInfo *module_fileinfo(const Module const *m) {
   return m->fi;
 }
 
-//void module_set_name(Module *m, const char name[]) {
-//  ASSERT_NOT_NULL(m);
-//  m->name = strings_intern(name);
-//}
 
 DEB_FN(const char *, module_name, const Module const *m) {
   ASSERT_NOT_NULL(m);
   return tape_modulename(m->tape);
 }
-
-//void module_load(Module *m) {
-//  Queue tokens;
-//  queue_init(&tokens);
-//  // Read file and tokenize it
-//  tokenize(m->fi, &tokens, true);
-////  DEBUGF("TOKENS=%d", queue_size(&tokens));
-//  tape_read(m->tape, &tokens);
-////  tape_write(m->tape, stdout);
-////  DEBUGF("module_name=%s", module_name(m));
-//  queue_shallow_delete(&tokens);
-//}
 
 Ins module_ins(const Module *m, uint32_t index) {
   ASSERT(NOT_NULL(m), tape_len(m->tape) > index);

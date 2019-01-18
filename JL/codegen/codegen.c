@@ -529,7 +529,6 @@ int codegen_function(SyntaxTree *tree, Tape *tape) {
   bool is_const = false;
   lines_for_func += codegen_function_helper(arg_begin, token, &is_const,
       tmp_tape);
-  printf("is_const=%d\n", is_const);
   if (is_const) {
     lines_for_func += tape_ins_no_arg(tmp_tape, CNST, token);
   }

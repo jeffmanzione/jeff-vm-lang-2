@@ -59,7 +59,7 @@ int interpret_from_file(FILE *f, const char filename[], VM *vm, InterpretFn fn) 
 }
 
 void interpret_statement(VM *vm, Thread *t, Element m, Tape *tape, int num_ins) {
-  vm_set_module(vm, t, m, tape_len(tape) - num_ins);
+  t_set_module(t, m, tape_len(tape) - num_ins);
 #ifdef DEBUG
   tape_write_range(tape, tape_len(tape) - num_ins, tape_len(tape), stdout);
   fflush(stdout);
@@ -73,12 +73,12 @@ void interpret_statement(VM *vm, Thread *t, Element m, Tape *tape, int num_ins) 
     if (!execute(vm, t)) {
       break;
     }
-  } while (vm_get_ip(vm, t)
-      < tape_len(module_tape(vm_get_module(vm, t).obj->module)));
+  } while (t_get_ip(t)
+      < tape_len(module_tape(t_get_module(t).obj->module)));
   fflush(stdout);
   fflush(stderr);
   printf("<-- ");
-  elt_to_str(vm_get_resval(vm, t), stdout);
+  elt_to_str(t_get_resval(t), stdout);
   printf("\n");
   fflush(stdout);
 }

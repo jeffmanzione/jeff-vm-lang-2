@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef DEBUG
+#ifdef MEMORY_WRAPPER
 #define ALLOC_ARRAY(type, count) (type *) alloc__(/*type=*/sizeof(type), /*count=*/(count), (__LINE__), (__func__), (__FILE__), (#type))
 #define ALLOC_ARRAY2(type, count) (type *) alloc__(/*type=*/sizeof(type), /*count=*/(count), (__LINE__), (__func__), (__FILE__), (#type))
 
@@ -39,12 +39,5 @@ void *realloc__(void *, uint32_t elt_size, uint32_t count, uint32_t line,
     const char func[], const char file[]);
 void dealloc__(void **, uint32_t line, const char func[], const char file[]);
 void alloc_finalize();
-
-//char *string_copy(const char src[]);
-//char *string_copy_after(const char src[], int start_index);
-//char *string_copy_range(const char src[], int start_index, int end_index);
-//void string_prepend(char **src, const char head[]);
-//void string_append(char **src, const char tail[]);
-//char *string_concat(int num_args, ...);
 
 #endif /* MEMORY_H_ */

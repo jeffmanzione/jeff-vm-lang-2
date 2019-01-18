@@ -1,58 +1,21 @@
 module sync
+  rmdl  io
+  mdst  io
+  push  2147483647
+  res   self
+  fld   INIFINITE
+  push  0
+  res   self
+  fld   LOCK_ACQUIRED
 
-class NonAtomicInt
-  jmp   6
+class AtomicInt
+  jmp   11
 
 @new
   set   orig
   push  orig
   res   self
-  fld   value
-  res   self
-  ret
-  jmp   5
-
-@set
-  set   v
-  push  v
-  res   self
-  fld   value
-  ret
-  jmp   3
-
-@get
-  res   self
-  get   value
-  ret
-  jmp   14
-
-@to_s
-  push  concat
-  push  ')'
-  push  str
-  res   self
-  get   value
-  call
-  push
-  push  '('
-  res   self
-  get   class
-  gtsh  name
-  tupl  4
-  call
-  ret
-endclass
-
-
-class AtomicInt,NonAtomicInt
-  jmp   12
-
-@new
-  set   orig
-  res   self
-  gtsh  NonAtomicInt
-  res   orig
-  call  new
+  fld   i
   push  Mutex
   call
   push
@@ -60,44 +23,303 @@ class AtomicInt,NonAtomicInt
   fld   mutex
   res   self
   ret
-  jmp   10
+  jmp   11
 
 @set
   set   v
-  push  mutex
-  call  acquire
   res   self
-  gtsh  NonAtomicInt
-  res   v
-  call  set
-  push  mutex
+  gtsh  mutex
+  call  acquire
+  push  v
+  res   self
+  fld   i
+  res   self
+  gtsh  mutex
   call  release
   ret
-  jmp   10
+  jmp   11
 
 @get
-  push  mutex
+  res   self
+  gtsh  mutex
   call  acquire
   res   self
-  gtsh  NonAtomicInt
-  call  get
+  get   i
   set   cpy
-  push  mutex
+  res   self
+  gtsh  mutex
   call  release
   res   cpy
   ret
-  jmp   10
+  jmp   15
 
-@to_s
-  push  mutex
+@inc
+  set   a
+  res   self
+  gtsh  mutex
   call  acquire
   res   self
-  gtsh  NonAtomicInt
-  call  to_s
+  gtsh  i
+  push  a
+  add
+  push
+  res   self
+  fld   i
+  res   self
+  gtsh  mutex
+  call  release
+  ret
+  jmp   13
+
+@to_s
+  res   self
+  gtsh  mutex
+  call  acquire
+  push  str
+  res   self
+  get   i
+  call
   set   tos
-  push  mutex
+  res   self
+  gtsh  mutex
   call  release
   res   tos
+  ret
+endclass
+
+
+class ThreadPoolExecutor
+  jmp   66
+
+@new
+  set   num_threads
+  push  num_threads
+  res   self
+  fld   num_threads
+  push  Mutex
+  call
+  push
+  res   self
+  fld   mutex
+  push  Semaphore
+  push  num_threads
+  push  0
+  tupl  2
+  call
+  push
+  res   self
+  fld   task_lock
+  anew
+  push
+  res   self
+  fld   threads
+  anew
+  push
+  res   self
+  fld   tasks
+  nblk
+  res   0
+  set   i
+  push
+  push  num_threads
+  lt
+  ifn   14
+  res   self
+  gtsh  threads
+  push  Thread
+  push  None
+  res   self
+  gtsh  execute_task
+  tupl  2
+  call
+  call  append
+  push  i
+  push  1
+  add
+  set   i
+  jmp   -18
+  bblck
+  nblk
+  res   self
+  gtsh  threads
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   7
+  dup
+  call  next
+  tget  1
+  set   t
+  push  t
+  call  start
+  jmp   -10
+  res
+  bblck
+  res   self
+  ret
+  jmp   44
+
+@execute_task
+  res   None
+  set   task
+  nblk
+  res   True
+  ifn   37
+  res   self
+  gtsh  task_lock
+  res   INFINITE
+  call  lock
+  res   self
+  gtsh  mutex
+  call  acquire
+  res   self
+  get   tasks
+  gtsh  len
+  push  0
+  gt
+  if    4
+  res   self
+  gtsh  task_lock
+  call  unlock
+  jmp   8
+  res   self
+  gtsh  tasks
+  res   1
+  call  pop
+  push
+  res   0
+  aidx
+  set   task
+  res   self
+  gtsh  mutex
+  call  release
+  push  task
+  push  None
+  neq
+  ifn   4
+  push  task
+  call  exec
+  res   None
+  set   task
+  jmp   -40
+  bblck
+  ret
+  jmp   27
+
+@execute
+  push
+  tget  0
+  set   fn
+  res
+  tget  1
+  set   args
+  push  Future
+  push  args
+  push  fn
+  tupl  2
+  call
+  set   f
+  res   self
+  gtsh  mutex
+  call  acquire
+  res   self
+  gtsh  tasks
+  res   f
+  call  append
+  res   self
+  gtsh  mutex
+  call  release
+  res   self
+  gtsh  task_lock
+  call  unlock
+  res   f
+  ret
+endclass
+
+
+class Future
+  jmp   28
+
+@new
+  push
+  tget  0
+  set   fn
+  res
+  tget  1
+  set   args
+  push  fn
+  res   self
+  fld   fn
+  push  args
+  res   self
+  fld   args
+  push  None
+  res   self
+  fld   result
+  push  False
+  res   self
+  fld   has_result
+  push  Semaphore
+  push  1
+  push  0
+  tupl  2
+  call
+  push
+  res   self
+  fld   read_mutex
+  res   self
+  ret
+  jmp   15
+
+@exec
+  res   self
+  gtsh  fn
+  res   self
+  get   args
+  call  call
+  push
+  res   self
+  fld   result
+  push  True
+  res   self
+  fld   has_result
+  res   self
+  gtsh  read_mutex
+  call  unlock
+  ret
+  jmp   24
+
+@get
+  nblk
+  res   True
+  ifn   19
+  res   self
+  gtsh  read_mutex
+  res   INFINITE
+  call  lock
+  res   self
+  get   has_result
+  not
+  ifn   4
+  res   self
+  gtsh  read_mutex
+  call  unlock
+  jmp   -12
+  res   self
+  gtsh  read_mutex
+  call  unlock
+  res   self
+  get   result
+  ret
+  jmp   -22
+  bblck
+  ret
+  jmp   3
+
+@wait
+  push  self
+  call  get
   ret
 endclass
 

@@ -2,10 +2,6 @@ module builtin
 
 import io
 
-$root.Int = self.Int
-$root.Float = self.Float
-$root.Char = self.Char
-
 def load_module(path) {
   load_module__(path)  ; External C function
 }

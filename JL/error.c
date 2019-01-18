@@ -48,7 +48,6 @@ void error_nest(int line_num, const char func_name[],
 
 void debugf(int line_num, const char func_name[], const char file_name[],
 		const char fmt[], ...) {
-#ifdef DEBUG
 	va_list args;
 	va_start(args, fmt);
 	fprintf(stdout, "[D] %s:%d(%s): ", file_name, line_num, func_name);
@@ -56,6 +55,5 @@ void debugf(int line_num, const char func_name[], const char file_name[],
 	fprintf(stdout, "\n");
 	fflush(stdout);
 	va_end(args);
-#endif
 }
 

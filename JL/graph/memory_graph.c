@@ -29,6 +29,8 @@ typedef struct MemoryGraph_ {
   uint32_t id_counter;
   Set/*<Node>*/nodes;
   Set/*<Node>*/roots;
+
+//  Set/*<Thread>*/threads;
   ThreadHandle access_mutex;
 } MemoryGraph;
 
@@ -70,7 +72,7 @@ void ltable_fill() {
 
 MemoryGraph *memory_graph_create() {
   MemoryGraph *graph = ALLOC2(MemoryGraph);
-  graph->access_mutex = create_mutex(NULL);
+  graph->access_mutex = mutex_create(NULL);
   set_init_default(&graph->nodes);
   set_init(&graph->roots, DEFAULT_TABLE_SZ, default_hasher, default_comparator);
   graph->rand_seeded = false;
@@ -98,14 +100,17 @@ int32_t node_edge_comparator(const void *ptr1, const void *ptr2) {
 Node *node_create(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
   Node *node = ARENA_ALLOC(Node);
-  wait_for_mutex(graph->access_mutex, INFINITE);
+  // TODO: Instead of locking here, give each thread its own arena and merge
+  // them when threads finish.
+  mutex_await(graph->access_mutex, INFINITE);
   node->id = new_id(graph);
   set_insert(&graph->nodes, node);
-  release_mutex(graph->access_mutex);
+  mutex_release(graph->access_mutex);
   set_init(&node->parents, DEFAULT_TABLE_SZ, node_edge_hasher,
       node_edge_comparator);
   set_init(&node->children, DEFAULT_TABLE_SZ, node_edge_hasher,
       node_edge_comparator);
+  node->access_mutex = mutex_create(NULL);
   return node;
 }
 
@@ -126,6 +131,7 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
     set_remove(&graph->nodes, node);
     ARENA_DEALLOC(Node, node);
   }
+  mutex_close(node->access_mutex);
 }
 
 void memory_graph_delete(MemoryGraph *graph) {
@@ -162,7 +168,7 @@ void memory_graph_delete(MemoryGraph *graph) {
   fflush(stdout);
 #endif
   set_finalize(&graph->nodes);
-  close_mutex(graph->access_mutex);
+  mutex_close(graph->access_mutex);
   DEALLOC(graph);
 }
 
@@ -190,35 +196,85 @@ NodeEdge *node_edge_create(Node *to) {
   return ne;
 }
 
-void memory_graph_inc_edge(MemoryGraph *graph, const Object * const parent,
-    const Object * const child) {
+void acquire_all_mutex(const Node * const n1, const Node * const n2) {
+  if (n1 == NULL && n2 == NULL) {
+    return;
+  }
+  if (n1 != NULL && n2 == NULL) {
+    mutex_await(n1->access_mutex, INFINITE);
+    return;
+  }
+  if (n1 == NULL && n2 != NULL) {
+    mutex_await(n2->access_mutex, INFINITE);
+    return;
+  }
+
+  ThreadHandle first =
+      n1->id.int_id > n2->id.int_id ? n1->access_mutex : n2->access_mutex;
+  ThreadHandle second =
+      n1->id.int_id > n2->id.int_id ? n2->access_mutex : n1->access_mutex;
+  mutex_await(first, INFINITE);
+  mutex_await(second, INFINITE);
+}
+
+void release_all_mutex(const Node * const n1, const Node * const n2) {
+  if (n1 == NULL && n2 == NULL) {
+    return;
+  }
+  if (n1 != NULL && n2 == NULL) {
+    mutex_release(n1->access_mutex);
+    return;
+  }
+  if (n1 == NULL && n2 != NULL) {
+    mutex_release(n2->access_mutex);
+    return;
+  }
+  ThreadHandle first =
+      n1->id.int_id > n2->id.int_id ? n1->access_mutex : n2->access_mutex;
+  ThreadHandle second =
+      n1->id.int_id > n2->id.int_id ? n2->access_mutex : n1->access_mutex;
+  mutex_release(second);
+  mutex_release(first);
+}
+
+DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
+    const Object * const parent, const Object * const child) {
   ASSERT_NOT_NULL(graph);
   Node *parent_node = parent->node;
   ASSERT_NOT_NULL(parent_node);
   Node *child_node = child->node;
   ASSERT_NOT_NULL(child_node);
-  // Create edge from parent to child
+
   Set *children_of_parent = &parent_node->children;
   ASSERT_NOT_NULL(children_of_parent);
   NodeEdge tmp_child_edge = { child_node, -1 };
   NodeEdge *child_edge;
-  // if There is already an edge, increase the edge count
-  if (NULL != (child_edge = set_lookup(children_of_parent, &tmp_child_edge))) {
-    child_edge->ref_count++;
-  } else {
-    set_insert(children_of_parent, node_edge_create(child_node));
-  }
-  // Create edge from child to parent
+
   Set *parents_of_child = &child_node->parents;
   ASSERT_NOT_NULL(parents_of_child);
   NodeEdge tmp_parent_edge = { parent_node, -1 };
   NodeEdge *parent_edge;
+
+  acquire_all_mutex(parent_node, child_node);
+
+  // if There is already an edge, increase the edge count
+  if (NULL != (child_edge = set_lookup(children_of_parent, &tmp_child_edge))) {
+    child_edge->ref_count++;
+  } else {
+    // Create edge from parent to child
+    set_insert(children_of_parent, node_edge_create(child_node));
+  }
+  // if There is already an edge, increase the edge count
   if (NULL != (parent_edge = set_lookup(parents_of_child, &tmp_parent_edge))) {
     parent_edge->ref_count++;
   } else {
+    // Create edge from child to parent
     set_insert(parents_of_child, node_edge_create(parent_node));
   }
+
+  release_all_mutex(parent_node, child_node);
 }
+#define memory_graph_inc_edge(...) CALL_FN(memory_graph_inc_edge__, __VA_ARGS__)
 
 Element memory_graph_create_root_element(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
@@ -227,32 +283,44 @@ Element memory_graph_create_root_element(MemoryGraph *graph) {
   return elt;
 }
 
-void memory_graph_dec_edge(MemoryGraph *graph, const Object * const parent,
-    const Object * const child) {
+DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
+    const Object * const parent, const Object * const child) {
   ASSERT_NOT_NULL(graph);
   Node *parent_node = parent->node;
   ASSERT_NOT_NULL(parent_node);
   Node *child_node = child->node;
   ASSERT_NOT_NULL(child_node);
 
-  // Remove edge from parent to child
   Set *children_of_parent = &parent_node->children;
   ASSERT_NOT_NULL(children_of_parent);
   NodeEdge tmp_child_edge = { child_node, -1 };
+
+  Set *parents_of_child = &child_node->parents;
+  ASSERT_NOT_NULL(parents_of_child);
+  NodeEdge tmp_parent_edge = { parent_node, -1 };
+
+  acquire_all_mutex(parent_node, child_node);
+
+  // Remove edge from parent to child
   NodeEdge *child_edge = set_lookup(children_of_parent, &tmp_child_edge);
   ASSERT_NOT_NULL(child_edge);
   --child_edge->ref_count;
   // Remove edge from child to parent
-  Set *parents_of_child = &child_node->parents;
-  ASSERT_NOT_NULL(parents_of_child);
-  NodeEdge tmp_parent_edge = { parent_node, -1 };
   NodeEdge *parent_edge = set_lookup(parents_of_child, &tmp_parent_edge);
   ASSERT_NOT_NULL(parent_edge);
   --parent_edge->ref_count;
+
+  release_all_mutex(parent_node, child_node);
+}
+#define memory_graph_dec_edge(...) CALL_FN(memory_graph_dec_edge__, __VA_ARGS__)
+
+const Node *node_for(const Element *e) {
+  return (e->type == OBJECT) ? e->obj->node : NULL;
 }
 
 void memory_graph_set_field(MemoryGraph *graph, const Element parent,
     const char field_name[], const Element field_val) {
+
   ASSERT_NOT_NULL(graph);
   ASSERT(OBJECT == parent.type);
   ASSERT_NOT_NULL(parent.obj);
@@ -262,10 +330,13 @@ void memory_graph_set_field(MemoryGraph *graph, const Element parent,
   if (OBJECT == existing.type) {
     memory_graph_dec_edge(graph, parent.obj, existing.obj);
   }
-  obj_set_field(parent, field_name, field_val);
   if (OBJECT == field_val.type) {
     memory_graph_inc_edge(graph, parent.obj, field_val.obj);
   }
+
+//  wait_for_mutex(parent.obj->node->access_mutex, INFINITE);
+  obj_set_field(parent, field_name, field_val);
+//  release_mutex(parent.obj->node->access_mutex);
 }
 
 void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
@@ -407,6 +478,19 @@ Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent) {
   return element;
 }
 
+Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
+    int index) {
+  ASSERT_NOT_NULL(graph);
+  Array *arr = extract_array(parent);
+  Element element = Array_remove(arr, index);
+  if (OBJECT == element.type) {
+    memory_graph_dec_edge(graph, parent.obj, element.obj);
+  }
+  memory_graph_set_field(graph, parent, LENGTH_KEY,
+      create_int(Array_size(arr)));
+  return element;
+}
+
 void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,
     const Element elt) {
   ASSERT(NOT_NULL(graph), OBJECT == tuple.type, TUPLE == tuple.obj->type);
@@ -451,4 +535,9 @@ void memory_graph_print(const MemoryGraph *graph, FILE *file) {
   fprintf(file, "edges={ ");
   set_iterate(&graph->nodes, print_edges_for_child);
   fprintf(file, "}\n\n");
+}
+
+
+Mutex memory_graph_mutex(const MemoryGraph *graph) {
+  return graph->access_mutex;
 }

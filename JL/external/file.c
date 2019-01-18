@@ -64,7 +64,7 @@ Element file_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
       (NULL == file) ? create_none() : create_int(1));
 
   if (NULL != file) {
-    ThreadHandle write_mutex = create_mutex(NULL);
+    ThreadHandle write_mutex = mutex_create(NULL);
     map_insert(&data->state, strings_intern("file"), file);
     map_insert(&data->state, strings_intern("mutex"), write_mutex);
   }
@@ -99,11 +99,11 @@ Element file_puts(VM *vm, Thread *t, ExternalData *data, Element arg) {
   }
 //  char *cstr = string_to_cstr(arg);
   String *string = String_extract(arg);
-  wait_for_mutex(mutex, INFINITE);
+  mutex_await(mutex, INFINITE);
   fprintf(file, "%*s", String_size(string), String_cstr(string));
 //  fputs(cstr, file);
   fflush(file);
-  release_mutex(mutex);
+  mutex_release(mutex);
   return create_none();
 }
 

@@ -11,11 +11,12 @@
 
 #include "../arena/strings.h"
 #include "../datastructure/map.h"
+#include "../error.h"
 #include "../external/external.h"
 #include "thread_interface.h"
 
 Element Mutex_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  ThreadHandle handle = create_mutex(NULL);
+  ThreadHandle handle = mutex_create(NULL);
   if (NULL == handle) {
     return throw_error(vm, t, "Failed to create Mutex.");
   }
@@ -28,7 +29,7 @@ Element Mutex_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg) 
   if (NULL == handle) {
     return create_none();
   }
-  close_mutex(handle);
+  mutex_close(handle);
   return data->object;
 }
 
@@ -37,15 +38,32 @@ Element Mutex_acquire(VM *vm, Thread *t, ExternalData *data, Element arg) {
   if (NULL == handle) {
     return throw_error(vm, t, "Failed to acquire Mutex.");
   }
-  wait_for_mutex(handle, INFINITE);
+//  ulong duration;
+//  if (NONE == arg.type) {
+//    duration = INFINITE;
+//  } else if (is_value_type(&arg, INT)) {
+//    duration = VALUE_OF(arg.val);
+//  } else {
+//    return throw_error(vm, t, "Mutex.wait() requires type Int.");
+//  }
+  WaitStatus status = mutex_await(handle, INFINITE);
+  if (status != WAIT_OBJECT_0) {
+    if (status == WAIT_TIMEOUT) {
+      return throw_error(vm, t, "Mutex.wait() timed out.");
+    }
+    return throw_error(vm, t, "Mutex.wait() failed.");
+  }
+//  DEBUGF("Mutex_acquire=%d", status);
+
   return data->object;
 }
+
 Element Mutex_release(VM *vm, Thread *t, ExternalData *data, Element arg) {
   ThreadHandle handle = map_lookup(&data->state, strings_intern("handle"));
   if (NULL == handle) {
     return throw_error(vm, t, "Failed to release Mutex.");
   }
-  release_mutex(handle);
+  mutex_release(handle);
   return data->object;
 }
 

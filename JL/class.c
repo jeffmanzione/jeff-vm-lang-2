@@ -66,6 +66,7 @@ void class_init(VM *vm) {
   class_fill(vm, class_error, ERROR_NAME, class_object);
   class_fill(vm, class_thread, strings_intern("Thread"), class_object);
   merge_object_class(vm);
+  merge_array_class(vm);
 }
 
 void class_fill_base(VM *vm, Element class, const char class_name[],

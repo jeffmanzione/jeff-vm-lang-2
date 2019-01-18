@@ -20,7 +20,6 @@
   struct name##_ {\
     uint32_t table_size;\
     uint32_t num_elts;\
-    uint32_t next_index;\
     type *table;\
   };\
   void name##_init(name*);\
@@ -37,6 +36,7 @@
   type name##_dequeue(name* const);\
   void name##_set(name* const, uint32_t, type);\
   type name##_get(name* const, uint32_t);\
+  type name##_remove(name* const, uint32_t);\
   uint32_t name##_size(const name* const);\
   bool name##_is_empty(const name* const);\
   name *name##_copy(const name* const);\
@@ -46,7 +46,6 @@
   void name##_init_sz(name* array, size_t table_sz) {\
     array->table = ALLOC_ARRAY(type, array->table_size = table_sz);\
     array->num_elts = 0;\
-    array->next_index = 0;\
   }\
   void name##_init(name *array) {\
     name##_init_sz(array, DEFAULT_TABLE_SIZE);\
@@ -77,35 +76,35 @@
   \
   void name##_maybe_realloc(name * const array, uint32_t need_to_accomodate) {\
     ASSERT(NOT_NULL(array));\
+    if (need_to_accomodate <= 0) {\
+      return;\
+    }\
     uint32_t size =\
         max(array->num_elts,\
             max(need_to_accomodate, (need_to_accomodate / DEFAULT_TABLE_SIZE + 1) * DEFAULT_TABLE_SIZE));\
-    if (size == array->table_size) {\
+    if (size <= 0 || size <= array->table_size) {\
       return;\
     }\
     array->table = REALLOC(array->table, type, size);\
     array->table_size = size;\
     memset(array->table + array->num_elts, 0x0,\
         (array->table_size - array->num_elts) * sizeof(type));\
-  \
   }\
   \
   void name##_shift(name * const array, uint32_t start_pos, int32_t amount) {\
     ASSERT(NOT_NULL(array), start_pos >= 0, start_pos + amount >= 0);\
     if (0 == amount) { return; }\
-    int new_next_index = array->next_index + amount;\
-    name##_maybe_realloc(array, new_next_index);\
+    name##_maybe_realloc(array, array->num_elts + amount);\
     memmove(array->table + start_pos + amount, array->table + start_pos,\
         (array->num_elts - start_pos) * sizeof(type));\
     if (amount > 0) {\
       memset(array->table + start_pos, 0x0, amount * sizeof(type));\
     }\
-    array->next_index = new_next_index;\
   }\
   \
   void name##_clear(name* const array) {\
     ASSERT(NOT_NULL(array));\
-    name##_maybe_realloc(array, array->num_elts = array->next_index = 0);\
+    name##_maybe_realloc(array, array->num_elts = 0);\
   }\
   \
   void name##_push(name* const array, type elt) {\
@@ -163,6 +162,16 @@
   type name##_get(name* const array, uint32_t index) {\
     ASSERT(NOT_NULL(array), index >= 0, index < array->num_elts);\
     return array->table[index];\
+  }\
+  \
+  type name##_remove(name* const array, uint32_t index) {\
+    ASSERT(NOT_NULL(array), index >= 0, index < array->num_elts);\
+    type to_return = array->table[index];\
+    if (array->num_elts > 1) {\
+      name##_shift(array, /*start_pos=*/index+1, /*amount=*/-1);\
+    }\
+    array->num_elts--;\
+    return to_return;\
   }\
   \
   uint32_t name##_size(const name* const array) {\

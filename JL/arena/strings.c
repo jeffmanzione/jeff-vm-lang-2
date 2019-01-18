@@ -162,7 +162,7 @@ void strings_insert_constants() {
 }
 
 void strings_init() {
-  strings.mutex = create_mutex(NULL);
+  strings.mutex = mutex_create(NULL);
   strings.chunk = strings.last = chunk_create();
   strings.tail = strings.chunk->block;
   strings.end = strings.tail + strings.chunk->sz;
@@ -174,7 +174,7 @@ void strings_init() {
 void strings_finalize() {
   set_finalize(&strings.strings);
   chunk_delete(strings.chunk);
-  close_mutex(strings.mutex);
+  mutex_close(strings.mutex);
 }
 
 char *strings_intern_range(const char str[], int start, int end) {
@@ -187,10 +187,10 @@ char *strings_intern_range(const char str[], int start, int end) {
 }
 
 char *strings_intern(const char str[]) {
-  wait_for_mutex(strings.mutex, INFINITE);
+  mutex_await(strings.mutex, INFINITE);
   char *str_lookup = (char *) set_lookup(&strings.strings, str);
   if (NULL != str_lookup) {
-    release_mutex(strings.mutex);
+    mutex_release(strings.mutex);
     return str_lookup;
   }
   uint32_t len = strlen(str);
@@ -204,6 +204,6 @@ char *strings_intern(const char str[]) {
   memmove(strings.tail, str, len + 1);
   strings.tail += (len + 1);
   set_insert(&strings.strings, to_return);
-  release_mutex(strings.mutex);
+  mutex_release(strings.mutex);
   return to_return;
 }
