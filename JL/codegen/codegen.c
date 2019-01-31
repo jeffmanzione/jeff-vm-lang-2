@@ -306,63 +306,98 @@ bool is_last) {
 //  fflush(stdout);
 
   int num_lines = 0;
-  const bool is_undecorated_single_arg = is_leaf(tree)
-      && LPAREN != tree->token->type;
-  const bool arg_is_const_single_arg = !is_leaf(tree) && is_leaf(tree->first)
+
+  const bool arg_is_const = !is_leaf(tree) && is_leaf(tree->first)
       && tree->first->token->type == CONST_T;
-  const bool arg_is_complex = !arg_is_const_single_arg && !is_leaf(tree)
-      && is_leaf(tree->first);
+  Token *const_tok = NULL;
+  if (arg_is_const) {
+    const_tok = tree->first->token;
+    tree = tree->second;
+  }
 
-  Token * arg_token =
-      arg_is_complex ? tree->first->token :
-      arg_is_const_single_arg ? tree->first->token : tree->token;
-  num_lines += (is_last ? 0 : tape_ins_no_arg(tape, PUSH, arg_token))
-      + tape_ins_int(tape, TGET, index, arg_token);
+  const bool has_default = !is_leaf(tree)
+      && tree->second->expression == default_value_expression;
+  SyntaxTree *default_val = tree->second;
+  if (has_default) {
+    tree = tree->first;
+  }
 
-  if (is_undecorated_single_arg) {
-    num_lines += tape_ins(tape, SET, tree->token);
-  } else if (arg_is_const_single_arg) {
-    const bool is_complex = !is_leaf(tree->second);
-    if (is_complex) {
-      num_lines += codegen_function_arguments_list(tree->second, tape);
-    } else {
-      num_lines += tape_ins_no_arg(tape, CNST, tree->first->token)
-          + tape_ins(tape, SETC, tree->second->token);
-    }
-  } else if (arg_is_complex) {
+  const bool is_single_arg = is_leaf(tree) && LPAREN != tree->token->type;
+
+  const bool arg_is_complex = !is_leaf(tree) && is_leaf(tree->first)
+      && tree->first->token->type == LPAREN;
+
+  Token * arg_token = arg_is_complex ? tree->first->token : tree->token;
+
+  if (index == 0) {
+    num_lines += tape_ins_no_arg(tape, PUSH, arg_token);
+  }
+
+  if (!has_default) {
+    num_lines += (is_last ? tape_ins_no_arg(tape, RES, arg_token) : 0);
+  }
+
+  if (has_default) {
+    num_lines += tape_ins_no_arg(tape, TLEN, default_val->first->token)
+        + tape_ins_no_arg(tape, PUSH, default_val->first->token)
+        + tape_ins_int(tape, PUSH, index, arg_token)
+        + tape_ins_no_arg(tape, LTE, default_val->first->token);
+    Tape *tmp = tape_create();
+    int lines_for_default = codegen(default_val->second, tmp);
+    num_lines += tape_ins_int(tape, IF, 3, default_val->first->token)
+        + tape_ins_no_arg(tape, PEEK, arg_token)
+        + tape_ins_int(tape, TGET, index, arg_token)
+        + tape_ins_int(tape, JMP, lines_for_default, arg_token);
+    num_lines += lines_for_default;
+    tape_append(tape, tmp);
+    tape_delete(tmp);
+  } else {
+    num_lines += tape_ins_int(tape, TGET, index, arg_token);
+  }
+
+  if (is_single_arg) {
+    return num_lines + tape_ins(tape, SET, tree->token);
+  }
+
+// TODO: Do something with const Tuple
+  if (arg_is_complex) {
     num_lines += codegen_function_arguments_list(tree->second->first, tape);
+  } else if (arg_is_const) {
+    num_lines += tape_ins_no_arg(tape, CNST, const_tok)
+        + tape_ins(tape, SETC, tree->token);
   }
 
   return num_lines;
 }
 
 int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape) {
-  //  printf("codegen_function_args ");
-  //  expression_tree_to_str(tree, NULL, stdout);
-  //  printf("\n");
-  //  fflush(stdout);
+//  printf("codegen_function_args ");
+//  expression_tree_to_str(tree, NULL, stdout);
+//  printf("\n");
+//  fflush(stdout);
 
   int num_lines = 0;
 
   ParseExpression prod = tree->expression;
   if (prod != function_argument_list1) {
+    expression_tree_to_str(tree, NULL, stdout);
     ERROR("Not a function_argument_list1");
   }
 
   SyntaxTree *arg = tree->second;
   if (!is_leaf(arg) && arg->expression == function_argument_list) {
-    num_lines += tape_ins_no_arg(tape, RES, tree->first->token)
+    num_lines += tape_ins_no_arg(tape, PEEK, tree->first->token)
         + codegen_function_single_arg(arg->first, tape, argument_index, /*is_last=*/
         false) + codegen_function_args(arg->second, argument_index + 1, tape);
   } else {
-    num_lines += tape_ins_no_arg(tape, RES, tree->first->token)
+    num_lines += tape_ins_no_arg(tape, PEEK, tree->first->token)
         + codegen_function_single_arg(arg, tape, argument_index, /*is_last=*/
         true);
   }
   return num_lines;
 }
 
-int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape) {
+int codegen_function_arguments_list(SyntaxTree *tree, Tape* tape) {
 //  printf("codegen_function_arguments_list ");
 //  expression_tree_to_str(tree, NULL, stdout);
 //  printf("\n");
@@ -370,16 +405,11 @@ int codegen_function_arguments_list(SyntaxTree*tree, Tape* tape) {
 
   int num_lines = 0;
 
-  // Strip parents in necessary
+// Strip parens if necessary
   if (!is_leaf(tree) && is_leaf(tree->first)
       && LPAREN == tree->first->token->type) {
     tree = tree->second->first;
   }
-//  if (!is_leaf(tree) && is_leaf(tree->second)
-//      && RPAREN == tree->second->token->type) {
-//    tree = tree->first;
-//  }
-
   num_lines += codegen_function_single_arg(tree->first, tape, 0, /*is_last=*/
   false);
 
@@ -455,7 +485,9 @@ bool *is_const, Tape *tape) {
   if (no_args) {
     *function_body = arg_begin->second;
   } else if (arg_begin->first->expression != function_argument_list) {
-    bool is_const = arg_begin->first->expression == const_expression;
+    bool is_const = arg_begin->first->expression == const_expression
+        && is_leaf(arg_begin->first->first)
+        && arg_begin->first->first->token->type == CONST_T;
     SyntaxTree *id = is_const ? arg_begin->first->second : arg_begin->first;
     lines_for_func += tape_ins(tape, SET, id->token);
     if (is_leaf(arg_begin->second)) {
@@ -469,11 +501,6 @@ bool *is_const, Tape *tape) {
     }
     *function_body = arg_begin->second->second;
   }
-//  if (!is_leaf(*function_body) && !is_leaf((*function_body)->first)
-//      && (*function_body)->first->expression == class_constructors) {
-//    lines_for_func += codegen((*function_body)->first, tape);
-//    *function_body = (*function_body)->second;
-//  }
 
   if (!is_leaf(*function_body) && is_leaf((*function_body)->first)
       && (*function_body)->first->token->type == CONST_T) {
@@ -847,7 +874,8 @@ int codegen_assignment(SyntaxTree *lhs, Token *eq_sign, SyntaxTree* rhs,
   int num_lines = codegen(rhs, tape);
   if (is_leaf(lhs)) {
     num_lines += tape_ins(tape, SET, lhs->token);
-  } else if (prod == const_expression) {
+  } else if (prod == const_expression && is_leaf(lhs->first)
+      && lhs->first->token->type == CONST_T) {
     num_lines += tape_ins(tape, SETC, lhs->second->token);
   } else if (prod == postfix_expression) {
     num_lines +=

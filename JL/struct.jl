@@ -1,6 +1,7 @@
 module struct
 
 import io
+import sync
 
 class Map {
   def new(sz) {
@@ -65,6 +66,23 @@ class Set {
   }
   def iter() {
     self.keys.iter()
+  }
+}
+
+class Cache {
+  def new() {
+    self.map = Map(255)
+    self.mutex = sync.Mutex()
+  }
+  def get(k, factory, args=None) {
+    self.mutex.acquire()
+    if k in self.map {
+      return self.map[k]
+    }
+    v = factory(args)
+    self.map[k] = v
+    self.mutex.release()
+    return v
   }
 }
 

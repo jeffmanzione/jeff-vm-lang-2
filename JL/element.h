@@ -28,6 +28,7 @@ typedef struct MemoryGraph_ MemoryGraph;
 typedef struct Node_ Node;
 
 typedef struct Element_ Element;
+typedef struct ElementContainer_ ElementContainer;
 typedef struct Thread_ Thread;
 typedef struct Object_ Objectt;
 typedef struct ExternalData_ ExternalData;
@@ -68,11 +69,9 @@ typedef struct Object_ {
   // Pointer to node owner.
   Node *node;
   Element ltable[CKey_END];
-  Map fields, consts;
+  Map fields;
   bool is_external;
   Expando *parent_objs;
-
-//  RWLock rwlock;
 
   union {
     Array *array;
@@ -82,6 +81,12 @@ typedef struct Object_ {
     ExternalData *external_data;
   };
 } Object;
+
+typedef struct ElementContainer_ {
+  bool is_const :1;
+  bool is_private :1;
+  Element elt;
+} ElementContainer;
 
 Element create_none();
 Element create_int(int64_t val);

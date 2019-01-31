@@ -16,7 +16,7 @@
 #include "../graph/memory.h"
 #include "../graph/memory_graph.h"
 
-ARENA_DECLARE(Element);
+ARENA_DECLARE(ElementContainer);
 ARENA_DECLARE(Node);
 ARENA_DECLARE(NodeEdge);
 ARENA_DECLARE(Token);
@@ -36,14 +36,14 @@ struct Subarena_ {
 };
 
 void arenas_init() {
-  ARENA_INIT(Element);
+  ARENA_INIT(ElementContainer);
   ARENA_INIT(Node);
   ARENA_INIT(NodeEdge);
   ARENA_INIT(Token);
 }
 
 void arenas_finalize() {
-  ARENA_FINALIZE(Element);
+  ARENA_FINALIZE(ElementContainer);
   ARENA_FINALIZE(Node);
   ARENA_FINALIZE(NodeEdge);
   ARENA_FINALIZE(Token);

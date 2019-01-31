@@ -70,9 +70,9 @@ Element Mutex_release(VM *vm, Thread *t, ExternalData *data, Element arg) {
 Element add_mutex_class(VM *vm, Element module) {
   Element mutex_class = create_external_class(vm, module,
       strings_intern("Mutex"), Mutex_constructor, Mutex_deconstructor);
-  add_external_function(vm, mutex_class, strings_intern("acquire"),
+  add_external_method(vm, mutex_class, strings_intern("acquire"),
       Mutex_acquire);
-  add_external_function(vm, mutex_class, strings_intern("release"),
+  add_external_method(vm, mutex_class, strings_intern("release"),
       Mutex_release);
   return mutex_class;
 }

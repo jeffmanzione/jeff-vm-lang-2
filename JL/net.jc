@@ -1,0 +1,520 @@
+module net
+  rmdl  io
+  mdst  io
+  rmdl  struct
+  mdst  struct
+  res   -1
+  push
+  res   self
+  fld   SOCKET_ERROR
+  res   2
+  push
+  res   self
+  fld   AF_INET
+  res   0
+  push
+  res   self
+  fld   INADDR_ANY
+  res   1
+  push
+  res   self
+  fld   SOCK_STREAM
+  res   'HTTP'
+  push
+  res   self
+  fld   HTTP
+  res   'OK'
+  push
+  res   self
+  fld   OK
+  res   'text/html'
+  push
+  res   self
+  fld   TEXT_HTML
+  res   'UTF-8'
+  push
+  res   self
+  fld   UTF_8
+
+class Header
+  jmp   45
+
+@new
+  push
+  tget  0
+  set   protocol
+  peek
+  tget  1
+  set   version
+  peek
+  tget  2
+  set   status_code
+  peek
+  tget  3
+  set   status
+  peek
+  tget  4
+  set   content_type
+  peek
+  res
+  tget  5
+  set   charset
+  res   protocol
+  push
+  res   self
+  fld   protocol
+  res   version
+  push
+  res   self
+  fld   version
+  res   status_code
+  push
+  res   self
+  fld   status_code
+  res   status
+  push
+  res   self
+  fld   status
+  res   content_type
+  push
+  res   self
+  fld   content_type
+  res   charset
+  push
+  res   self
+  fld   charset
+  res   self
+  ret
+  jmp   35
+
+@to_s
+  res   concat
+  push
+  res   '\r\n\r\n'
+  push
+  res   self
+  get   charset
+  push
+  res   '; charset='
+  push
+  res   self
+  get   content_type
+  push
+  res   '\r\nContent-Type: '
+  push
+  res   self
+  get   status
+  push
+  res   ' '
+  push
+  res   self
+  get   status_code
+  push
+  res   ' '
+  push
+  res   self
+  get   version
+  push
+  res   '/'
+  push
+  res   self
+  get   protocol
+  push
+  tupl  12
+  call
+  ret
+endclass
+
+  jmp   245
+
+@parse_header
+  set   header_text
+  res   header_text
+  push
+  res   '/'
+  call  find
+  set   i
+  res   header_text
+  push
+  res   i
+  push
+  res   0
+  push
+  tupl  2
+  call  substr
+  set   protocol
+  res   i
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i
+  push
+  res   1
+  push
+  add
+  push
+  res   ' '
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i2
+  res   header_text
+  push
+  res   i2
+  push
+  res   i
+  push
+  res   1
+  push
+  add
+  push
+  tupl  2
+  call  substr
+  set   version
+  res   i2
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i2
+  push
+  res   1
+  push
+  add
+  push
+  res   ' '
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i3
+  res   header_text
+  push
+  res   i3
+  push
+  res   i2
+  push
+  res   1
+  push
+  add
+  push
+  tupl  2
+  call  substr
+  set   status_code
+  res   i3
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i3
+  push
+  res   1
+  push
+  add
+  push
+  res   '\r\n'
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i4
+  res   header_text
+  push
+  res   i4
+  push
+  res   i3
+  push
+  res   1
+  push
+  add
+  push
+  tupl  2
+  call  substr
+  set   status
+  res   i4
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i4
+  push
+  res   1
+  push
+  add
+  push
+  res   ' '
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i5
+  res   i5
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i5
+  push
+  res   1
+  push
+  add
+  push
+  res   ';'
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i6
+  res   header_text
+  push
+  res   i6
+  push
+  res   i5
+  push
+  res   1
+  push
+  add
+  push
+  tupl  2
+  call  substr
+  set   content_type
+  res   i6
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i6
+  push
+  res   1
+  push
+  add
+  push
+  res   '='
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i7
+  res   i7
+  push
+  res   1
+  push
+  res   header_text
+  push
+  res   i7
+  push
+  res   1
+  push
+  add
+  push
+  res   '\r\n'
+  push
+  tupl  2
+  call  find
+  push
+  add
+  push
+  add
+  set   i8
+  res   header_text
+  push
+  res   i8
+  push
+  res   i7
+  push
+  res   1
+  push
+  add
+  push
+  tupl  2
+  call  substr
+  set   charset
+  res   Header
+  push
+  res   charset
+  push
+  res   content_type
+  push
+  res   status
+  push
+  res   status_code
+  push
+  res   version
+  push
+  res   protocol
+  push
+  tupl  6
+  call
+  ret
+  ret
+
+class HttpRequest
+  jmp   45
+
+@new
+  push
+  tget  0
+  set   type
+  peek
+  tget  1
+  set   path
+  peek
+  tget  2
+  set   params
+  peek
+  tget  3
+  set   protocol
+  peek
+  tget  4
+  set   version
+  peek
+  res
+  tget  5
+  set   map
+  res   type
+  push
+  res   self
+  fld   type
+  res   path
+  push
+  res   self
+  fld   path
+  res   params
+  push
+  res   self
+  fld   params
+  res   protocol
+  push
+  res   self
+  fld   protocol
+  res   version
+  push
+  res   self
+  fld   version
+  res   map
+  push
+  res   self
+  fld   map
+  res   self
+  ret
+endclass
+
+  jmp   89
+
+@parse_request
+  set   req
+  res   io
+  push
+  res   req
+  call  println
+  res   req
+  push
+  res   '\r\n'
+  call  split
+  set   parts
+  res   parts
+  push
+  res   0
+  aidx
+  push
+  call  trim
+  set   request
+  res   request
+  push
+  res   request
+  push
+  res   0
+  push
+  res   ' '
+  push
+  tupl  2
+  call  find
+  push
+  res   0
+  push
+  tupl  2
+  call  substr
+  set   type
+  res   struct
+  push
+  res   51
+  call  Map
+  set   map
+  nblk
+  res   1
+  set   i
+  res   i
+  push
+  res   parts
+  get   len
+  push
+  lt
+  ifn   31
+  res   parts
+  push
+  res   i
+  aidx
+  push
+  res   ':'
+  call  split
+  set   kv
+  res   kv
+  push
+  res   1
+  aidx
+  push
+  call  trim
+  push
+  res   map
+  push
+  res   kv
+  push
+  res   0
+  aidx
+  push
+  call  trim
+  aset
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -37
+  bblck
+  res   io
+  push
+  res   type
+  call  println
+  res   io
+  push
+  res   map
+  call  println
+  ret
+  exit  0

@@ -217,10 +217,10 @@ Element Thread_wait(VM *vm, Thread *t, ExternalData *data, Element arg) {
 Element add_thread_class(VM *vm, Element module) {
   Element thread_class = create_external_class(vm, module,
       strings_intern("Thread"), Thread_constructor, Thread_deconstructor);
-  add_external_function(vm, thread_class, strings_intern("start"),
+  add_external_method(vm, thread_class, strings_intern("start"),
       Thread_start);
-  add_external_function(vm, thread_class, strings_intern("wait"), Thread_wait);
-  add_external_function(vm, thread_class, strings_intern("get_result"),
+  add_external_method(vm, thread_class, strings_intern("wait"), Thread_wait);
+  add_external_method(vm, thread_class, strings_intern("get_result"),
       Thread_get_result);
   return thread_class;
 }

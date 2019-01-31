@@ -1,6 +1,8 @@
 module struct
   rmdl  io
   mdst  io
+  rmdl  sync
+  mdst  sync
 
 class Map
   jmp   23
@@ -29,17 +31,16 @@ class Map
   fld   keys
   res   self
   ret
-  jmp   130
+  jmp   129
 
 @__set__
   push
   tget  0
-  cnst
-  setc  k
+  set   k
+  peek
   res
   tget  1
-  cnst
-  setc  v
+  set   v
   res   hash
   push
   res   k
@@ -316,6 +317,83 @@ class Set
 endclass
 
 
+class Cache
+  jmp   15
+
+@new
+  res   Map
+  push
+  res   255
+  call
+  push
+  res   self
+  fld   map
+  res   sync
+  push
+  call  Mutex
+  push
+  res   self
+  fld   mutex
+  res   self
+  ret
+  jmp   52
+
+@get
+  push
+  tget  0
+  set   k
+  peek
+  tget  1
+  set   factory
+  peek
+  tlen
+  push
+  push  2
+  lte
+  if    3
+  peek
+  tget  2
+  jmp   1
+  res   None
+  set   args
+  res   self
+  get   mutex
+  push
+  call  acquire
+  res   self
+  get   map
+  push
+  res   k
+  call  __in__
+  ifn   6
+  res   self
+  get   map
+  push
+  res   k
+  aidx
+  ret
+  res   factory
+  push
+  res   args
+  call
+  set   v
+  res   v
+  push
+  res   self
+  get   map
+  push
+  res   k
+  aset
+  res   self
+  get   mutex
+  push
+  call  release
+  res   v
+  ret
+  ret
+endclass
+
+
 class Node
   jmp   13
 
@@ -333,7 +411,7 @@ class Node
   fld   value
   res   self
   ret
-  jmp   55
+  jmp   56
 
 @to_s
   res   'Node('
@@ -357,12 +435,13 @@ class Node
   push
   dup
   call  has_next
-  ifn   26
+  ifn   27
   dup
   call  next
   push
   tget  0
   set   k
+  peek
   res
   tget  1
   set   v
@@ -383,7 +462,7 @@ class Node
   tupl  5
   call
   call  extend
-  jmp   -29
+  jmp   -30
   res
   bblck
   res   tos
@@ -406,12 +485,13 @@ class Trie
   fld   root
   res   self
   ret
-  jmp   73
+  jmp   74
 
 @insert
   push
   tget  0
   set   key
+  peek
   res
   tget  1
   set   value
@@ -424,12 +504,11 @@ class Trie
   push
   tupl  2
   call  find_node
-  push
-  tget  0
-  set   node
-  res
-  tget  1
   set   index_last_char
+  push
+  res   node
+  push
+  tupl  2
   res   index_last_char
   not
   ifn   2
@@ -450,12 +529,13 @@ class Trie
   push
   dup
   call  has_next
-  ifn   24
+  ifn   25
   dup
   call  next
   push
   tget  0
   set   i
+  peek
   res
   tget  1
   set   char
@@ -474,7 +554,7 @@ class Trie
   res   char
   aidx
   set   node
-  jmp   -27
+  jmp   -28
   res
   bblck
   res   value
@@ -482,12 +562,13 @@ class Trie
   res   node
   fld   value
   ret
-  jmp   54
+  jmp   56
 
 @find_node
   push
   tget  0
   set   node
+  peek
   res
   tget  1
   set   key
@@ -500,12 +581,13 @@ class Trie
   push
   dup
   call  has_next
-  ifn   30
+  ifn   31
   dup
   call  next
   push
   tget  0
   set   i
+  peek
   res
   tget  1
   set   char
@@ -530,7 +612,7 @@ class Trie
   res   char
   aidx
   set   node
-  jmp   -33
+  jmp   -34
   res
   bblck
   res   index_last_char
@@ -539,7 +621,7 @@ class Trie
   push
   tupl  2
   ret
-  jmp   24
+  jmp   23
 
 @find
   set   key
@@ -552,12 +634,11 @@ class Trie
   push
   tupl  2
   call  find_node
-  push
-  tget  0
-  set   node
-  res
-  tget  1
   set   i
+  push
+  res   node
+  push
+  tupl  2
   res   node
   not
   ifn   2
@@ -566,7 +647,7 @@ class Trie
   res   node
   get   value
   ret
-  jmp   42
+  jmp   43
 
 @collect_child_values
   set   node
@@ -588,12 +669,13 @@ class Trie
   push
   dup
   call  has_next
-  ifn   18
+  ifn   19
   dup
   call  next
   push
   tget  0
   set   k
+  peek
   res
   tget  1
   set   child
@@ -606,12 +688,12 @@ class Trie
   res   child
   call  collect_child_values
   call  extend
-  jmp   -21
+  jmp   -22
   res
   bblck
   res   result
   ret
-  jmp   37
+  jmp   36
 
 @find_by_prefix
   set   key
@@ -624,12 +706,11 @@ class Trie
   push
   tupl  2
   call  find_node
-  push
-  tget  0
-  set   node
-  res
-  tget  1
   set   i
+  push
+  res   node
+  push
+  tupl  2
   res   node
   not
   ifn   2

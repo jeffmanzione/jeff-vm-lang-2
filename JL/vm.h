@@ -38,7 +38,7 @@ void vm_throw_error(VM *vm, Thread *t, Ins ins, const char fmt[], ...);
 
 Element vm_lookup(VM *vm, Thread *t, const char name[]);
 
-void vm_maybe_initialize_and_execute(VM *vm, Thread *t, const Module *module);
+void vm_maybe_initialize_and_execute(VM *vm, Thread *t, Element module_element);
 
 void vm_call_fn(VM *vm, Thread *t, Element obj, Element func);
 void vm_call_new(VM *vm, Thread *t, Element class);

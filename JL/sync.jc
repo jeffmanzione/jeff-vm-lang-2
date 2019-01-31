@@ -107,7 +107,7 @@ endclass
 
 
 class ThreadPoolExecutor
-  jmp   85
+  jmp   86
 
 @new
   set   num_threads
@@ -178,19 +178,20 @@ class ThreadPoolExecutor
   push
   dup
   call  has_next
-  ifn   12
+  ifn   13
   dup
   call  next
   push
   tget  0
   set   _
+  peek
   res
   tget  1
   set   t
   res   t
   push
   call  start
-  jmp   -15
+  jmp   -16
   res
   bblck
   res   self
@@ -252,23 +253,9 @@ class ThreadPoolExecutor
   jmp   -50
   bblck
   ret
-  jmp   35
+  jmp   21
 
-@execute
-  push
-  tget  0
-  set   fn
-  res
-  tget  1
-  set   args
-  res   Future
-  push
-  res   args
-  push
-  res   fn
-  push
-  tupl  2
-  call
+@execute_future
   set   f
   res   self
   get   mutex
@@ -290,19 +277,57 @@ class ThreadPoolExecutor
   res   f
   ret
   ret
+  jmp   31
+
+@execute
+  push
+  tget  0
+  set   fn
+  peek
+  tlen
+  push
+  push  1
+  lte
+  if    3
+  peek
+  tget  1
+  jmp   1
+  res   None
+  set   args
+  res   Future
+  push
+  res   self
+  push
+  res   args
+  push
+  res   fn
+  push
+  tupl  3
+  call
+  set   f
+  res   self
+  push
+  res   f
+  call  execute_future
+  ret
+  ret
 endclass
 
 
 class Future
-  jmp   35
+  jmp   53
 
 @new
   push
   tget  0
   set   fn
-  res
+  peek
   tget  1
   set   args
+  peek
+  res
+  tget  2
+  set   ex
   res   fn
   push
   res   self
@@ -311,6 +336,20 @@ class Future
   push
   res   self
   fld   args
+  res   ex
+  push
+  res   self
+  fld   ex
+  anew
+  push
+  res   self
+  fld   listeners
+  res   Mutex
+  push
+  call
+  push
+  res   self
+  fld   listeners_mutex
   res   None
   push
   res   self
@@ -332,7 +371,7 @@ class Future
   fld   read_mutex
   res   self
   ret
-  jmp   18
+  jmp   55
 
 @exec
   res   self
@@ -348,6 +387,43 @@ class Future
   push
   res   self
   fld   has_result
+  res   self
+  get   listeners_mutex
+  push
+  call  acquire
+  nblk
+  res   listeners
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   19
+  dup
+  call  next
+  push
+  tget  0
+  set   _
+  peek
+  res
+  tget  1
+  set   f
+  res   self
+  push
+  res   f
+  fld   args
+  res   self
+  get   ex
+  push
+  res   f
+  call  execute_future
+  jmp   -22
+  res
+  bblck
+  res   self
+  get   listeners_mutex
+  push
+  call  release
   res   self
   get   read_mutex
   push
@@ -382,6 +458,65 @@ class Future
   ret
   jmp   -25
   bblck
+  ret
+  jmp   15
+
+@is_resolved
+  res   self
+  get   read_mutex
+  push
+  res   INFINITE
+  call  lock
+  res   self
+  get   has_result
+  set   has_result
+  res   self
+  get   read_mutex
+  push
+  call  unlock
+  res   has_result
+  ret
+  ret
+  jmp   38
+
+@thenDo
+  set   fn
+  res   Future
+  push
+  res   self
+  get   ex
+  push
+  res   args
+  push
+  res   fn
+  push
+  tupl  3
+  call
+  set   f
+  res   self
+  get   listeners_mutex
+  push
+  call  acquire
+  res   self
+  push
+  call  is_resolved
+  if    6
+  res   self
+  get   listeners
+  push
+  res   f
+  call  append
+  jmp   4
+  res   ex
+  push
+  res   f
+  call  execute_future
+  res   self
+  get   listeners_mutex
+  push
+  call  release
+  res   f
+  ret
   ret
   jmp   4
 

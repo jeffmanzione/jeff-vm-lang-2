@@ -127,6 +127,20 @@ void optimizer_RetRet(OptimizeHelper *oh, const Tape * const tape, int start,
   }
 }
 
+void optimizer_PeekRes(OptimizeHelper *oh, const Tape * const tape, int start,
+    int end) {
+  int i;
+  for (i = start + 1; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 1);
+    const InsContainer *second = tape_get(tape, i);
+    if (PEEK == first->ins.op
+        && (RES == second->ins.op || TLEN == second->ins.op)
+        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+      o_Remove(oh, i-1);
+    }
+  }
+}
+
 void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
     int start, int end) {
 

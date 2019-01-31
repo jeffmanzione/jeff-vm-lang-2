@@ -205,20 +205,9 @@ class ThreadPoolExecutor
   jmp   -40
   bblck
   ret
-  jmp   27
+  jmp   16
 
-@execute
-  push
-  tget  0
-  set   fn
-  res
-  tget  1
-  set   args
-  push  Future
-  push  args
-  push  fn
-  tupl  2
-  call
+@execute_future
   set   f
   res   self
   gtsh  mutex
@@ -235,25 +224,67 @@ class ThreadPoolExecutor
   call  unlock
   res   f
   ret
+  jmp   24
+
+@execute
+  push
+  tget  0
+  set   fn
+  tlen
+  push
+  push  1
+  lte
+  if    3
+  peek
+  tget  1
+  jmp   1
+  res   None
+  set   args
+  push  Future
+  push  self
+  push  args
+  push  fn
+  tupl  3
+  call
+  set   f
+  push  self
+  res   f
+  call  execute_future
+  ret
 endclass
 
 
 class Future
-  jmp   28
+  jmp   43
 
 @new
   push
   tget  0
   set   fn
-  res
+  peek
   tget  1
   set   args
+  res
+  tget  2
+  set   ex
   push  fn
   res   self
   fld   fn
   push  args
   res   self
   fld   args
+  push  ex
+  res   self
+  fld   ex
+  anew
+  push
+  res   self
+  fld   listeners
+  push  Mutex
+  call
+  push
+  res   self
+  fld   listeners_mutex
   push  None
   res   self
   fld   result
@@ -270,7 +301,7 @@ class Future
   fld   read_mutex
   res   self
   ret
-  jmp   15
+  jmp   42
 
 @exec
   res   self
@@ -284,6 +315,33 @@ class Future
   push  True
   res   self
   fld   has_result
+  res   self
+  gtsh  listeners_mutex
+  call  acquire
+  nblk
+  push  listeners
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   12
+  dup
+  call  next
+  tget  1
+  set   f
+  push  self
+  res   f
+  fld   args
+  res   self
+  gtsh  ex
+  res   f
+  call  execute_future
+  jmp   -15
+  res
+  bblck
+  res   self
+  gtsh  listeners_mutex
+  call  release
   res   self
   gtsh  read_mutex
   call  unlock
@@ -314,6 +372,52 @@ class Future
   ret
   jmp   -22
   bblck
+  ret
+  jmp   12
+
+@is_resolved
+  res   self
+  gtsh  read_mutex
+  res   INFINITE
+  call  lock
+  res   self
+  get   has_result
+  set   has_result
+  res   self
+  gtsh  read_mutex
+  call  unlock
+  res   has_result
+  ret
+  jmp   28
+
+@thenDo
+  set   fn
+  push  Future
+  res   self
+  gtsh  ex
+  push  args
+  push  fn
+  tupl  3
+  call
+  set   f
+  res   self
+  gtsh  listeners_mutex
+  call  acquire
+  push  self
+  call  is_resolved
+  if    5
+  res   self
+  gtsh  listeners
+  res   f
+  call  append
+  jmp   3
+  push  ex
+  res   f
+  call  execute_future
+  res   self
+  gtsh  listeners_mutex
+  call  release
+  res   f
   ret
   jmp   3
 

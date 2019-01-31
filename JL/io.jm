@@ -102,14 +102,21 @@ endclass
 
 
 class FileReader
-  jmp   18
+  jmp   25
 
 @new
   push
   tget  0
   set   fn
-  res
+  tlen
+  push
+  push  1
+  lte
+  if    3
+  peek
   tget  1
+  jmp   1
+  res   False
   set   binary
   push  FileInternal
   push  binary

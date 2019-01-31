@@ -19,6 +19,7 @@ typedef enum {
   EXIT,
   RES,
   TGET,
+  TLEN,
   SET,
   PUSH,
   PEEK,

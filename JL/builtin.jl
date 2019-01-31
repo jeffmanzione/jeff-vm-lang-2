@@ -22,6 +22,7 @@ def concat(args) {
   }
   strc
 }
+self.cat = self.concat
 
 def hash(v) {
   if v is Object {
@@ -228,14 +229,13 @@ class Array {
     }
     arr
   }
-  def collect(s, f) {
+  def collect(f, s=None) {
     if self.len == 0 {
       if s is Function {
-        a = s()
+        return s()
       } else {
-        a = s
+        return s
       }
-      return a
     }
     a = self[0]
     for i=1, i<self.len, i=i+1 {
@@ -413,12 +413,16 @@ class String {
     parts = []
     last_delim_end = 0
     for i=0, i < self.len, i=i+1 {
-      if equals_range(self, i, delim, 0, del_len) {
+      if equals_range(self, i, del, 0, del_len) {
         parts.append(self.substr(last_delim_end, i))
-        i = i + delim_len
+        i = i + del_len
         last_delim_end = i
       }
+      if i==self.len-1 & last_delim_end < self.len - del_len {
+        parts.append(self.substr(last_delim_end, self.len))
+      }
     }
+
     return parts
   }
 }

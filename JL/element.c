@@ -281,13 +281,15 @@ void obj_set_field(Element elt, const char field_name[], Element field_val) {
     elt.obj->ltable[key] = field_val;
   }
 
-  Element *old;
+  ElementContainer *old;
   if (NULL != (old = map_lookup(&elt.obj->fields, field_name))) {
-    *old = field_val;
+    old->elt = field_val;
     return;
   }
-  Element *elt_ptr = ARENA_ALLOC(Element);
-  *elt_ptr = field_val;
+  ElementContainer *elt_ptr = ARENA_ALLOC(ElementContainer);
+  elt_ptr->is_const = false;
+  elt_ptr->is_private = false;
+  elt_ptr->elt = field_val;
 
   map_insert(&elt.obj->fields, field_name, elt_ptr);
 }
@@ -299,12 +301,12 @@ Element obj_lookup(Object *obj, CommonKey key) {
 
 Element obj_get_field_obj(Object *obj, const char field_name[]) {
   ASSERT_NOT_NULL(obj);
-  Element *to_return = map_lookup(&obj->fields, field_name);
+  ElementContainer *to_return = map_lookup(&obj->fields, field_name);
 
   if (NULL == to_return) {
     return create_none();
   }
-  return *to_return;
+  return to_return->elt;
 }
 
 Element obj_get_field(Element elt, const char field_name[]) {
@@ -325,12 +327,11 @@ void obj_delete_ptr(Object *obj, bool free_mem) {
 //  close_rwlock(&obj->rwlock);
   if (free_mem) {
     void dealloc_elts(Pair *kv) {
-      ARENA_DEALLOC(Element, kv->value);
+      ARENA_DEALLOC(ElementContainer, kv->value);
     }
     map_iterate(&obj->fields, dealloc_elts);
   }
   map_finalize(&obj->fields);
-  map_finalize(&obj->consts);
 
   ASSERT(NOT_NULL(obj->parent_objs));
   expando_delete(obj->parent_objs);
@@ -492,10 +493,10 @@ void obj_to_str(Object *obj, FILE *file) {
     fprintf(file, "(");
     fflush(file);
     void print_field(Pair *pair) {
-      Element *field_val = (Element *) pair->value;
-      Element to_print = *field_val;
-      if (ISOBJECT(*field_val)) {
-        Element field_class = obj_lookup(field_val->obj, CKey_class);
+      ElementContainer *field_val = (ElementContainer *) pair->value;
+      Element to_print = field_val->elt;
+      if (ISOBJECT(field_val->elt)) {
+        Element field_class = obj_lookup(field_val->elt.obj, CKey_class);
         to_print = field_class;
         if (ISOBJECT(field_class)) {
           Element class_name = obj_lookup(field_class.obj, CKey_name);
@@ -580,9 +581,17 @@ Element make_const(Element elt) {
 }
 
 void make_const_ref(Object *obj, const char field_name[]) {
-  map_insert(&obj->consts, field_name, (void *) true);
+  ElementContainer *ec = map_lookup(&obj->fields, field_name);
+  if (NULL == ec) {
+    ERROR("ElementContainer was null.");
+  }
+  ec->is_const = true;
 }
 
 bool is_const_ref(Object *obj, const char field_name[]) {
-  return map_lookup(&obj->consts, field_name) != NULL;
+  ElementContainer *ec = map_lookup(&obj->fields, field_name);
+  if (NULL == ec) {
+    return false;
+  }
+  return ec->is_const;
 }

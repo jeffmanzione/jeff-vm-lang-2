@@ -1,7 +1,6 @@
 module sync
 
 import io
-import struct
 
 self.INIFINITE = 2147483647
 self.LOCK_ACQUIRED = 0
@@ -70,9 +69,7 @@ class ThreadPoolExecutor {
     }
   }
   
-  def execute(fn, args) {
-    f = Future(fn, args)
-
+  def execute_future(f) {
     self.mutex.acquire()
     self.tasks.append(f)
     self.mutex.release()
@@ -80,12 +77,20 @@ class ThreadPoolExecutor {
     self.task_lock.unlock()
     return f
   }
+  
+  def execute(fn, args=None) {
+    f = Future(fn, args, self)
+    return self.execute_future(f)
+  }
 }
 
 class Future {
-  def new(fn, args) {
+  def new(fn, args, ex) {
     self.fn = fn
     self.args = args
+    self.ex = ex
+    self.listeners = []
+    self.listeners_mutex = Mutex()
     self.result = None
     self.has_result = False
     self.read_mutex = Semaphore(0, 1)
@@ -94,6 +99,12 @@ class Future {
   def exec() {
     self.result = self.fn.call(self.args)
     self.has_result = True
+    self.listeners_mutex.acquire()
+    for _,f in listeners {
+      f.args = self
+      self.ex.execute_future(f)
+    }
+    self.listeners_mutex.release()
     self.read_mutex.unlock()
   }
   
@@ -109,38 +120,57 @@ class Future {
     }
   }
   
+  def is_resolved() {
+    self.read_mutex.lock(INFINITE)
+    has_result = self.has_result
+    self.read_mutex.unlock()
+    return has_result
+  }
+  
+  def thenDo(fn) {
+    f = Future(fn, args, self.ex)
+    self.listeners_mutex.acquire()
+    if self.is_resolved() {
+      ex.execute_future(f)
+    } else {
+      self.listeners.append(f)
+    }
+    self.listeners_mutex.release()
+    return f
+  }
+  
   def wait() {
     self.get()
   }
 }
 
-def Graph {
-  def new(ex) {
-    self.ex = ex
-    self.edges = struct.Map(51)
-    self.back_edges = struct.Map(51)
-    self.nodes = struct.Map(51)
-  }
+;def Graph {
+ ; def new(ex) {
+ ;   self.ex = ex
+ ;   self.edges = struct.Map(51)
+ ;   self.back_edges = struct.Map(51)
+ ;   self.nodes = struct.Map(51)
+ ; }
+
+ ; def create_node(name, fn) {
+ ;   self.nodes[name] = fn
+ ;   return self
+ ; }
   
-  def create_node(name, fn) {
-    self.nodes[name] = fn
-    return self
-  }
+ ; def create_edge(n1, n2) {
+ ;   if n1 notin self.edges {
+ ;     self.edges[n1] = []
+ ;   }
+ ;   if n2 notin self.back_edges {
+ ;     self.back_edges[n2] = []
+ ;   }
+ ;   self.edges[n1].append(n2)
+ ;   self.back_edges[n2].append(n1)
+ ;   
+ ;   return self
+ ; }
   
-  def create_edge(n1, n2) {
-    if n1 notin self.edges {
-      self.edges[n1] = []
-    }
-    if n2 notin self.back_edges {
-      self.back_edges[n2] = []
-    }
-    self.edges[n1].append(n2)
-    self.back_edges[n2].append(n1)
-    
-    return self
-  }
-  
-  def exec() {
-    
-  }
-}
+;  def exec() {
+;    
+;  }
+;}

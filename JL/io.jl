@@ -23,7 +23,7 @@ class FileInternal {
 }
 
 class FileReader {
-  def new(fn, binary) {
+  def new(fn, binary=False) {
     self.fi = FileInternal(fn, 'r', False, binary)
   }
   def rewind() self.fi.rewind()

@@ -39,7 +39,7 @@ typedef struct {
 #endif
 } Arena;
 
-ARENA_DEFINE(Element);
+ARENA_DEFINE(ElementContainer);
 ARENA_DEFINE(Node);
 ARENA_DEFINE(NodeEdge);
 ARENA_DEFINE(Token);

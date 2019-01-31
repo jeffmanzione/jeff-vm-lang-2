@@ -52,7 +52,7 @@ void vm_throw_error(VM *vm, Thread *t, Ins ins, const char fmt[], ...) {
 
   // TODO: Why do I need to do this? It should automatically init the module.
   vm_maybe_initialize_and_execute(vm, t,
-      vm_lookup_module(vm, strings_intern("io")).obj->module);
+      vm_lookup_module(vm, strings_intern("io")));
 
   memory_graph_set_field(vm->graph, curr_block, ERROR_KEY, create_int(1));
   t_set_resval(t, error_msg);
@@ -86,7 +86,7 @@ void catch_error(VM *vm, Thread *t) {
 
     // TODO: Why do I need to do this? It should automatically init the module.
     vm_maybe_initialize_and_execute(vm, t,
-        vm_lookup_module(vm, strings_intern("io")).obj->module);
+        vm_lookup_module(vm, strings_intern("io")));
 
     vm_call_fn(vm, t, error_module, raise_error);
     t_shift_ip(t, 1);
@@ -229,7 +229,6 @@ Element vm_add_module(VM *vm, const Module *module) {
   return module_element;
 }
 void vm_merge_module(VM *vm, const char fn[]) {
-  DEBUGF("begin fn=%s", fn);
   Module *module = load_fn(strings_intern(fn), vm->store);
   ASSERT(NOT_NULL(vm), NOT_NULL(module));
   Element module_element = create_module(vm, module);
@@ -277,8 +276,6 @@ void vm_merge_module(VM *vm, const char fn[]) {
     map_iterate(methods, add_method);
   }
   module_iterate_classes(module, add_class);
-
-  DEBUGF("end fn=%s", fn);
 }
 
 VM *vm_create(ArgStore *store) {
@@ -313,11 +310,11 @@ void vm_delete(VM *vm) {
   ASSERT_NOT_NULL(vm->graph);
   void delete_module(Pair *kv) {
     ASSERT(NOT_NULL(kv));
-    Element *e = ((Element *) kv->value);
-    if (e->type != OBJECT || e->obj->type != MODULE) {
+    ElementContainer *e = ((ElementContainer *) kv->value);
+    if (e->elt.type != OBJECT || e->elt.obj->type != MODULE) {
       return;
     }
-    Module *module = (Module*) e->obj->module;
+    Module *module = (Module*) e->elt.obj->module;
     module_delete(module);
   }
   map_iterate(&vm->modules.obj->fields, delete_module);
@@ -394,6 +391,12 @@ void call_external_fn(VM *vm, Thread *t, Element obj, Element external_func) {
         "Cannot call ExternalFunction on something not ExternalFunction.");
     return;
   }
+
+  Element module = vm_object_lookup(vm, external_func, PARENT_MODULE);
+  if (NONE != module.type) {
+    vm_maybe_initialize_and_execute(vm, t, module);
+  }
+
   ASSERT(NOT_NULL(external_func.obj->external_fn));
   Element resval = t_get_resval(t);
   ExternalData *ed = (obj.obj->is_external) ? obj.obj->external_data : NULL;
@@ -421,7 +424,7 @@ void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
 //  printf("\n");
 //  fflush(stdout);
 
-  vm_maybe_initialize_and_execute(vm, t, parent.obj->module);
+  vm_maybe_initialize_and_execute(vm, t, parent);
 
   Element new_block = t_new_block(t, parent, obj);
   memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
@@ -452,8 +455,7 @@ void vm_call_new(VM *vm, Thread *t, Element class) {
   if (NONE != new_func.type) {
     vm_call_fn(vm, t, new_obj, new_func);
   } else {
-    vm_maybe_initialize_and_execute(vm, t,
-        obj_get_field(class, PARENT_MODULE).obj->module);
+    vm_maybe_initialize_and_execute(vm, t, obj_get_field(class, PARENT_MODULE));
     t_set_resval(t, new_obj);
   }
 }
@@ -691,6 +693,15 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
   case CNST:
     t_set_resval(t, make_const(t_get_resval(t)));
     return true;
+  case TLEN:
+    elt = t_peekstack(t, 0);
+    // TODO: Not sure if this is the best solution
+    if (!is_object_type(&elt, TUPLE)) {
+      t_set_resval(t, create_int(-1));
+      return true;
+    }
+    t_set_resval(t, create_int(tuple_size(elt.obj->tuple)));
+    return true;
   default:
     break;
   }
@@ -916,6 +927,9 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
     }
     Element target = vm_object_lookup(vm, obj, ins.str);
     if (OBJECT != target.type) {
+      elt_to_str(obj, stderr);
+      fprintf(stderr, "\n");
+      fflush(stderr);
       vm_throw_error(vm, t, ins, "Object has no such function '%s'.", ins.str);
       return true;
     }
@@ -1019,6 +1033,12 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
       return true;
     }
     tuple = t_get_resval(t);
+    // TODO: Maybe there is a better solution.
+    if ((tuple.type != OBJECT || tuple.obj->type != TUPLE)
+        && elt.val.int_val == 0) {
+      t_set_resval(t, tuple);
+      break;
+    }
     execute_tget(vm, t, ins, tuple, elt.val.int_val);
     break;
   case JMP:
@@ -1105,18 +1125,18 @@ bool execute(VM *vm, Thread *t) {
 
   Ins ins = t_current_ins(t);
 
-//#ifdef DEBUG
-//  mutex_await(vm->debug_mutex, INFINITE);
-//  fflush(stderr);
-//  fprintf(stdout, "module(%s,t=%d) ", module_name(t_get_module(t).obj->module),
-//      (int) t->id);
-//  fflush(stdout);
-//  ins_to_str(ins, stdout);
-//  fprintf(stdout, "\n");
-//  fflush(stdout);
-//  fflush(stderr);
-//  mutex_release(vm->debug_mutex);
-//#endif
+#ifdef DEBUG
+  mutex_await(vm->debug_mutex, INFINITE);
+  fflush(stderr);
+  fprintf(stdout, "module(%s,t=%d) ", module_name(t_get_module(t).obj->module),
+      (int) t->id);
+  fflush(stdout);
+  ins_to_str(ins, stdout);
+  fprintf(stdout, "\n");
+  fflush(stdout);
+  fflush(stderr);
+  mutex_release(vm->debug_mutex);
+#endif
 
   bool status;
   switch (ins.param) {
@@ -1145,9 +1165,8 @@ bool execute(VM *vm, Thread *t) {
   return status;
 }
 
-void vm_maybe_initialize_and_execute(VM *vm, Thread *t, const Module *module) {
+void vm_maybe_initialize_and_execute(VM *vm, Thread *t, Element module_element) {
   mutex_await(vm->module_init_mutex, INFINITE);
-  Element module_element = vm_lookup_module(vm, module_name(module));
   if (is_true(obj_get_field(module_element, INITIALIZED))) {
     mutex_release(vm->module_init_mutex);
     return;

@@ -35,6 +35,7 @@ void optimize_init() {
   register_optimizer("PushRes", optimizer_PushRes);
   register_optimizer("ResPush2", optimizer_ResPush2);
   register_optimizer("RetRet", optimizer_RetRet);
+  register_optimizer("PeekRes", optimizer_PeekRes);
 //  register_optimizer("Increment", optimizer_Increment);
   register_optimizer("SetEmpty", optimizer_SetEmpty);
   register_optimizer("PushResEmpty", optimizer_PushResEmpty);

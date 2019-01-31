@@ -24,6 +24,7 @@
   };\
   void name##_init(name*);\
   name *name##_create();\
+  name *name##_create_sz(size_t len);\
   name *name##_create_copy(const type input[], size_t len);\
   void name##_finalize(name*);\
   void name##_delete(name*);\
@@ -53,6 +54,11 @@
   name *name##_create() {\
     name *array = ALLOC2(name);\
     name##_init(array);\
+    return array;\
+  }\
+  name *name##_create_sz(size_t len) {\
+    name *array = ALLOC2(name);\
+    name##_init_sz(array, len);\
     return array;\
   }\
   name *name##_create_copy(const type input[], size_t len) {\

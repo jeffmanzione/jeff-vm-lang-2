@@ -89,6 +89,7 @@ DefineSyntax(foreach_statement);
 DefineSyntax(for_statement);
 DefineSyntax(while_statement);
 DefineSyntax(const_expression);
+DefineSyntax(default_value_expression);
 
 
 #endif /* EXPRESSION_H_ */
