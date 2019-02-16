@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "../error.h"
 #include "../shared.h"
 
 #define DEFAULT_MAP_SZ 31
@@ -56,7 +57,8 @@ void map_delete(Map *);
 
 bool map_insert(Map *, const void *key, const void *value);
 Pair map_remove(Map *, const void *key);
-void *map_lookup(const Map *, const void *key);
+DEB_FN(void *, map_lookup, const Map *map, const void *key);
+#define map_lookup(...) CALL_FN(map_lookup__, __VA_ARGS__)
 
 void map_iterate(const Map *, PairAction);
 

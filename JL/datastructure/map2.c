@@ -24,8 +24,9 @@ int MAP__lookup_count = 0;
 int MAP__lookup_compares_count = 0;
 #endif
 
-#define pos(hval, num_probes, table_sz) (((hval) + ((num_probes) * (num_probes))) % (table_sz))
-#define calculate_new_size(current_sz) (((current_sz)*2)+1)
+#define pos(hval, num_probes, table_sz) \
+  (((hval) + ((num_probes) * (num_probes))) % (table_sz))
+#define calculate_new_size(current_sz) (((current_sz)*2) + 1)
 #define calculate_thresh(table_sz) ((int)(((float)(3 * (table_sz))) / 4))
 
 typedef void (*EntryAction)(MEntry *me);
@@ -46,9 +47,9 @@ void map_init(Map *map, uint32_t size, Hasher hasher, Comparator comparator) {
   map->compare = comparator;
   map->table_sz = size;
   map->entries_thresh = calculate_thresh(size);
-//  DEBUGF("map_init 1");
+  //  DEBUGF("map_init 1");
   map->table = ALLOC_ARRAY(MEntry, size);
-//  DEBUGF("map_init 2");
+  //  DEBUGF("map_init 2");
   map->first = NULL;
   map->last = NULL;
   map->num_entries = 0;
@@ -62,9 +63,7 @@ Map *map_create_default() {
   return map_create(DEFAULT_MAP_SZ, default_hasher, default_comparator);
 }
 
-void map_finalize(Map *map) {
-  DEALLOC(map->table);
-}
+void map_finalize(Map *map) { DEALLOC(map->table); }
 
 void map_delete(Map *map) {
   ASSERT_NOT_NULL(map);
@@ -73,8 +72,8 @@ void map_delete(Map *map) {
 }
 
 bool map_insert_helper(Map *map, const void *key, const void *value,
-    uint32_t hval, MEntry *table, uint32_t table_sz, MEntry **first,
-    MEntry **last) {
+                       uint32_t hval, MEntry *table, uint32_t table_sz,
+                       MEntry **first, MEntry **last) {
   ASSERT(NOT_NULL(map));
   int num_probes = 0;
   MEntry *first_empty = NULL;
@@ -83,7 +82,8 @@ bool map_insert_helper(Map *map, const void *key, const void *value,
     int table_index = pos(hval, num_probes, table_sz);
     num_probes++;
     MEntry *me = table + table_index;
-//    DEBUGF("num_probes=%d, me->num_probes=%d", num_probes, me->num_probes);
+    //    DEBUGF("num_probes=%d, me->num_probes=%d", num_probes,
+    //    me->num_probes);
     // Position is vacant.
     if (0 == me->num_probes) {
       // Use the previously empty slot if we don't find our element.
@@ -93,7 +93,7 @@ bool map_insert_helper(Map *map, const void *key, const void *value,
       }
       // Take the vacant spot.
       me->pair.key = key;
-      me->pair.value = (void *) value;
+      me->pair.value = (void *)value;
       me->hash_value = hval;
       me->num_probes = num_probes;
       me->prev = *last;
@@ -126,11 +126,11 @@ bool map_insert_helper(Map *map, const void *key, const void *value,
     }
     // Rob this entry if it did fewer probes.
     if (me->num_probes < num_probes) {
-//      DEBUGF("ROBBING!");
+      //      DEBUGF("ROBBING!");
       MEntry tmp_me = *me;
       // Take its spot.
       me->pair.key = key;
-      me->pair.value = (void *) value;
+      me->pair.value = (void *)value;
       me->hash_value = hval;
       me->num_probes = num_probes;
       // It is the new insertion.
@@ -149,13 +149,14 @@ bool map_insert(Map *map, const void *key, const void *value) {
   MAP__insert_count++;
 #endif
   ASSERT(NOT_NULL(map));
-//  DEBUGF("num_entries=%d entries_thresh=%d, table_sz=%d", map->num_entries,
-//      map->entries_thresh, map->table_sz);
+  //  DEBUGF("num_entries=%d entries_thresh=%d, table_sz=%d", map->num_entries,
+  //      map->entries_thresh, map->table_sz);
   if (map->num_entries > map->entries_thresh) {
     resize_table(map);
   }
-  bool was_inserted = map_insert_helper(map, key, value, map->hash(key),
-      map->table, map->table_sz, &map->first, &map->last);
+  bool was_inserted =
+      map_insert_helper(map, key, value, map->hash(key), map->table,
+                        map->table_sz, &map->first, &map->last);
   if (was_inserted) {
     map->num_entries++;
   }
@@ -163,7 +164,7 @@ bool map_insert(Map *map, const void *key, const void *value) {
 }
 
 MEntry *map_lookup_entry(const Map *map, const void *key, MEntry *table,
-    uint32_t table_sz) {
+                         uint32_t table_sz) {
   ASSERT(NOT_NULL(map));
   uint32_t hval = map->hash(key);
   int num_probes = 0;
@@ -194,7 +195,7 @@ Pair map_remove(Map *map, const void *key) {
   ASSERT(NOT_NULL(map));
   MEntry *me = map_lookup_entry(map, key, map->table, map->table_sz);
   if (NULL == me) {
-    Pair pair = { key, NULL };
+    Pair pair = {key, NULL};
     return pair;
   }
   if (map->last == me) {
@@ -212,7 +213,7 @@ Pair map_remove(Map *map, const void *key) {
   return me->pair;
 }
 
-void *map_lookup(const Map *map, const void *key) {
+DEB_FN(void *, map_lookup, const Map *map, const void *key) {
 #ifdef DEBUG
   MAP__lookup_count++;
 #endif
@@ -232,28 +233,24 @@ void map_iterate_internal(const Map *map, EntryAction action) {
 }
 
 void map_iterate(const Map *map, PairAction action) {
-  void pair_action(MEntry *me) {
-    action(&me->pair);
-  }
+  void pair_action(MEntry * me) { action(&me->pair); }
   map_iterate_internal(map, pair_action);
 }
 
-uint32_t map_size(const Map *map) {
-  return map->num_entries;
-}
+uint32_t map_size(const Map *map) { return map->num_entries; }
 
 void resize_table(Map *map) {
   ASSERT(NOT_NULL(map));
-//  DEBUGF("resize_table num_entries=%d entries_thresh=%d, table_sz=%d",
-//      map->num_entries, map->entries_thresh, map->table_sz);
+  //  DEBUGF("resize_table num_entries=%d entries_thresh=%d, table_sz=%d",
+  //      map->num_entries, map->entries_thresh, map->table_sz);
   int new_table_sz = calculate_new_size(map->table_sz);
   MEntry *new_table = ALLOC_ARRAY(MEntry, new_table_sz);
   MEntry *new_first = NULL;
   MEntry *new_last = NULL;
 
-  void insert_in_new_table(MEntry *me) {
+  void insert_in_new_table(MEntry * me) {
     map_insert_helper(map, me->pair.key, me->pair.value, me->hash_value,
-        new_table, new_table_sz, &new_first, &new_last);
+                      new_table, new_table_sz, &new_first, &new_last);
   }
   map_iterate_internal(map, insert_in_new_table);
 

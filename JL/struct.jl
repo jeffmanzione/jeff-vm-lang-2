@@ -74,12 +74,19 @@ class Cache {
     self.map = Map(255)
     self.mutex = sync.Mutex()
   }
-  def get(k, factory, args=None) {
+  def get(k, factory, args=None, default='') {
     self.mutex.acquire()
     if k in self.map {
-      return self.map[k]
+      v = self.map[k]
+      self.mutex.release()
+      return v
     }
-    v = factory(args)
+    try {
+      v = factory(args)
+    } catch e {
+      v = default
+    }
+    
     self.map[k] = v
     self.mutex.release()
     return v

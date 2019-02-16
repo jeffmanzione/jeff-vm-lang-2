@@ -18,7 +18,10 @@
 #include "datastructure/set.h"
 #include "ltable/ltable.h"
 
-#define VALUE_OF(val) (((val).type==INT) ? val.int_val : (((val).type==FLOAT) ? val.float_val : val.char_val))
+#define VALUE_OF(val)  \
+  (((val).type == INT) \
+       ? val.int_val   \
+       : (((val).type == FLOAT) ? val.float_val : val.char_val))
 
 typedef struct Array_ Array;
 typedef struct Tuple_ Tuple;
@@ -35,9 +38,7 @@ typedef struct ExternalData_ ExternalData;
 typedef Element (*ExternalFunction)(VM *, Thread *, ExternalData *, Element);
 
 // Do not manually access any of these =(
-typedef enum {
-  INT, FLOAT, CHAR
-} ValType;
+typedef enum { INT, FLOAT, CHAR } ValType;
 typedef struct Value_ {
   char type;
   union {
@@ -47,22 +48,17 @@ typedef struct Value_ {
   };
 } Value;
 
-typedef enum {
-  NONE, OBJECT, VALUE
-} ElementType;
+typedef enum { NONE, OBJECT, VALUE } ElementType;
 
 typedef struct Element_ {
-  ElementType type;
-  bool is_const;
+  char type;
   union {
     struct Object_ *obj;
     Value val;
   };
 } Element;
 
-typedef enum {
-  OBJ, ARRAY, TUPLE, MODULE
-} ObjectType;
+typedef enum { OBJ, ARRAY, TUPLE, MODULE } ObjectType;
 
 typedef struct Object_ {
   char type;
@@ -70,7 +66,7 @@ typedef struct Object_ {
   Node *node;
   Element ltable[CKey_END];
   Map fields;
-  bool is_external;
+  bool is_external, is_const;
   Expando *parent_objs;
 
   union {
@@ -83,8 +79,8 @@ typedef struct Object_ {
 } Object;
 
 typedef struct ElementContainer_ {
-  bool is_const :1;
-  bool is_private :1;
+  bool is_const : 1;
+  bool is_private : 1;
   Element elt;
 } ElementContainer;
 
@@ -109,15 +105,16 @@ Element string_add(VM *vm, Element str1, Element str2);
 
 Element create_tuple(MemoryGraph *graph);
 Element create_module(VM *vm, const Module *module);
-Element create_function(VM *vm, Element module, uint32_t ins, const char name[]);
+Element create_function(VM *vm, Element module, uint32_t ins,
+                        const char name[]);
 Element create_external_function(VM *vm, Element module, const char name[],
-    ExternalFunction external_fn);
+                                 ExternalFunction external_fn);
 Element create_external_method(VM *vm, Element class, const char name[],
-    ExternalFunction external_fn);
+                               ExternalFunction external_fn);
 Element create_method(VM *vm, Element module, uint32_t ins, Element class,
-    const char name[]);
+                      const char name[]);
 Element create_method_instance(MemoryGraph *graph, Element object,
-    Element method);
+                               Element method);
 
 Element val_to_elt(Value val);
 Value value_negate(Value val);
@@ -144,7 +141,7 @@ Element element_true(VM *vm);
 Element element_false(VM *vm);
 Element element_not(VM *vm, Element elt);
 
-Element element_from_obj(Object * const obj);
+Element element_from_obj(Object *const obj);
 
 bool is_true(Element elt);
 bool is_false(Element elt);

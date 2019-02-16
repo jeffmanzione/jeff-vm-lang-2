@@ -27,38 +27,38 @@ typedef struct MemoryGraph_ {
   // ID-related bools
   bool rand_seeded, use_rand;
   uint32_t id_counter;
-  Set/*<Node>*/nodes;
-  Set/*<Node>*/roots;
+  Set /*<Node>*/ nodes;
+  Set /*<Node>*/ roots;
 
-//  Set/*<Thread>*/threads;
+  //  Set/*<Thread>*/threads;
   ThreadHandle access_mutex;
 } MemoryGraph;
 
-NodeID new_id(MemoryGraph* graph) {
+NodeID new_id(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
   uint32_t int_id;
   if (graph->use_rand) {
     if (!graph->rand_seeded) {
-      srand((uint32_t) time(NULL));
+      srand((uint32_t)time(NULL));
       graph->rand_seeded = true;
     }
     int_id = rand();
   } else {
     int_id = graph->id_counter++;
   }
-  NodeID id = { int_id };
+  NodeID id = {int_id};
   return id;
 }
 
 uint32_t node_hasher(const void *node) {
   ASSERT_NOT_NULL(node);
-  return ((Node *) node)->id.int_id;
+  return ((Node *)node)->id.int_id;
 }
 
 int32_t node_comparator(const void *n1, const void *n2) {
   ASSERT_NOT_NULL(n1);
   ASSERT_NOT_NULL(n2);
-  return ((Node *) n1)->id.int_id - ((Node *) n2)->id.int_id;
+  return ((Node *)n1)->id.int_id - ((Node *)n2)->id.int_id;
 }
 
 void ltable_fill() {
@@ -85,15 +85,15 @@ MemoryGraph *memory_graph_create() {
 
 uint32_t node_edge_hasher(const void *ptr) {
   ASSERT_NOT_NULL(ptr);
-  NodeEdge *edge = (NodeEdge *) ptr;
+  NodeEdge *edge = (NodeEdge *)ptr;
   return node_hasher(edge->node);
 }
 
 int32_t node_edge_comparator(const void *ptr1, const void *ptr2) {
   ASSERT_NOT_NULL(ptr1);
   ASSERT_NOT_NULL(ptr2);
-  NodeEdge *edge1 = (NodeEdge *) ptr1;
-  NodeEdge *edge2 = (NodeEdge *) ptr2;
+  NodeEdge *edge1 = (NodeEdge *)ptr1;
+  NodeEdge *edge2 = (NodeEdge *)ptr2;
   return node_comparator(edge1->node, edge2->node);
 }
 
@@ -107,9 +107,9 @@ Node *node_create(MemoryGraph *graph) {
   set_insert(&graph->nodes, node);
   mutex_release(graph->access_mutex);
   set_init(&node->parents, DEFAULT_TABLE_SZ, node_edge_hasher,
-      node_edge_comparator);
+           node_edge_comparator);
   set_init(&node->children, DEFAULT_TABLE_SZ, node_edge_hasher,
-      node_edge_comparator);
+           node_edge_comparator);
   node->access_mutex = mutex_create(NULL);
   return node;
 }
@@ -119,7 +119,7 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
   ASSERT_NOT_NULL(node);
   if (free_mem) {
     void delete_node_edge(void *ptr) {
-      ARENA_DEALLOC(NodeEdge, (NodeEdge* ) ptr);
+      ARENA_DEALLOC(NodeEdge, (NodeEdge *)ptr);
     }
     set_iterate(&node->children, delete_node_edge);
     set_iterate(&node->children, delete_node_edge);
@@ -144,7 +144,7 @@ void memory_graph_delete(MemoryGraph *graph) {
 #endif
   void delete_node_and_obj(void *p) {
     ASSERT_NOT_NULL(p);
-    Node *node = (Node *) p;
+    Node *node = (Node *)p;
 #ifdef DEBUG
     node_count++;
     field_count += map_size(&node->obj.fields);
@@ -160,11 +160,12 @@ void memory_graph_delete(MemoryGraph *graph) {
   set_iterate(&graph->nodes, delete_node_and_obj);
 
 #ifdef DEBUG
-  fprintf(stdout, "There are %d members of the graph.\n"
-      "Total/Avg # fields: %d/%.02f\n"
-      "Total/Avg # children %d/%.02f\n", node_count, field_count,
-      (field_count * 1.0) / node_count, children_count,
-      (children_count * 1.0) / node_count);
+  fprintf(stdout,
+          "There are %d members of the graph.\n"
+          "Total/Avg # fields: %d/%.02f\n"
+          "Total/Avg # children %d/%.02f\n",
+          node_count, field_count, (field_count * 1.0) / node_count,
+          children_count, (children_count * 1.0) / node_count);
   fflush(stdout);
 #endif
   set_finalize(&graph->nodes);
@@ -180,8 +181,12 @@ Element memory_graph_new_node(MemoryGraph *graph) {
   node->obj.is_external = false;
   map_init_default(&node->obj.fields);
   node->obj.parent_objs = expando(Object *, 4);
-  Element e = { .type = OBJECT, .is_const = false, .obj = &node->obj, };
-  memory_graph_set_field(graph, e, ADDRESS_KEY, create_int((int32_t) e.obj));
+  Element e = {
+      .type = OBJECT,
+      .obj = &node->obj,
+  };
+  e.obj->is_const = false;
+  memory_graph_set_field(graph, e, ADDRESS_KEY, create_int((int32_t)e.obj));
   return e;
 }
 
@@ -192,7 +197,7 @@ NodeEdge *node_edge_create(Node *to) {
   return ne;
 }
 
-void acquire_all_mutex(const Node * const n1, const Node * const n2) {
+void acquire_all_mutex(const Node *const n1, const Node *const n2) {
   if (n1 == NULL && n2 == NULL) {
     return;
   }
@@ -213,7 +218,7 @@ void acquire_all_mutex(const Node * const n1, const Node * const n2) {
   mutex_await(second, INFINITE);
 }
 
-void release_all_mutex(const Node * const n1, const Node * const n2) {
+void release_all_mutex(const Node *const n1, const Node *const n2) {
   if (n1 == NULL && n2 == NULL) {
     return;
   }
@@ -234,7 +239,7 @@ void release_all_mutex(const Node * const n1, const Node * const n2) {
 }
 
 DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
-    const Object * const parent, const Object * const child) {
+       const Object *const parent, const Object *const child) {
   ASSERT_NOT_NULL(graph);
   Node *parent_node = parent->node;
   ASSERT_NOT_NULL(parent_node);
@@ -243,12 +248,12 @@ DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
 
   Set *children_of_parent = &parent_node->children;
   ASSERT_NOT_NULL(children_of_parent);
-  NodeEdge tmp_child_edge = { child_node, -1 };
+  NodeEdge tmp_child_edge = {child_node, -1};
   NodeEdge *child_edge;
 
   Set *parents_of_child = &child_node->parents;
   ASSERT_NOT_NULL(parents_of_child);
-  NodeEdge tmp_parent_edge = { parent_node, -1 };
+  NodeEdge tmp_parent_edge = {parent_node, -1};
   NodeEdge *parent_edge;
 
   acquire_all_mutex(parent_node, child_node);
@@ -280,7 +285,7 @@ Element memory_graph_create_root_element(MemoryGraph *graph) {
 }
 
 DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
-    const Object * const parent, const Object * const child) {
+       const Object *const parent, const Object *const child) {
   ASSERT_NOT_NULL(graph);
   Node *parent_node = parent->node;
   ASSERT_NOT_NULL(parent_node);
@@ -289,11 +294,11 @@ DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
 
   Set *children_of_parent = &parent_node->children;
   ASSERT_NOT_NULL(children_of_parent);
-  NodeEdge tmp_child_edge = { child_node, -1 };
+  NodeEdge tmp_child_edge = {child_node, -1};
 
   Set *parents_of_child = &child_node->parents;
   ASSERT_NOT_NULL(parents_of_child);
-  NodeEdge tmp_parent_edge = { parent_node, -1 };
+  NodeEdge tmp_parent_edge = {parent_node, -1};
 
   acquire_all_mutex(parent_node, child_node);
 
@@ -315,8 +320,7 @@ const Node *node_for(const Element *e) {
 }
 
 void memory_graph_set_field(MemoryGraph *graph, const Element parent,
-    const char field_name[], const Element field_val) {
-
+                            const char field_name[], const Element field_val) {
   ASSERT_NOT_NULL(graph);
   ASSERT(OBJECT == parent.type);
   ASSERT_NOT_NULL(parent.obj);
@@ -330,9 +334,9 @@ void memory_graph_set_field(MemoryGraph *graph, const Element parent,
     memory_graph_inc_edge(graph, parent.obj, field_val.obj);
   }
 
-//  wait_for_mutex(parent.obj->node->access_mutex, INFINITE);
+  //  wait_for_mutex(parent.obj->node->access_mutex, INFINITE);
   obj_set_field(parent, field_name, field_val);
-//  release_mutex(parent.obj->node->access_mutex);
+  //  release_mutex(parent.obj->node->access_mutex);
 }
 
 void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
@@ -342,7 +346,7 @@ void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
   }
   set_insert(marked, node);
   void traverse_subtree_helper(void *ptr) {
-    NodeEdge *child_edge = (NodeEdge *) ptr;
+    NodeEdge *child_edge = (NodeEdge *)ptr;
     ASSERT_NOT_NULL(child_edge);
     ASSERT_NOT_NULL(child_edge->node);
     // Don't traverse edges which no longer are present
@@ -360,7 +364,7 @@ void memory_graph_free_space(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
   Set *marked = set_create_default();
   void traverse_graph(void *ptr) {
-    Node *node = (Node *) ptr;
+    Node *node = (Node *)ptr;
     ASSERT_NOT_NULL(node);
     traverse_subtree(graph, marked, node);
   }
@@ -369,7 +373,7 @@ void memory_graph_free_space(MemoryGraph *graph) {
 
   void delete_node_if_not_marked(void *p) {
     ASSERT_NOT_NULL(p);
-    Node *node = (Node *) p;
+    Node *node = (Node *)p;
     if (set_lookup(marked, node)) {
       return;
     }
@@ -388,7 +392,7 @@ Array *extract_array(Element element) {
 }
 
 void memory_graph_array_push(MemoryGraph *graph, const Element parent,
-    const Element element) {
+                             const Element element) {
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
   Array_push(arr, element);
@@ -396,11 +400,11 @@ void memory_graph_array_push(MemoryGraph *graph, const Element parent,
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(Array_size(arr)));
+                         create_int(Array_size(arr)));
 }
 
 void memory_graph_array_set(MemoryGraph *graph, const Element parent,
-    int64_t index, const Element element) {
+                            int64_t index, const Element element) {
   ASSERT(NOT_NULL(graph), index >= 0);
   Array *arr = extract_array(parent);
   if (index < Array_size(arr)) {
@@ -414,7 +418,7 @@ void memory_graph_array_set(MemoryGraph *graph, const Element parent,
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(Array_size(arr)));
+                         create_int(Array_size(arr)));
 }
 
 Element memory_graph_array_pop(MemoryGraph *graph, const Element parent) {
@@ -427,12 +431,12 @@ Element memory_graph_array_pop(MemoryGraph *graph, const Element parent) {
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(Array_size(arr)));
+                         create_int(Array_size(arr)));
   return element;
 }
 
 void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
-    const Element element) {
+                                const Element element) {
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
   Array_enqueue(arr, element);
@@ -440,16 +444,16 @@ void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(Array_size(arr)));
+                         create_int(Array_size(arr)));
 }
 
 Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
-    const Element a2) {
+                                const Element a2) {
   Element joined = create_array(graph);
   Array_append(joined.obj->array, a1.obj->array);
   Array_append(joined.obj->array, a2.obj->array);
   void append_child_edges(void *p) {
-    NodeEdge *ne = (NodeEdge *) p;
+    NodeEdge *ne = (NodeEdge *)p;
     int i;
     for (i = 0; i < ne->ref_count; i++) {
       memory_graph_inc_edge(graph, joined.obj, &ne->node->obj);
@@ -458,7 +462,7 @@ Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
   set_iterate(&a1.obj->node->children, append_child_edges);
   set_iterate(&a2.obj->node->children, append_child_edges);
   memory_graph_set_field(graph, joined, LENGTH_KEY,
-      create_int(Array_size(joined.obj->array)));
+                         create_int(Array_size(joined.obj->array)));
   return joined;
 }
 
@@ -470,12 +474,12 @@ Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent) {
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(Array_size(arr)));
+                         create_int(Array_size(arr)));
   return element;
 }
 
 Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
-    int index) {
+                                  int index) {
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
   Element element = Array_remove(arr, index);
@@ -483,44 +487,44 @@ Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
   memory_graph_set_field(graph, parent, LENGTH_KEY,
-      create_int(Array_size(arr)));
+                         create_int(Array_size(arr)));
   return element;
 }
 
 void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,
-    const Element elt) {
+                            const Element elt) {
   ASSERT(NOT_NULL(graph), OBJECT == tuple.type, TUPLE == tuple.obj->type);
   tuple_add(tuple.obj->tuple, elt);
   if (OBJECT == elt.type) {
     memory_graph_inc_edge(graph, tuple.obj, elt.obj);
   }
   memory_graph_set_field(graph, tuple, LENGTH_KEY,
-      create_int(tuple_size(tuple.obj->tuple)));
+                         create_int(tuple_size(tuple.obj->tuple)));
 }
 
 void memory_graph_print(const MemoryGraph *graph, FILE *file) {
   ASSERT_NOT_NULL(graph);
   void print_node_id(void *ptr) {
     ASSERT_NOT_NULL(ptr);
-    fprintf(file, "%u ", ((Node *) ptr)->id.int_id);
+    fprintf(file, "%u ", ((Node *)ptr)->id.int_id);
   }
   fprintf(file, "roots={ ");
   set_iterate(&graph->roots, print_node_id);
   fprintf(file, "}\n");
   void print_node_id2(void *ptr) {
     ASSERT_NOT_NULL(ptr);
-    fprintf(file, "%u ", ((Node *) ptr)->id.int_id);
+    fprintf(file, "%u ", ((Node *)ptr)->id.int_id);
   }
   fprintf(file, "nodes(%d)={ ", set_size(&graph->nodes));
   set_iterate(&graph->nodes, print_node_id2);
   fprintf(file, "}\n");
   void print_edges_for_child(void *ptr) {
     ASSERT_NOT_NULL(ptr);
-    Node *parent = (Node *) ptr;
-    Set *children = (Set *) &parent->children;
+    Node *parent = (Node *)ptr;
+    Set *children = (Set *)&parent->children;
     void print_edge(void *ptr) {
       ASSERT_NOT_NULL(ptr);
-      NodeEdge *edge = (NodeEdge *) ptr;
+      NodeEdge *edge = (NodeEdge *)ptr;
       int i;
       for (i = 0; i < edge->ref_count; i++) {
         fprintf(file, "%u-->%u ", parent->id.int_id, edge->node->id.int_id);
@@ -532,7 +536,6 @@ void memory_graph_print(const MemoryGraph *graph, FILE *file) {
   set_iterate(&graph->nodes, print_edges_for_child);
   fprintf(file, "}\n\n");
 }
-
 
 Mutex memory_graph_mutex(const MemoryGraph *graph) {
   return graph->access_mutex;

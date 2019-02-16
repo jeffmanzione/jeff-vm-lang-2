@@ -25,20 +25,20 @@
 static Element sh_class;
 
 Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
-    Element arg);
+                                 Element arg);
 
 Element Socket_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   ASSERT(is_object_type(&arg, TUPLE));
   Tuple *tuple = arg.obj->tuple;
 
   DEBUGF("Input = (%I64d, %I64d, %I64d, %I64d %I64d)",
-      tuple_get(tuple, 0).val.int_val, tuple_get(tuple, 1).val.int_val,
-      tuple_get(tuple, 2).val.int_val, tuple_get(tuple, 3).val.int_val,
-      tuple_get(tuple, 4).val.int_val);
+         tuple_get(tuple, 0).val.int_val, tuple_get(tuple, 1).val.int_val,
+         tuple_get(tuple, 2).val.int_val, tuple_get(tuple, 3).val.int_val,
+         tuple_get(tuple, 4).val.int_val);
 
-  Socket *socket = socket_create(tuple_get(tuple, 0).val.int_val,
-      tuple_get(tuple, 1).val.int_val, tuple_get(tuple, 2).val.int_val,
-      tuple_get(tuple, 3).val.int_val);
+  Socket *socket = socket_create(
+      tuple_get(tuple, 0).val.int_val, tuple_get(tuple, 1).val.int_val,
+      tuple_get(tuple, 2).val.int_val, tuple_get(tuple, 3).val.int_val);
 
   map_insert(&data->state, strings_intern("socket"), socket);
   if (!socket_is_valid(socket)) {
@@ -53,9 +53,9 @@ Element Socket_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element Socket_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  Socket *socket = (Socket *) map_lookup(&data->state,
-      strings_intern("socket"));
+Element Socket_deconstructor(VM *vm, Thread *t, ExternalData *data,
+                             Element arg) {
+  Socket *socket = (Socket *)map_lookup(&data->state, strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -65,8 +65,7 @@ Element Socket_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg)
 }
 
 Element Socket_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  Socket *socket = (Socket *) map_lookup(&data->state,
-      strings_intern("socket"));
+  Socket *socket = (Socket *)map_lookup(&data->state, strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -76,22 +75,21 @@ Element Socket_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
 
 // To ease finding sockethandle class.
 Element Socket_accept(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  Socket *socket = (Socket *) map_lookup(&data->state,
-      strings_intern("socket"));
+  Socket *socket = (Socket *)map_lookup(&data->state, strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
   }
   Element socket_handle = create_external_obj(vm, sh_class);
   SocketHandle_constructor(vm, t, socket_handle.obj->external_data,
-      data->object);
+                           data->object);
 
   return socket_handle;
 }
 
 Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
-    Element arg) {
-  Socket *socket = (Socket *) map_lookup(&arg.obj->external_data->state,
-      strings_intern("socket"));
+                                 Element arg) {
+  Socket *socket = (Socket *)map_lookup(&arg.obj->external_data->state,
+                                        strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -102,9 +100,9 @@ Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
 }
 
 Element SocketHandle_deconstructor(VM *vm, Thread *t, ExternalData *data,
-    Element arg) {
-  SocketHandle *sh = (SocketHandle *) map_lookup(&data->state,
-      strings_intern("handle"));
+                                   Element arg) {
+  SocketHandle *sh =
+      (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -114,8 +112,8 @@ Element SocketHandle_deconstructor(VM *vm, Thread *t, ExternalData *data,
 }
 
 Element SocketHandle_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  SocketHandle *sh = (SocketHandle *) map_lookup(&data->state,
-      strings_intern("handle"));
+  SocketHandle *sh =
+      (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -124,8 +122,8 @@ Element SocketHandle_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
 }
 
 Element SocketHandle_send(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  SocketHandle *sh = (SocketHandle *) map_lookup(&data->state,
-      strings_intern("handle"));
+  SocketHandle *sh =
+      (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -137,9 +135,10 @@ Element SocketHandle_send(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return create_none();
 }
 
-Element SocketHandle_receive(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  SocketHandle *sh = (SocketHandle *) map_lookup(&arg.obj->external_data->state,
-      strings_intern("handle"));
+Element SocketHandle_receive(VM *vm, Thread *t, ExternalData *data,
+                             Element arg) {
+  SocketHandle *sh =
+      (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
     return throw_error(vm, t, "Weird Socket error.");
   }
@@ -152,20 +151,22 @@ Element SocketHandle_receive(VM *vm, Thread *t, ExternalData *data, Element arg)
 
 Element add_sockethandle_class(VM *vm, Element module) {
   sh_class = create_external_class(vm, module, strings_intern("SocketHandle"),
-      SocketHandle_constructor, SocketHandle_deconstructor);
+                                   SocketHandle_constructor,
+                                   SocketHandle_deconstructor);
   add_external_method(vm, sh_class, strings_intern("send"), SocketHandle_send);
   add_external_method(vm, sh_class, strings_intern("receive"),
-      SocketHandle_receive);
+                      SocketHandle_receive);
   add_external_method(vm, sh_class, strings_intern("close"),
-      SocketHandle_close);
+                      SocketHandle_close);
   return sh_class;
 }
 
 Element add_socket_class(VM *vm, Element module) {
-  Element socket_class = create_external_class(vm, module,
-      strings_intern("Socket"), Socket_constructor, Socket_deconstructor);
+  Element socket_class =
+      create_external_class(vm, module, strings_intern("Socket"),
+                            Socket_constructor, Socket_deconstructor);
   add_external_method(vm, socket_class, strings_intern("accept"),
-      Socket_accept);
+                      Socket_accept);
   add_external_method(vm, socket_class, strings_intern("close"), Socket_close);
   return socket_class;
 }

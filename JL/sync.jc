@@ -371,34 +371,34 @@ class Future
   fld   read_mutex
   res   self
   ret
-  jmp   55
+  jmp   56
 
 @exec
   res   self
-  get   fn
   push
   res   self
   get   args
-  call  call
+  call  fn
   push
   res   self
   fld   result
-  res   True
-  push
-  res   self
-  fld   has_result
   res   self
   get   listeners_mutex
   push
   call  acquire
+  res   True
+  push
+  res   self
+  fld   has_result
   nblk
-  res   listeners
+  res   self
+  get   listeners
   push
   call  iter
   push
   dup
   call  has_next
-  ifn   19
+  ifn   20
   dup
   call  next
   push
@@ -409,6 +409,7 @@ class Future
   tget  1
   set   f
   res   self
+  get   result
   push
   res   f
   fld   args
@@ -417,7 +418,7 @@ class Future
   push
   res   f
   call  execute_future
-  jmp   -22
+  jmp   -23
   res
   bblck
   res   self
@@ -459,25 +460,7 @@ class Future
   jmp   -25
   bblck
   ret
-  jmp   15
-
-@is_resolved
-  res   self
-  get   read_mutex
-  push
-  res   INFINITE
-  call  lock
-  res   self
-  get   has_result
-  set   has_result
-  res   self
-  get   read_mutex
-  push
-  call  unlock
-  res   has_result
-  ret
-  ret
-  jmp   38
+  jmp   37
 
 @thenDo
   set   fn
@@ -486,7 +469,7 @@ class Future
   res   self
   get   ex
   push
-  res   args
+  res   None
   push
   res   fn
   push
@@ -498,8 +481,7 @@ class Future
   push
   call  acquire
   res   self
-  push
-  call  is_resolved
+  get   has_result
   if    6
   res   self
   get   listeners

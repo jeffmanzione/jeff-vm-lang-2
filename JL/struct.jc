@@ -336,7 +336,7 @@ class Cache
   fld   mutex
   res   self
   ret
-  jmp   52
+  jmp   76
 
 @get
   push
@@ -356,6 +356,17 @@ class Cache
   jmp   1
   res   None
   set   args
+  peek
+  tlen
+  push
+  push  3
+  lte
+  if    3
+  peek
+  tget  3
+  jmp   1
+  res   ''
+  set   default
   res   self
   get   mutex
   push
@@ -365,18 +376,31 @@ class Cache
   push
   res   k
   call  __in__
-  ifn   6
+  ifn   12
   res   self
   get   map
   push
   res   k
   aidx
+  set   v
+  res   self
+  get   mutex
+  push
+  call  release
+  res   v
   ret
+  ctch  4
   res   factory
   push
   res   args
   call
   set   v
+  jmp   3
+  set   e
+  res   default
+  set   v
+  res   Nil
+  set   $try_goto
   res   v
   push
   res   self

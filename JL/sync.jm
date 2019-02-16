@@ -304,39 +304,39 @@ class Future
   jmp   42
 
 @exec
-  res   self
-  gtsh  fn
-  res   self
+  psrs  self
   get   args
-  call  call
+  call  fn
   push
   res   self
   fld   result
-  push  True
-  res   self
-  fld   has_result
   res   self
   gtsh  listeners_mutex
   call  acquire
+  push  True
+  res   self
+  fld   has_result
   nblk
-  push  listeners
+  res   self
+  gtsh  listeners
   call  iter
   push
   dup
   call  has_next
-  ifn   12
+  ifn   13
   dup
   call  next
   tget  1
   set   f
-  push  self
+  res   self
+  gtsh  result
   res   f
   fld   args
   res   self
   gtsh  ex
   res   f
   call  execute_future
-  jmp   -15
+  jmp   -16
   res
   bblck
   res   self
@@ -373,21 +373,6 @@ class Future
   jmp   -22
   bblck
   ret
-  jmp   12
-
-@is_resolved
-  res   self
-  gtsh  read_mutex
-  res   INFINITE
-  call  lock
-  res   self
-  get   has_result
-  set   has_result
-  res   self
-  gtsh  read_mutex
-  call  unlock
-  res   has_result
-  ret
   jmp   28
 
 @thenDo
@@ -395,7 +380,7 @@ class Future
   push  Future
   res   self
   gtsh  ex
-  push  args
+  push  None
   push  fn
   tupl  3
   call
@@ -403,8 +388,8 @@ class Future
   res   self
   gtsh  listeners_mutex
   call  acquire
-  push  self
-  call  is_resolved
+  res   self
+  get   has_result
   if    5
   res   self
   gtsh  listeners

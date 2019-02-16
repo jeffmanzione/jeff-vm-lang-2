@@ -58,18 +58,34 @@ class HttpRequest {
       self.version = version
       self.map = map
     }
+    def to_s() {
+      concat(self.type, ' ', self.path, ' ', self.protocol, '/', self.version)
+    }
 }
 
 def parse_request(req) {
-  io.println(req)
   parts = req.split('\r\n')
   request = parts[0].trim()
-  type = request.substr(0, request.find(' ', 0))
+  req_head = request.split(' ')
+  type = req_head[0]
+  path = req_head[1]
+  protocol = req_head[2].split('/')
+  
   map = struct.Map(51)
   for i=1, i<parts.len, i=i+1 {
     kv = parts[i].split(':')
     map[kv[0].trim()] = kv[1].trim()
   }
-  io.println(type)
-  io.println(map)
+  return HttpRequest(type, path, [], protocol[0], protocol[1], map) 
+}
+
+def html_escape(text) {
+  result = ''
+  for i=0, i<text.len, i=i+1 {
+    c = text[i]
+    if c == '<'[0] then result.extend('&lt;')
+    else if c == '>'[0] then result.extend('&gt;')
+    else result.append(c)
+  }
+  return result
 }

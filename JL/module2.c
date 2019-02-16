@@ -30,28 +30,6 @@ struct Module_ {
   FileInfo *fi;
   Tape *tape;
 };
-// Not sure why I need these...
-//void module_set_filename(Module *m, const char fn[]);
-//void module_load(Module *m);
-//
-//Module *module_create(const char fn[]) {
-//  FILE *file = FILE_FN(fn, "r");
-//  Module *m = module_create_file(file);
-//  m->fn = NULL;
-//  module_set_filename(m, fn);
-//  return m;
-//}
-//
-//Module *module_create_file(FILE *file) {
-//  Module *m = ALLOC2(Module);
-//  m->file = file;
-//  m->fn = NULL;
-//
-//  m->fi = file_info_file(m->file);
-//  m->tape = tape_create();
-//  module_load(m);
-//  return m;
-//}
 
 Module *module_create_tape(FileInfo *fi, Tape *tape) {
   Module *m = ALLOC2(Module);

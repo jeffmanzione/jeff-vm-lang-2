@@ -423,16 +423,38 @@ class HttpRequest
   fld   map
   res   self
   ret
+  jmp   23
+
+@to_s
+  res   concat
+  push
+  res   self
+  get   version
+  push
+  res   '/'
+  push
+  res   self
+  get   protocol
+  push
+  res   ' '
+  push
+  res   self
+  get   path
+  push
+  res   ' '
+  push
+  res   self
+  get   type
+  push
+  tupl  7
+  call
+  ret
 endclass
 
-  jmp   89
+  jmp   107
 
 @parse_request
   set   req
-  res   io
-  push
-  res   req
-  call  println
   res   req
   push
   res   '\r\n'
@@ -447,20 +469,27 @@ endclass
   set   request
   res   request
   push
-  res   request
-  push
-  res   0
-  push
   res   ' '
-  push
-  tupl  2
-  call  find
+  call  split
+  set   req_head
+  res   req_head
   push
   res   0
-  push
-  tupl  2
-  call  substr
+  aidx
   set   type
+  res   req_head
+  push
+  res   1
+  aidx
+  set   path
+  res   req_head
+  push
+  res   2
+  aidx
+  push
+  res   '/'
+  call  split
+  set   protocol
   res   struct
   push
   res   51
@@ -508,13 +537,92 @@ endclass
   set   i
   jmp   -37
   bblck
-  res   io
-  push
-  res   type
-  call  println
-  res   io
+  res   HttpRequest
   push
   res   map
-  call  println
+  push
+  res   protocol
+  push
+  res   1
+  aidx
+  push
+  res   protocol
+  push
+  res   0
+  aidx
+  push
+  anew
+  push
+  res   path
+  push
+  res   type
+  push
+  tupl  6
+  call
+  ret
+  ret
+  jmp   61
+
+@html_escape
+  set   text
+  res   ''
+  set   result
+  nblk
+  res   0
+  set   i
+  res   i
+  push
+  res   text
+  get   len
+  push
+  lt
+  ifn   44
+  res   text
+  push
+  res   i
+  aidx
+  set   c
+  res   c
+  push
+  res   '<'
+  push
+  res   0
+  aidx
+  push
+  eq
+  if    19
+  res   c
+  push
+  res   '>'
+  push
+  res   0
+  aidx
+  push
+  eq
+  if    5
+  res   result
+  push
+  res   c
+  call  append
+  jmp   4
+  res   result
+  push
+  res   '&gt;'
+  call  extend
+  jmp   4
+  res   result
+  push
+  res   '&lt;'
+  call  extend
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -50
+  bblck
+  res   result
+  ret
   ret
   exit  0

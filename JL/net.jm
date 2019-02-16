@@ -314,15 +314,30 @@ class HttpRequest
   fld   map
   res   self
   ret
+  jmp   15
+
+@to_s
+  push  concat
+  res   self
+  gtsh  version
+  push  '/'
+  res   self
+  gtsh  protocol
+  push  ' '
+  res   self
+  gtsh  path
+  push  ' '
+  res   self
+  gtsh  type
+  tupl  7
+  call
+  ret
 endclass
 
-  jmp   70
+  jmp   85
 
 @parse_request
   set   req
-  push  io
-  res   req
-  call  println
   push  req
   res   '\r\n'
   call  split
@@ -334,16 +349,24 @@ endclass
   call  trim
   set   request
   push  request
-  push  request
-  push  0
-  push  ' '
-  tupl  2
-  call  find
-  push
-  push  0
-  tupl  2
-  call  substr
+  res   ' '
+  call  split
+  set   req_head
+  push  req_head
+  res   0
+  aidx
   set   type
+  push  req_head
+  res   1
+  aidx
+  set   path
+  push  req_head
+  res   2
+  aidx
+  push
+  res   '/'
+  call  split
+  set   protocol
   push  struct
   res   51
   call  Map
@@ -382,11 +405,72 @@ endclass
   set   i
   jmp   -30
   bblck
-  push  io
-  res   type
-  call  println
-  push  io
-  res   map
-  call  println
+  push  HttpRequest
+  push  map
+  push  protocol
+  res   1
+  aidx
+  push
+  push  protocol
+  res   0
+  aidx
+  push
+  anew
+  push
+  push  path
+  push  type
+  tupl  6
+  call
+  ret
+  jmp   48
+
+@html_escape
+  set   text
+  res   ''
+  set   result
+  nblk
+  res   0
+  set   i
+  push
+  res   text
+  gtsh  len
+  lt
+  ifn   34
+  push  text
+  res   i
+  aidx
+  set   c
+  push  c
+  push  '<'
+  res   0
+  aidx
+  push
+  eq
+  if    15
+  push  c
+  push  '>'
+  res   0
+  aidx
+  push
+  eq
+  if    4
+  push  result
+  res   c
+  call  append
+  jmp   3
+  push  result
+  res   '&gt;'
+  call  extend
+  jmp   3
+  push  result
+  res   '&lt;'
+  call  extend
+  push  i
+  push  1
+  add
+  set   i
+  jmp   -39
+  bblck
+  res   result
   ret
   exit  0
