@@ -33,6 +33,7 @@ class Map {
   }
   def __index__(const k) {
     hval = hash(k)
+    if hval < 0 hval = -hval
     pos = hval % self.sz
     if ~self.table[pos] {
       return None
@@ -74,7 +75,7 @@ class Cache {
     self.map = Map(255)
     self.mutex = sync.Mutex()
   }
-  def get(k, factory, args=None, default='') {
+  def get(k, factory, args, default) {
     self.mutex.acquire()
     if k in self.map {
       v = self.map[k]
@@ -90,77 +91,5 @@ class Cache {
     self.map[k] = v
     self.mutex.release()
     return v
-  }
-}
-
-class Node {
-  def new() {
-    self.children = Map(255)
-    self.value = None
-  }
-  def to_s() {
-    tos = 'Node('
-    if (self.value) {
-      tos.extend('value=').extend(self.value)
-    }
-    for k, v in self.children {
-      tos.extend(concat('(', k, '->', v, '),'))
-    }
-    tos.extend(')')
-  }
-}
-
-class Trie {
-  def new() {
-    self.root = Node()
-  }  
-  def insert(key, value) {
-    node, index_last_char = self.find_node(self.root, key)
-    if ~index_last_char {
-      index_last_char = 0
-    }
-    for (i, char) in key.substr(index_last_char, key.len) {
-      node.children[char] = Node()
-      node = node.children[char]
-    }
-    node.value = value
-  }
-  def find_node(node, key) {
-    index_last_char = None
-    for (i, char) in key {
-     if char in node.children {
-        node = node.children[char]
-      } else {
-        index_last_char = i
-        return (node, index_last_char)
-      }
-    }
-    (node, index_last_char)
-  }
-  def find(key) {
-    node, i = self.find_node(self.root, key)
-    if ~node return None
-    node.value
-  }
-  def collect_child_values(node) {
-    if node.value return [node.value]
-    result = []
-    for (k, child) in node.children {
-      if child {
-        result.extend(self.collect_child_values(child))
-      }
-    }
-    result
-  }
-  def find_by_prefix(key) {
-    node, i = self.find_node(self.root, key)
-    if (~node) return []
-    if i {
-      if i < key.len return []
-    }
-    self.collect_child_values(node)
-  }
-  def to_s() {
-    concat('Trie(', self.root, ')')
   }
 }

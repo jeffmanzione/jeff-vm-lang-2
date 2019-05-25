@@ -14,8 +14,8 @@
 #include "../vm.h"
 
 Element load_module__(VM *vm, Thread *thread, ExternalData *ed,
-    Element argument) {
-  ASSERT(ISTYPE(argument, class_string));
-  Module *module = load_fn(string_to_cstr(argument), vm->store);
+                      Element *argument) {
+  ASSERT(ISTYPE(*argument, class_string));
+  Module *module = load_fn(string_to_cstr(*argument), vm->store);
   return vm_add_module(vm, module);
 }

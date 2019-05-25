@@ -19,11 +19,11 @@
 #include "../vm.h"
 #include "external.h"
 
-Element token__(VM *vm, Thread *t, ExternalData *ed, Element argument) {
-  if (!is_object_type(&argument, TUPLE)) {
+Element token__(VM *vm, Thread *t, ExternalData *ed, Element *argument) {
+  if (!is_object_type(argument, TUPLE)) {
     return throw_error(vm, t, "Argument to token__ must be a tuple.");
   }
-  Tuple *args = argument.obj->tuple;
+  Tuple *args = argument->obj->tuple;
   if (tuple_size(args) != 2) {
     return throw_error(vm, t, "Argument to token__ must be a size 2 tuple.");
   }
@@ -32,7 +32,7 @@ Element token__(VM *vm, Thread *t, ExternalData *ed, Element argument) {
   if (!is_object_type(&module, MODULE)) {
     return throw_error(vm, t, "First argument to token__ must be a Module.");
   }
-  if (!is_value_type(&ip, INT)) {
+  if (!is_value_type(&ip, INT)) { // @suppress("Symbol is not resolved")
     return throw_error(vm, t, "Second argument to token__ must be an int.");
   }
 

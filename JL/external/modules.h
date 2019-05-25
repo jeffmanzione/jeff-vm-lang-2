@@ -11,6 +11,6 @@
 #include "../element.h"
 #include "../threads/thread.h"
 
-Element load_module__(VM *vm, Thread *t, ExternalData *ed, Element argument);
+Element load_module__(VM *vm, Thread *t, ExternalData *ed, Element *argument);
 
 #endif /* EXTERNAL_MODULES_H_ */

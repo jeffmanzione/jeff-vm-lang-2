@@ -58,7 +58,7 @@ Subarena *subarena_create(Subarena *prev, size_t sz) {
 }
 
 void subarena_delete(Subarena *sa) {
-//  DEBUGF("Deleting subarena.");
+  //  DEBUGF("Deleting subarena.");
   if (NULL != sa->prev) {
     subarena_delete(sa->prev);
   }
@@ -68,8 +68,8 @@ void subarena_delete(Subarena *sa) {
 
 void arena_init(Arena *arena, size_t sz) {
   ASSERT_NOT_NULL(arena);
-  descriptor_sz = ((int) ceil(((float) sizeof(Descriptor)) / 4)) * 4;
-//  printf("descripto_sz=%d\n", descriptor_sz);fflush(stdout);
+  descriptor_sz = ((int)ceil(((float)sizeof(Descriptor)) / 4)) * 4;
+  //  printf("descripto_sz=%d\n", descriptor_sz);fflush(stdout);
   arena->mutex = mutex_create(NULL);
   arena->alloc_sz = sz + descriptor_sz;
   arena->last = subarena_create(NULL, arena->alloc_sz);
@@ -88,7 +88,7 @@ void arena_finalize(Arena *arena) {
   mutex_close(arena->mutex);
 #ifdef DEBUG
   DEBUGF("Arena had %d requests, %d removals.", arena->requests,
-      arena->removes);
+         arena->removes);
 #endif
 }
 
@@ -100,9 +100,8 @@ void *arena_alloc(Arena *arena) {
 #endif
   // Use up space that was already freed.
   if (NULL != arena->last_freed) {
-    DEBUGF("REUSING FREED SPACE");
     void *free_spot = arena->last_freed;
-    arena->last_freed = ((Descriptor *) free_spot)->prev_freed;
+    arena->last_freed = ((Descriptor *)free_spot)->prev_freed;
     mutex_release(arena->mutex);
     return free_spot + descriptor_sz;
   }
@@ -126,8 +125,8 @@ void arena_dealloc(Arena *arena, void *ptr) {
 #ifdef DEBUG
   arena->removes++;
 #endif
-  Descriptor *d = (Descriptor *) (ptr - descriptor_sz);
+  Descriptor *d = (Descriptor *)(ptr - descriptor_sz);
   d->prev_freed = arena->last_freed;
-  arena->last_freed = (void *) d;
+  arena->last_freed = (void *)d;
   mutex_release(arena->mutex);
 }

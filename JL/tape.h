@@ -15,6 +15,7 @@
 #include "datastructure/expando.h"
 #include "datastructure/map.h"
 #include "datastructure/queue.h"
+#include "datastructure/queue2.h"
 #include "instruction.h"
 
 typedef struct {
@@ -25,7 +26,7 @@ typedef struct {
 typedef struct {
   Expando *ins;
   const char *module_name;
-  Map refs, classes, class_starts, class_ends, class_parents;
+  Map refs, classes, class_starts, class_ends, class_parents, fn_args;
   Queue class_prefs;
 } Tape;
 
@@ -45,6 +46,8 @@ int tape_ins_neg(Tape *tape, Op op, Token *token);
 
 int tape_label(Tape *tape, Token *token);
 int tape_anon_label(Tape *tape, Token *token);
+int tape_function_with_args(Tape *tape, Token *token, Q *args);
+int tape_anon_function_with_args(Tape *tape, Token *token, Q *args);
 
 int tape_module(Tape *tape, Token *token);
 int tape_class(Tape *tape, Token *token);
@@ -53,25 +56,25 @@ int tape_endclass(Tape *tape, Token *token);
 
 InsContainer *tape_get_mutable(const Tape *tape, int i);
 const InsContainer *tape_get(const Tape *tape, int i);
-size_t tape_len(const Tape * const tape);
+size_t tape_len(const Tape *const tape);
 
 void insc_to_str(const InsContainer *c, FILE *file);
 // Destroys tail.
 void tape_append(Tape *head, Tape *tail);
-void tape_read(Tape * const tape, Queue *tokens);
-void tape_write_range(const Tape * const tape, int start, int end, FILE *file);
-void tape_write(const Tape * const tape, FILE *file);
-void tape_read_binary(Tape * const tape, FILE *file);
-void tape_write_binary(const Tape * const tape, FILE *file);
+void tape_read(Tape *const tape, Queue *tokens);
+void tape_write_range(const Tape *const tape, int start, int end, FILE *file);
+void tape_write(const Tape *const tape, FILE *file);
+void tape_read_binary(Tape *const tape, FILE *file);
+void tape_write_binary(const Tape *const tape, FILE *file);
 
-const Map *tape_classes(const Tape * const tape);
-const Map *tape_class_parents(const Tape * const tape);
-const Map *tape_refs(const Tape * const tape);
-const char *tape_modulename(const Tape * tape);
+const Map *tape_classes(const Tape *const tape);
+const Map *tape_class_parents(const Tape *const tape);
+const Map *tape_refs(const Tape *const tape);
+const char *tape_modulename(const Tape *tape);
 
 void tape_populate_mappings(const Tape *tape, Map *i_to_refs,
-    Map *i_to_class_starts, Map *i_to_class_ends);
+                            Map *i_to_class_starts, Map *i_to_class_ends);
 void tape_clear_mappings(Map *i_to_refs, Map *i_to_class_starts,
-    Map *i_to_class_ends);
+                         Map *i_to_class_ends);
 
 #endif /* TAPE_H_ */

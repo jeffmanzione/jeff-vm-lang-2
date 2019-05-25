@@ -13,6 +13,11 @@ self.OK = 'OK'
 self.TEXT_HTML = 'text/html'
 self.UTF_8 = 'UTF-8'
 
+self.LT = '<'
+self.GT = '>'
+self.LT_ESCAPED = '&lt;'
+self.GT_ESCAPED = '&gt;'
+
 class Header {
   def new(protocol, version, status_code, status, content_type, charset) {
     self.protocol = protocol
@@ -64,28 +69,90 @@ class HttpRequest {
 }
 
 def parse_request(req) {
-  parts = req.split('\r\n')
-  request = parts[0].trim()
-  req_head = request.split(' ')
-  type = req_head[0]
-  path = req_head[1]
-  protocol = req_head[2].split('/')
-  
-  map = struct.Map(51)
-  for i=1, i<parts.len, i=i+1 {
-    kv = parts[i].split(':')
-    map[kv[0].trim()] = kv[1].trim()
+  io.println(req)
+  try {
+    parts = req.split('\r\n')
+    request = parts[0].trim()
+    req_head = request.split(' ')
+    type = req_head[0]
+    path = req_head[1]
+    protocol = req_head[2].split('/')
+    
+    map = struct.Map(51)
+    for i=1, i<parts.len, i=i+1 {
+      kv = parts[i].split(':')
+      map[kv[0].trim()] = kv[1].trim()
+    }
+    return HttpRequest(type, path, [], protocol[0], protocol[1], map)
+  } catch e {
+    io.fprintln(io.ERROR, e)
+    return None
   }
-  return HttpRequest(type, path, [], protocol[0], protocol[1], map) 
 }
 
 def html_escape(text) {
-  result = ''
-  for i=0, i<text.len, i=i+1 {
-    c = text[i]
-    if c == '<'[0] then result.extend('&lt;')
-    else if c == '>'[0] then result.extend('&gt;')
-    else result.append(c)
+  i = 0
+  lts = []
+  while i < text.len {
+    f = text.find(LT, i)
+    if ~f {
+      break
+    }
+    i = i + f
+    lts.append(i)
+    i=i+1
   }
+  i = 0
+  while i < text.len {
+    f = text.find(GT, i)
+    if ~f {
+      break
+    }
+    i = i + f
+    lts.append(i)
+    i=i+1
+  }
+  
+  if lts.len == 0 {
+    return text.copy()
+  }
+  lts.sort(cmp)
+  result = ''
+  old_i = 0
+  for i=0, i<lts.len, i=i+1 {
+    c = text[lts[i]]
+    result.extend(text, old_i, lts[i])
+    old_i = lts[i]+1
+    if c == LT[0] then result.extend(LT_ESCAPED)
+    else if c == GT[0] then result.extend(GT_ESCAPED)
+  }
+  result.extend(text, lts[lts.len-1])
   return result
+}
+
+class RequestHandler {
+  def new() {
+    self.handlers = []
+  }
+  def register(match_fn, handler) {
+    self.handlers.append((match_fn, handler))
+  }
+  def register_else(handler) {
+    self.elseHandler = handler
+  }
+  def handle(request, args) {
+    for _,(match_fn, handler) in self.handlers {
+      if match_fn(request) {
+        return handler(request, args)
+      }
+    }
+    if self.elseHandler {
+      return self.elseHandler(request, args)
+    }
+    return None
+  }
+}
+
+def readEntireFile(path) {
+  return io.FileReader(concat('.', '\\'.join(path.split('/')))).getlines()
 }

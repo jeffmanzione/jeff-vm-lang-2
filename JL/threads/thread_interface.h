@@ -36,6 +36,7 @@ typedef struct {
 
 // General functions
 void sleep_thread(ulong duration);
+int num_cpus();
 
 // THREADS
 ThreadHandle create_thread(VoidFn fn, void *arg, ThreadId *id);
@@ -55,16 +56,16 @@ void semaphore_unlock(Semaphore s);
 void semaphore_close(Semaphore s);
 
 //// Condition
-//Condition condition_create(const char *name);
-//void condition_await(Mutex id, ulong duration);
-//void condition_signal(Mutex id);
-//void condition_close(Mutex id);
+// Condition condition_create(const char *name);
+// void condition_await(Mutex id, ulong duration);
+// void condition_signal(Mutex id);
+// void condition_close(Mutex id);
 
 // RW Lock
 RWLock *create_rwlock();
-void begin_read(RWLock* lock);
+void begin_read(RWLock *lock);
 void begin_write(RWLock *lock);
-void end_read(RWLock* lock);
+void end_read(RWLock *lock);
 void end_write(RWLock *lock);
 void close_rwlock(RWLock *lock);
 

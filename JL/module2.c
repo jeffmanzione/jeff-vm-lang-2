@@ -11,15 +11,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "arena/strings.h"
 #include "codegen/tokenizer.h"
 #include "datastructure/map.h"
 #include "datastructure/queue.h"
 #include "error.h"
-#include "instruction.h"
 #include "graph/memory.h"
+#include "instruction.h"
 #include "module.h"
 #include "shared.h"
-#include "arena/strings.h"
 #include "tape.h"
 
 #define DEFAULT_PROGRAM_SIZE 256
@@ -56,10 +56,7 @@ const char *module_filename(const Module const *m) {
   return m->fn;
 }
 
-FileInfo *module_fileinfo(const Module const *m) {
-  return m->fi;
-}
-
+FileInfo *module_fileinfo(const Module const *m) { return m->fi; }
 
 DEB_FN(const char *, module_name, const Module const *m) {
   ASSERT_NOT_NULL(m);
@@ -73,7 +70,7 @@ Ins module_ins(const Module *m, uint32_t index) {
 
 const InsContainer *module_insc(const Module *m, uint32_t index) {
   ASSERT(NOT_NULL(m), tape_len(m->tape) > index);
-  return tape_get(m->tape, (int) index);
+  return tape_get(m->tape, (int)index);
 }
 
 int32_t module_ref(const Module *m, const char ref_name[]) {
@@ -82,12 +79,17 @@ int32_t module_ref(const Module *m, const char ref_name[]) {
   if (NULL == ptr) {
     return -1;
   }
-  return (int32_t) (uint32_t) ptr;
+  return (int32_t)(uint32_t)ptr;
 }
 
 const Map *module_refs(const Module *m) {
   ASSERT(NOT_NULL(m));
   return tape_refs(m->tape);
+}
+
+const Map *module_fn_args(const Module *m) {
+  ASSERT(NOT_NULL(m));
+  return &m->tape->fn_args;
 }
 
 void module_iterate_classes(const Module *m, ClassAction action) {
@@ -96,16 +98,16 @@ void module_iterate_classes(const Module *m, ClassAction action) {
   set_init_default(&processed);
 
   // For each class
-  void process_class(Pair *kv) {
-    const char *class_name = (char *) kv->key;
-    const Map *methods = (Map *) kv->value;
+  void process_class(Pair * kv) {
+    const char *class_name = (char *)kv->key;
+    const Map *methods = (Map *)kv->value;
     // Check if already processed.
     if (set_lookup(&processed, methods)) {
       return;
     }
     // Check if the parents have been processed processed.
     void maybe_process_parent(void *ptr) {
-      const char *parent_class_name = *((char **) ptr);
+      const char *parent_class_name = *((char **)ptr);
       Map *parent_methods = map_lookup(module_classes(m), parent_class_name);
       // If parent not processed, process it.
       if (set_lookup(&processed, parent_methods)) {
@@ -121,7 +123,7 @@ void module_iterate_classes(const Module *m, ClassAction action) {
       expando_iterate(class_parents, maybe_process_parent);
     }
     // Process class
-    action((char *) kv->key, (const Map*) kv->value);
+    action((char *)kv->key, (const Map *)kv->value);
     set_insert(&processed, kv->value);
   }
   map_iterate(module_classes(m), process_class);
@@ -144,9 +146,7 @@ uint32_t module_size(const Module *m) {
   return tape_len(m->tape);
 }
 
-const Tape *module_tape(const Module *m) {
-  return m->tape;
-}
+const Tape *module_tape(const Module *m) { return m->tape; }
 
 void module_delete(Module *m) {
   ASSERT_NOT_NULL(m);

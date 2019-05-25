@@ -149,7 +149,8 @@ Element create_array(MemoryGraph *graph) {
 Element string_create_len_unescape(VM *vm, const char *str, size_t len) {
   Element elt = create_external_obj(vm, class_string);
   ASSERT(NONE != elt.type);
-  string_constructor(vm, NULL, elt.obj->external_data, create_none());
+  Element none = create_none();
+  string_constructor(vm, NULL, elt.obj->external_data, &none);
   elt.obj->external_data->deconstructor = string_deconstructor;
   String *string = String_extract(elt);
 
@@ -202,16 +203,29 @@ Element create_module(VM *vm, const Module *module) {
 }
 
 void decorate_function(VM *vm, Element func, Element module, uint32_t ins,
-                       const char name[]) {
+                       const char name[], Q *args) {
   memory_graph_set_field(vm->graph, func, NAME_KEY, string_create(vm, name));
   memory_graph_set_field(vm->graph, func, INS_INDEX, create_int(ins));
   memory_graph_set_field(vm->graph, func, PARENT_MODULE, module);
+  if (NULL != args) {
+    Element arg_e = create_array(vm->graph);
+    int i;
+    for (i = 0; i < Q_size(args); ++i) {
+      char *str = Q_get(args, i);
+      memory_graph_array_enqueue(
+          vm->graph, arg_e,
+          str == NULL ? create_none() : string_create(vm, str));
+    }
+    memory_graph_set_field(vm->graph, func, ARGS_NAME, arg_e);
+    memory_graph_set_field(vm->graph, func, ARGS_KEY,
+                           create_int((uint32_t)args));
+  }
 }
 
-Element create_function(VM *vm, Element module, uint32_t ins,
-                        const char name[]) {
+Element create_function(VM *vm, Element module, uint32_t ins, const char name[],
+                        Q *args) {
   Element elt = create_obj_of_class(vm->graph, class_function);
-  decorate_function(vm, elt, module, ins, name);
+  decorate_function(vm, elt, module, ins, name, args);
   return elt;
 }
 
@@ -221,15 +235,17 @@ Element create_external_function(VM *vm, Element module, const char name[],
   elt.obj->external_fn = external_fn;
 
   Object *function_object = *((Object **)expando_get(elt.obj->parent_objs, 0));
-  decorate_function(vm, element_for_obj(function_object), module, -1, name);
+  decorate_function(vm, element_for_obj(function_object), module, -1, name,
+                    NULL);
   return elt;
 }
 
 Element create_method(VM *vm, Element module, uint32_t ins, Element class,
-                      const char name[]) {
+                      const char name[], Q *args) {
   Element elt = create_obj_of_class(vm->graph, class_method);
   Object *function_object = *((Object **)expando_get(elt.obj->parent_objs, 0));
-  decorate_function(vm, element_for_obj(function_object), module, ins, name);
+  decorate_function(vm, element_for_obj(function_object), module, ins, name,
+                    args);
   memory_graph_set_field(vm->graph, elt, PARENT_CLASS, class);
   return elt;
 }
@@ -243,7 +259,7 @@ Element create_external_method(VM *vm, Element class, const char name[],
   Object *function_object = *((Object **)expando_get(
       (*((Object **)expando_get(elt.obj->parent_objs, 0)))->parent_objs, 0));
   decorate_function(vm, element_for_obj(function_object),
-                    obj_get_field(class, PARENT_MODULE), -1, name);
+                    obj_get_field(class, PARENT_MODULE), -1, name, NULL);
   memory_graph_set_field(vm->graph, elt, PARENT_CLASS, class);
   return elt;
 }
@@ -297,14 +313,24 @@ Element obj_lookup(Object *obj, CommonKey key) {
   return e;
 }
 
+ElementContainer *obj_get_field_obj_raw(Object *obj, const char field_name[]) {
+  ASSERT_NOT_NULL(obj);
+  return map_lookup(&obj->fields, field_name);
+}
+
 Element obj_get_field_obj(Object *obj, const char field_name[]) {
   ASSERT_NOT_NULL(obj);
-  ElementContainer *to_return = map_lookup(&obj->fields, field_name);
+  ElementContainer *to_return = obj_get_field_obj_raw(obj, field_name);
 
   if (NULL == to_return) {
     return create_none();
   }
   return to_return->elt;
+}
+
+Element obj_get_field_ptr(Element *elt, const char field_name[]) {
+  ASSERT(OBJECT == elt->type);
+  return obj_get_field_obj(elt->obj, field_name);
 }
 
 Element obj_get_field(Element elt, const char field_name[]) {
@@ -318,8 +344,7 @@ void obj_delete_ptr(Object *obj, bool free_mem) {
     ASSERT(NOT_NULL(obj->external_data));
     if (NULL != obj->external_data->deconstructor) {
       obj->external_data->deconstructor(externaldata_vm(obj->external_data),
-                                        NULL, obj->external_data,
-                                        create_none());
+                                        NULL, obj->external_data, NULL);
     }
     externaldata_delete(obj->external_data);
   }
@@ -462,16 +487,46 @@ char *string_to_cstr(Element elt_str) {
 #define VALTYPE_NAME(val) \
   (((val).type == INT) ? "Int" : (((val).type == FLOAT) ? "Float" : "Char"))
 
+void print_obj_fields(Object *obj, FILE *file) {
+  fprintf(file, "{");
+  fflush(file);
+  void print_field(Pair * pair) {
+    ElementContainer *field_val = (ElementContainer *)pair->value;
+    Element to_print = field_val->elt;
+    if (ISOBJECT(field_val->elt) && !ISTYPE(to_print, class_string)) {
+      Element field_class = obj_lookup(field_val->elt.obj, CKey_class);
+      to_print = field_class;
+      if (ISOBJECT(field_class)) {
+        Element class_name = obj_lookup(field_class.obj, CKey_name);
+        to_print = class_name;
+      }
+    }
+    fprintf(file, "%s:", (char *)pair->key);
+    if (ISOBJECT(to_print)) {
+      if (to_print.obj == field_val->elt.obj) {
+        fprintf(file, "'%s'@%p", string_to_cstr(to_print), field_val->elt.obj);
+      } else {
+        fprintf(file, "%s@%p", string_to_cstr(to_print), field_val->elt.obj);
+      }
+    } else {
+      elt_to_str(to_print, file);
+    }
+    fprintf(file, ", ");
+    fflush(file);
+  }
+  map_iterate(&obj->fields, print_field);
+  fprintf(file, "}");
+  fflush(file);
+}
+
 void obj_to_str(Object *obj, FILE *file) {
   mutex_await(obj->node->access_mutex, INFINITE);
   Element name, class = obj_get_field_obj(obj, CLASS_KEY);
-  int i;
   switch (obj->type) {
     case OBJ:
     case MODULE:
       if (NONE == class.type) {
         fprintf(file, "?");
-        fflush(file);
       } else {
         if (class.obj == class_string.obj) {
           fprintf(file,
@@ -479,48 +534,46 @@ void obj_to_str(Object *obj, FILE *file) {
                   String_cstr(String_extract(element_from_obj(obj))));
           fflush(file);
         }
-        fprintf(file, "%s", string_to_cstr(obj_lookup(class.obj, CKey_name)));
+        fprintf(file, "%s@%p",
+                ISTYPE(obj_lookup(class.obj, CKey_name), class_string)
+                    ? string_to_cstr(obj_lookup(class.obj, CKey_name))
+                    : "?",
+                obj);
       }
       fflush(file);
       name = obj_lookup(obj, CKey_name);
-      if (NONE != name.type &&
-          OBJECT == name.type /*&& ARRAY == name.obj->type*/) {
+      if (ISTYPE(name, class_string)) {
         fprintf(file, "[%s]", string_to_cstr(name));
         fflush(file);
       }
-      fprintf(file, "(");
-      fflush(file);
-      void print_field(Pair * pair) {
-        ElementContainer *field_val = (ElementContainer *)pair->value;
-        Element to_print = field_val->elt;
-        if (ISOBJECT(field_val->elt)) {
-          Element field_class = obj_lookup(field_val->elt.obj, CKey_class);
-          to_print = field_class;
-          if (ISOBJECT(field_class)) {
-            Element class_name = obj_lookup(field_class.obj, CKey_name);
-            to_print = class_name;
-          }
-        }
-        fprintf(
-            file, "%s:%s, ", (char *)pair->key,
-            ISOBJECT(to_print)
-                ? string_to_cstr(to_print)
-                : ISVALUE(to_print) ? VALTYPE_NAME(to_print.val) : "(None)");
-        fflush(file);
-      }
-      map_iterate(&obj->fields, print_field);
-      fprintf(file, ")");
-      fflush(file);
+      //      if (class.obj == class_context.obj) {
+      //        fprintf(file, "[module=%s]",
+      //                (!ISTYPE(obj_get_field(obj_get_field_obj(obj,
+      //                MODULE_FIELD),
+      //                                       NAME_KEY),
+      //                         class_string))
+      //                    ? "?"
+      //                    : string_to_cstr(obj_get_field(
+      //                          obj_get_field_obj(obj, MODULE_FIELD),
+      //                          NAME_KEY)));
+      //      }
+      print_obj_fields(obj, file);
       break;
     case TUPLE:
+      fprintf(file, "%s@%p", string_to_cstr(obj_lookup(class.obj, CKey_name)),
+              obj);
       tuple_print(obj->tuple, file);
+      print_obj_fields(obj, file);
       break;
     case ARRAY:
+      fprintf(file, "%s@%p", string_to_cstr(obj_lookup(class.obj, CKey_name)),
+              obj);
       fprintf(file, "[");
       fflush(file);
       if (Array_size(obj->array) > 0) {
         elt_to_str(Array_get(obj->array, 0), file);
       }
+      int i;
       for (i = 1; i < Array_size(obj->array); i++) {
         fprintf(file, ",");
         fflush(file);
@@ -528,6 +581,7 @@ void obj_to_str(Object *obj, FILE *file) {
       }
       fprintf(file, "]");
       fflush(file);
+      print_obj_fields(obj, file);
       break;
     default:
       fprintf(file, "no_impl");

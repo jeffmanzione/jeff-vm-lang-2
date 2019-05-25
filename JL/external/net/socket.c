@@ -25,16 +25,17 @@
 static Element sh_class;
 
 Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
-                                 Element arg);
+                                 Element *arg);
 
-Element Socket_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
-  ASSERT(is_object_type(&arg, TUPLE));
-  Tuple *tuple = arg.obj->tuple;
+Element Socket_constructor(VM *vm, Thread *t, ExternalData *data,
+                           Element *arg) {
+  ASSERT(is_object_type(arg, TUPLE));
+  Tuple *tuple = arg->obj->tuple;
 
-  DEBUGF("Input = (%I64d, %I64d, %I64d, %I64d %I64d)",
-         tuple_get(tuple, 0).val.int_val, tuple_get(tuple, 1).val.int_val,
-         tuple_get(tuple, 2).val.int_val, tuple_get(tuple, 3).val.int_val,
-         tuple_get(tuple, 4).val.int_val);
+  //  DEBUGF("Input = (%I64d, %I64d, %I64d, %I64d %I64d)",
+  //         tuple_get(tuple, 0).val.int_val, tuple_get(tuple, 1).val.int_val,
+  //         tuple_get(tuple, 2).val.int_val, tuple_get(tuple, 3).val.int_val,
+  //         tuple_get(tuple, 4).val.int_val);
 
   Socket *socket = socket_create(
       tuple_get(tuple, 0).val.int_val, tuple_get(tuple, 1).val.int_val,
@@ -54,7 +55,7 @@ Element Socket_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
 }
 
 Element Socket_deconstructor(VM *vm, Thread *t, ExternalData *data,
-                             Element arg) {
+                             Element *arg) {
   Socket *socket = (Socket *)map_lookup(&data->state, strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
@@ -64,7 +65,7 @@ Element Socket_deconstructor(VM *vm, Thread *t, ExternalData *data,
   return create_none();
 }
 
-Element Socket_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element Socket_close(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   Socket *socket = (Socket *)map_lookup(&data->state, strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
@@ -74,21 +75,21 @@ Element Socket_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
 }
 
 // To ease finding sockethandle class.
-Element Socket_accept(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element Socket_accept(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   Socket *socket = (Socket *)map_lookup(&data->state, strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
   }
   Element socket_handle = create_external_obj(vm, sh_class);
   SocketHandle_constructor(vm, t, socket_handle.obj->external_data,
-                           data->object);
+                           &data->object);
 
   return socket_handle;
 }
 
 Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
-                                 Element arg) {
-  Socket *socket = (Socket *)map_lookup(&arg.obj->external_data->state,
+                                 Element *arg) {
+  Socket *socket = (Socket *)map_lookup(&arg->obj->external_data->state,
                                         strings_intern("socket"));
   if (NULL == socket) {
     return throw_error(vm, t, "Weird Socket error.");
@@ -100,7 +101,7 @@ Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
 }
 
 Element SocketHandle_deconstructor(VM *vm, Thread *t, ExternalData *data,
-                                   Element arg) {
+                                   Element *arg) {
   SocketHandle *sh =
       (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
@@ -111,7 +112,8 @@ Element SocketHandle_deconstructor(VM *vm, Thread *t, ExternalData *data,
   return create_none();
 }
 
-Element SocketHandle_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element SocketHandle_close(VM *vm, Thread *t, ExternalData *data,
+                           Element *arg) {
   SocketHandle *sh =
       (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
@@ -121,22 +123,22 @@ Element SocketHandle_close(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return create_none();
 }
 
-Element SocketHandle_send(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element SocketHandle_send(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   SocketHandle *sh =
       (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {
     return throw_error(vm, t, "Weird Socket error.");
   }
-  if (!ISTYPE(arg, class_string)) {
+  if (!ISTYPE(*arg, class_string)) {
     return throw_error(vm, t, "Cannot send non-string.");
   }
-  String *msg = String_extract(arg);
+  String *msg = String_extract(*arg);
   sockethandle_send(sh, String_cstr(msg), String_size(msg));
   return create_none();
 }
 
 Element SocketHandle_receive(VM *vm, Thread *t, ExternalData *data,
-                             Element arg) {
+                             Element *arg) {
   SocketHandle *sh =
       (SocketHandle *)map_lookup(&data->state, strings_intern("handle"));
   if (NULL == sh) {

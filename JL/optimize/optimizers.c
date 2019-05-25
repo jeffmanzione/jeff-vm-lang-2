@@ -13,53 +13,54 @@
 #include "../tape.h"
 #include "optimizer.h"
 
-void optimizer_ResPush(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_ResPush(OptimizeHelper *oh, const Tape *const tape, int start,
+                       int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (RES == first->ins.op && NO_PARAM != first->ins.param
-        && PUSH == second->ins.op && NO_PARAM == second->ins.param
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+    if (RES == first->ins.op && NO_PARAM != first->ins.param &&
+        PUSH == second->ins.op && NO_PARAM == second->ins.param &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
       o_Remove(oh, i);
       o_SetOp(oh, i - 1, PUSH);
     }
   }
 }
 
-void optimizer_SetRes(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_SetRes(OptimizeHelper *oh, const Tape *const tape, int start,
+                      int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (SET == first->ins.op && ID_PARAM == first->ins.param
-        && RES == second->ins.op && ID_PARAM == second->ins.param
-        && first->token->text == second->token->text // same pointer because string interning
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i))) {
+    if (SET == first->ins.op && ID_PARAM == first->ins.param &&
+        RES == second->ins.op && ID_PARAM == second->ins.param &&
+        first->token->text ==
+            second->token->text  // same pointer because string interning
+        && NULL == map_lookup(&oh->i_gotos, (void *)(i))) {
       o_Remove(oh, i);
     }
   }
 }
 
-void optimizer_GetPush(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_GetPush(OptimizeHelper *oh, const Tape *const tape, int start,
+                       int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (GET == first->ins.op && NO_PARAM != first->ins.param
-        && PUSH == second->ins.op && NO_PARAM == second->ins.param
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+    if (GET == first->ins.op && NO_PARAM != first->ins.param &&
+        PUSH == second->ins.op && NO_PARAM == second->ins.param &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
       o_Remove(oh, i);
       o_SetOp(oh, i - 1, GTSH);
     }
   }
 }
 
-void optimizer_JmpRes(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_JmpRes(OptimizeHelper *oh, const Tape *const tape, int start,
+                      int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
@@ -73,80 +74,81 @@ void optimizer_JmpRes(OptimizeHelper *oh, const Tape * const tape, int start,
     }
     const InsContainer *jump_to_parent = tape_get(tape, i + jmp_val - 1);
     const InsContainer *jump_to = tape_get(tape, i + jmp_val);
-    if (SET != jump_to_parent->ins.op || jump_to_parent->ins.id != first->ins.id
-        || RES != jump_to->ins.op || ID_PARAM != jump_to->ins.param
-        || first->ins.id != jump_to->ins.id) { // same pointer because string interning
+    if (SET != jump_to_parent->ins.op ||
+        jump_to_parent->ins.id != first->ins.id || RES != jump_to->ins.op ||
+        ID_PARAM != jump_to->ins.param ||
+        first->ins.id !=
+            jump_to->ins.id) {  // same pointer because string interning
       continue;
     }
     o_Remove(oh, i + jmp_val);
   }
 }
 
-void optimizer_PushRes(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_PushRes(OptimizeHelper *oh, const Tape *const tape, int start,
+                       int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (PUSH == first->ins.op && RES == second->ins.op
-        && first->ins.param == second->ins.param
-        && first->token->text == second->token->text &&
-        NULL == map_lookup(&oh->i_gotos, (void *) (i))) {
+    if (PUSH == first->ins.op && RES == second->ins.op &&
+        first->ins.param == second->ins.param &&
+        first->token->text == second->token->text &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i))) {
       o_Remove(oh, i);
       o_SetOp(oh, i - 1, PSRS);
     }
   }
 }
 
-void optimizer_ResPush2(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_ResPush2(OptimizeHelper *oh, const Tape *const tape, int start,
+                        int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (RES == first->ins.op && NO_PARAM == first->ins.param
-        && PUSH == second->ins.op && NO_PARAM == second->ins.param
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+    if (RES == first->ins.op && NO_PARAM == first->ins.param &&
+        PUSH == second->ins.op && NO_PARAM == second->ins.param &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
       o_Remove(oh, i);
       o_SetOp(oh, i - 1, PEEK);
     }
   }
 }
 
-void optimizer_RetRet(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_RetRet(OptimizeHelper *oh, const Tape *const tape, int start,
+                      int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (RET == first->ins.op && NO_PARAM == first->ins.param
-        && RET == second->ins.op && NO_PARAM == second->ins.param
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+    if (RET == first->ins.op && NO_PARAM == first->ins.param &&
+        RET == second->ins.op && NO_PARAM == second->ins.param &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
       o_Remove(oh, i);
     }
   }
 }
 
-void optimizer_PeekRes(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_PeekRes(OptimizeHelper *oh, const Tape *const tape, int start,
+                       int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (PEEK == first->ins.op
-        && (RES == second->ins.op || TLEN == second->ins.op)
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
-      o_Remove(oh, i-1);
+    if (PEEK == first->ins.op &&
+        (RES == second->ins.op || TLEN == second->ins.op) &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
+      o_Remove(oh, i - 1);
     }
   }
 }
 
-void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
-    int start, int end) {
+void optimizer_GroupStatics(OptimizeHelper *oh, const Tape *const tape,
+                            int start, int end) {}
 
-}
-
-//void optimizer_Increment(OptimizeHelper *oh, const Tape * const tape, int start,
+// void optimizer_Increment(OptimizeHelper *oh, const Tape * const tape, int
+// start,
 //    int end) {
 ////  push  a
 ////  push  1
@@ -175,33 +177,62 @@ void optimizer_GroupStatics(OptimizeHelper *oh, const Tape * const tape,
 //  }
 //}
 
-void optimizer_SetEmpty(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_SetEmpty(OptimizeHelper *oh, const Tape *const tape, int start,
+                        int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (TGET == first->ins.op && VAL_PARAM == first->ins.param
-        && SET == second->ins.op && ID_PARAM == second->ins.param
-        && 0 == strncmp(second->ins.id, "_", 2)
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+    if (TGET == first->ins.op && VAL_PARAM == first->ins.param &&
+        SET == second->ins.op && ID_PARAM == second->ins.param &&
+        0 == strncmp(second->ins.id, "_", 2) &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
       o_Remove(oh, i - 1);
       o_Remove(oh, i);
     }
   }
 }
 
-void optimizer_PushResEmpty(OptimizeHelper *oh, const Tape * const tape, int start,
-    int end) {
+void optimizer_PushResEmpty(OptimizeHelper *oh, const Tape *const tape,
+                            int start, int end) {
   int i;
   for (i = start + 1; i < end; i++) {
     const InsContainer *first = tape_get(tape, i - 1);
     const InsContainer *second = tape_get(tape, i);
-    if (PUSH == first->ins.op && NO_PARAM == first->ins.param
-        && RES == second->ins.op && NO_PARAM == second->ins.param
-        && NULL == map_lookup(&oh->i_gotos, (void *) (i - 1))) {
+    if (PUSH == first->ins.op && NO_PARAM == first->ins.param &&
+        RES == second->ins.op && NO_PARAM == second->ins.param &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
       o_Remove(oh, i - 1);
       o_Remove(oh, i);
+    }
+  }
+}
+
+void optimizer_PeekPeek(OptimizeHelper *oh, const Tape *const tape, int start,
+                        int end) {
+  int i;
+  for (i = start + 1; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 1);
+    const InsContainer *second = tape_get(tape, i);
+    if (PEEK == first->ins.op && NO_PARAM == first->ins.param &&
+        PEEK == second->ins.op && NO_PARAM == second->ins.param &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
+      o_Remove(oh, i - 1);
+    }
+  }
+}
+
+void optimizer_PushRes2(OptimizeHelper *oh, const Tape *const tape, int start,
+                        int end) {
+  int i;
+  for (i = start + 1; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 1);
+    const InsContainer *second = tape_get(tape, i);
+    if (PUSH == first->ins.op && RES == second->ins.op &&
+        first->ins.param == second->ins.param && first->ins.param == NO_PARAM &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i))) {
+      o_Remove(oh, i);
+      o_Remove(oh, i - 1);
     }
   }
 }

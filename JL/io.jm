@@ -1,21 +1,9 @@
 module io
 
 class FileInternal
-  jmp   55
+  jmp   43
 
-@new
-  push
-  tget  0
-  set   fn
-  peek
-  tget  1
-  set   rw
-  peek
-  tget  2
-  set   a
-  res
-  tget  3
-  set   binary
+@new(fn,rw,a,binary)
   push  rw
   call  copy
   set   mode
@@ -68,7 +56,7 @@ class FileInternal
   ret
   jmp   6
 
-@gets
+@gets(n)
   set   n
   res   self
   gtsh  file
@@ -84,7 +72,7 @@ class FileInternal
   ret
   jmp   6
 
-@puts
+@puts(s)
   set   s
   res   self
   gtsh  file
@@ -102,12 +90,10 @@ endclass
 
 
 class FileReader
-  jmp   25
+  jmp   22
 
-@new
+@new(fn,binary)
   push
-  tget  0
-  set   fn
   tlen
   push
   push  1
@@ -117,7 +103,6 @@ class FileReader
   tget  1
   jmp   1
   res   False
-  set   binary
   push  FileInternal
   push  binary
   push  False
@@ -139,7 +124,7 @@ class FileReader
   ret
   jmp   6
 
-@gets
+@gets(n)
   set   n
   res   self
   gtsh  fi
@@ -181,18 +166,9 @@ endclass
 
 
 class FileWriter
-  jmp   21
+  jmp   12
 
-@new
-  push
-  tget  0
-  set   fn
-  peek
-  tget  1
-  set   append
-  res
-  tget  2
-  set   binary
+@new(fn,append,binary)
   push  FileInternal
   push  binary
   push  append
@@ -214,7 +190,7 @@ class FileWriter
   ret
   jmp   6
 
-@write
+@write(s)
   set   s
   res   self
   gtsh  fi
@@ -223,7 +199,7 @@ class FileWriter
   ret
   jmp   10
 
-@writeln
+@writeln(s)
   set   s
   res   self
   gtsh  fi
@@ -269,30 +245,18 @@ endclass
   push
   res   self
   fld   ERROR
-  jmp   12
+  jmp   6
 
-@fprint
-  push
-  tget  0
-  set   f
-  res
-  tget  1
-  set   a
+@fprint(f,a)
   push  f
   push  str
   res   a
   call
   call  write
   ret
-  jmp   12
+  jmp   6
 
-@fprintln
-  push
-  tget  0
-  set   f
-  res
-  tget  1
-  set   a
+@fprintln(f,a)
   push  f
   push  str
   res   a
@@ -301,7 +265,7 @@ endclass
   ret
   jmp   7
 
-@print
+@print(a)
   set   a
   push  fprint
   push  a
@@ -311,7 +275,7 @@ endclass
   ret
   jmp   7
 
-@println
+@println(a)
   set   a
   push  fprintln
   push  a

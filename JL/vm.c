@@ -153,7 +153,8 @@ void vm_add_builtin(VM *vm) {
 
   void add_ref(Pair * pair) {
     Element function =
-        create_function(vm, builtin_element, (uint32_t)pair->value, pair->key);
+        create_function(vm, builtin_element, (uint32_t)pair->value, pair->key,
+                        (Q *)map_lookup(module_fn_args(builtin), pair->value));
     memory_graph_set_field(vm->graph, builtin_element, pair->key, function);
     memory_graph_set_field(vm->graph, vm->root, pair->key, function);
   }
@@ -173,8 +174,9 @@ void vm_add_builtin(VM *vm) {
     }
 
     void add_method(Pair * pair2) {
-      Element method = create_method(vm, builtin_element,
-                                     (uint32_t)pair2->value, class, pair2->key);
+      Element method = create_method(
+          vm, builtin_element, (uint32_t)pair2->value, class, pair2->key,
+          (Q *)map_lookup(module_fn_args(builtin), pair2->value));
       memory_graph_set_field(vm->graph, class, pair2->key, method);
       memory_graph_array_enqueue(vm->graph, methods_array, method);
     }
@@ -200,7 +202,8 @@ Element vm_add_module(VM *vm, const Module *module) {
   void add_ref(Pair * pair) {
     memory_graph_set_field(
         vm->graph, module_element, pair->key,
-        create_function(vm, module_element, (uint32_t)pair->value, pair->key));
+        create_function(vm, module_element, (uint32_t)pair->value, pair->key,
+                        (Q *)map_lookup(module_fn_args(module), pair->value)));
   }
   map_iterate(module_refs(module), add_ref);
   void add_class(const char class_name[], const Map *methods) {
@@ -216,8 +219,9 @@ Element vm_add_module(VM *vm, const Module *module) {
                              (methods_array = create_array(vm->graph)));
     }
     void add_method(Pair * pair2) {
-      Element method = create_method(vm, module_element, (uint32_t)pair2->value,
-                                     class, pair2->key);
+      Element method = create_method(
+          vm, module_element, (uint32_t)pair2->value, class, pair2->key,
+          (Q *)map_lookup(module_fn_args(module), pair2->value));
 
       memory_graph_set_field(vm->graph, class, pair2->key, method);
       memory_graph_array_enqueue(vm->graph, methods_array, method);
@@ -245,7 +249,8 @@ void vm_merge_module(VM *vm, const char fn[]) {
 
   void add_ref(Pair * pair) {
     Element function =
-        create_function(vm, module_element, (uint32_t)pair->value, pair->key);
+        create_function(vm, module_element, (uint32_t)pair->value, pair->key,
+                        (Q *)map_lookup(module_fn_args(module), pair->value));
     memory_graph_set_field(vm->graph, module_element, pair->key, function);
   }
   map_iterate(module_refs(module), add_ref);
@@ -266,8 +271,9 @@ void vm_merge_module(VM *vm, const char fn[]) {
     }
 
     void add_method(Pair * pair2) {
-      Element method = create_method(vm, module_element, (uint32_t)pair2->value,
-                                     class, pair2->key);
+      Element method = create_method(
+          vm, module_element, (uint32_t)pair2->value, class, pair2->key,
+          (Q *)map_lookup(module_fn_args(module), pair2->value));
       memory_graph_set_field(vm->graph, class, pair2->key, method);
       memory_graph_array_enqueue(vm->graph, methods_array, method);
     }
@@ -283,6 +289,8 @@ VM *vm_create(ArgStore *store) {
   vm->store = store;
   vm->graph = memory_graph_create();
   vm->root = memory_graph_create_root_element(vm->graph);
+  memory_graph_set_field(vm->graph, vm->root, THREADS_KEY,
+                         create_array(vm->graph));
   class_init(vm);
   vm_add_string_class(vm);
   // Complete the root object.
@@ -290,7 +298,8 @@ VM *vm_create(ArgStore *store) {
   memory_graph_set_field(vm->graph, vm->root, ROOT, vm->root);
   memory_graph_set_field(vm->graph, vm->root, MODULES,
                          (vm->modules = create_obj(vm->graph)));
-
+  memory_graph_set_field(vm->graph, vm->root, NAME_KEY,
+                         string_create(vm, MODULES));
   vm_add_builtin(vm);
 
   memory_graph_set_field(vm->graph, vm->root, NIL_KEYWORD, create_none());
@@ -356,13 +365,17 @@ Element vm_object_get(VM *vm, Thread *t, const char name[], bool *has_error) {
 }
 
 Element vm_lookup(VM *vm, Thread *t, const char name[]) {
-  //////DEBUGF("Looking for '%s'", name);
+  //  DEBUGF("Looking for '%s'", name);
   Element block = t_current_block(t);
+  //  elt_to_str(block, stdout);
+  //  printf("\n");
   Element lookup;
-  while (NONE != block.type &&
+  while (OBJECT == block.type &&
          NONE == (lookup = obj_get_field(block, name)).type) {
     block = obj_lookup(block.obj, CKey_parent);
-    //////DEBUGF("Looking for '%s'", name);
+    //    DEBUGF("+Looking for '%s'", name);
+    //    elt_to_str(block, stdout);
+    //    printf("\n");
   }
 
   if (NONE == block.type) {
@@ -402,19 +415,19 @@ void call_external_fn(VM *vm, Thread *t, Element obj, Element external_func) {
     tmp.vm = vm;
     ed = &tmp;
   }
-  Element returned = external_func.obj->external_fn(vm, t, ed, resval);
+  Element returned = external_func.obj->external_fn(vm, t, ed, &resval);
   t_set_resval(t, returned);
 }
 
 void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
   Element parent;
-  if (ISTYPE(func, class_method)) {
-    Object *function_object =
-        *((Object **)expando_get(func.obj->parent_objs, 0));
-    parent = obj_get_field_obj(function_object, PARENT_MODULE);
-  } else {
-    parent = obj_get_field(func, PARENT_MODULE);
-  }
+
+  Element function_object = ISTYPE(func, class_method)
+                                ? element_from_obj(*((Object **)expando_get(
+                                      func.obj->parent_objs, 0)))
+                                : func;
+  parent = obj_get_field(function_object, PARENT_MODULE);
+
   //  DEBUGF("module_name=%s", string_to_cstr(obj_get_field(parent, NAME_KEY)));
   //  elt_to_str(parent, stdout);
   //  printf("\n");
@@ -424,7 +437,29 @@ void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
 
   Element new_block = t_new_block(t, parent, obj);
   memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
-  t_set_module(t, parent, obj_deep_lookup(func.obj, INS_INDEX).val.int_val - 1);
+
+  Element arg_names = obj_get_field(function_object, ARGS_KEY);
+  if (arg_names.type != NONE) {
+    Q *args = (Q *)(int)arg_names.val.int_val;
+    Element res_args = t_get_resval(t);
+    if (args != NULL && Q_size(args) > 0 && NONE != res_args.type) {
+      if (Q_size(args) == 1 || res_args.type != OBJECT ||
+          TUPLE != res_args.obj->type) {
+        memory_graph_set_field(vm->graph, new_block, (char *)Q_get(args, 0),
+                               t_get_resval(t));
+      } else if (TUPLE == t_get_resval(t).obj->type) {
+        int i;
+        Tuple *tup = t_get_resval(t).obj->tuple;
+        for (i = 0; i < tuple_size(tup); ++i) {
+          memory_graph_set_field(vm->graph, new_block, (char *)Q_get(args, i),
+                                 tuple_get(tup, i));
+        }
+      }
+    }
+  }
+
+  t_set_module(t, parent,
+               obj_get_field(function_object, INS_INDEX).val.int_val - 1);
 }
 
 void call_methodinstance(VM *vm, Thread *t, Element methodinstance) {
@@ -671,7 +706,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
       t_set_resval(t, create_array(vm->graph));
       return true;
     case NOTC:
-      t_set_resval(t, operator_notc(t_get_resval(t)));
+      t_set_resval(t, operator_notc(vm, t, ins, t_get_resval(t)));
       return true;
     case NOT:
       t_set_resval(t, element_not(vm, t_get_resval(t)));
@@ -715,24 +750,24 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         res = string_add(vm, lhs, rhs);
         break;
       }
-      res = operator_add(lhs, rhs);
+      res = operator_add(vm, t, ins, lhs, rhs);
       break;
     case SUB:
-      res = operator_sub(lhs, rhs);
+      res = operator_sub(vm, t, ins, lhs, rhs);
       break;
     case MULT:
-      res = operator_mult(lhs, rhs);
+      res = operator_mult(vm, t, ins, lhs, rhs);
       break;
     case DIV:
-      res = operator_div(lhs, rhs);
+      res = operator_div(vm, t, ins, lhs, rhs);
       break;
     case MOD:
-      res = operator_mod(lhs, rhs);
+      res = operator_mod(vm, t, ins, lhs, rhs);
       break;
     case EQ:
       //    DEBUGF("lhs.type=%d, rhs.type=%d", lhs.type, rhs.type);
       if (lhs.type == VALUE && rhs.type == VALUE) {
-        res = operator_eq(vm, lhs, rhs);
+        res = operator_eq(vm, t, ins, lhs, rhs);
         break;
       }
       execute_object_operation(vm, t, lhs, rhs, EQ_FN_NAME);
@@ -740,37 +775,38 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
     case NEQ:
       //    DEBUGF("lhs.type=%d, rhs.type=%d", lhs.type, rhs.type);
       if (lhs.type == VALUE && rhs.type == VALUE) {
-        res = operator_neq(vm, lhs, rhs);
+        res = operator_neq(vm, t, ins, lhs, rhs);
         break;
       }
       execute_object_operation(vm, t, lhs, rhs, NEQ_FN_NAME);
       return true;
     case GT:
-      res = operator_gt(vm, lhs, rhs);
+      res = operator_gt(vm, t, ins, lhs, rhs);
       break;
     case LT:
-      res = operator_lt(vm, lhs, rhs);
+      res = operator_lt(vm, t, ins, lhs, rhs);
       break;
     case GTE:
-      res = operator_gte(vm, lhs, rhs);
+      res = operator_gte(vm, t, ins, lhs, rhs);
       break;
     case LTE:
-      res = operator_lte(vm, lhs, rhs);
+      res = operator_lte(vm, t, ins, lhs, rhs);
       break;
     case AND:
-      res = operator_and(vm, lhs, rhs);
+      res = operator_and(vm, t, ins, lhs, rhs);
       break;
     case OR:
-      res = operator_or(vm, lhs, rhs);
+      res = operator_or(vm, t, ins, lhs, rhs);
       break;
     case XOR:
-      res = operator_or(vm, operator_and(vm, lhs, element_not(vm, rhs)),
-                        operator_and(vm, element_not(vm, lhs), rhs));
+      res = operator_or(vm, t, ins,
+                        operator_and(vm, t, ins, lhs, element_not(vm, rhs)),
+                        operator_and(vm, t, ins, element_not(vm, lhs), rhs));
       break;
     case IS:
       if (!ISCLASS(rhs)) {
         vm_throw_error(vm, t, ins,
-                       "Cannot perfom type-check against a non-object type.");
+                       "Cannot perform type-check against a non-object type.");
         return true;
       }
       if (lhs.type != OBJECT) {
@@ -804,11 +840,12 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
   bool has_error = false;
   switch (ins.op) {
     case SET:
+      DEBUGF("Here");
       if (is_const_ref(block.obj, ins.str)) {
         vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
         return true;
       }
-      memory_graph_set_field(vm->graph, block, ins.str, t_get_resval(t));
+      memory_graph_set_var(vm->graph, block, ins.str, t_get_resval(t));
       break;
     case MDST:
       memory_graph_set_field(vm->graph, t_get_module(t), ins.str,
@@ -1018,6 +1055,8 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
       for (i = 0; i < elt.val.int_val; i++) {
         popped = t_popstack(t, &has_error);
         if (has_error) {
+          vm_throw_error(vm, t, ins,
+                         "Attempted to build tuple with too few arguments.");
           return true;
         }
         memory_graph_tuple_add(vm->graph, tuple, popped);
@@ -1119,16 +1158,17 @@ bool execute(VM *vm, Thread *t) {
   Ins ins = t_current_ins(t);
 
 #ifdef DEBUG
-  mutex_await(vm->debug_mutex, INFINITE);
-  fflush(stderr);
-  fprintf(stdout, "module(%s,t=%d) ", module_name(t_get_module(t).obj->module),
-          (int)t->id);
-  fflush(stdout);
-  ins_to_str(ins, stdout);
-  fprintf(stdout, "\n");
-  fflush(stdout);
-  fflush(stderr);
-  mutex_release(vm->debug_mutex);
+  //  mutex_await(vm->debug_mutex, INFINITE);
+//  fflush(stderr);
+//  fprintf(stdout, "module(%s,t=%d) ",
+//  module_name(t_get_module(t).obj->module),
+//          (int)t->id);
+//  fflush(stdout);
+//  ins_to_str(ins, stdout);
+//  fprintf(stdout, "\n");
+//  fflush(stdout);
+//  fflush(stderr);
+//  mutex_release(vm->debug_mutex);
 #endif
 
   bool status;
@@ -1193,7 +1233,7 @@ void vm_maybe_initialize_and_execute(VM *vm, Thread *t,
 
 void vm_start_execution(VM *vm, Element module) {
   Element main_function =
-      create_function(vm, module, 0, strings_intern("main"));
+      create_function(vm, module, 0, strings_intern("main"), NULL);
   // Set to true so we don't double-run it.
   memory_graph_set_field(vm->graph, module, INITIALIZED, element_true(vm));
   Element thread = create_thread_object(vm, main_function, create_none());

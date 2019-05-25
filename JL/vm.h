@@ -26,7 +26,8 @@ struct VM_ {
   ThreadHandle debug_mutex, module_init_mutex;
 };
 
-VM *vm_create(ArgStore *store);Element vm_add_module(VM *vm, const Module *module);
+VM *vm_create(ArgStore *store);
+Element vm_add_module(VM *vm, const Module *module);
 Element vm_lookup_module(const VM *vm, const char module_name[]);
 Element vm_object_lookup(VM *vm, Element obj, const char name[]);
 const MemoryGraph *vm_get_graph(const VM *vm);

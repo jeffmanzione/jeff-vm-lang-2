@@ -18,6 +18,7 @@
 #include "error.h"
 #include "file_load.h"
 #include "graph/memory.h"
+#include "graph/memory_graph.h"
 #include "interpreter/interpreter.h"
 #include "optimize/optimize.h"
 #include "vm.h"
@@ -40,7 +41,7 @@ int main(int argc, const char *argv[]) {
 
   void load_src(void *ptr) {
     ASSERT(NOT_NULL(ptr));
-    Module *module = load_fn((char *) ptr, store);
+    Module *module = load_fn((char *)ptr, store);
     set_insert(&modules, module);
   }
   set_iterate(argstore_sources(store), load_src);
@@ -49,13 +50,12 @@ int main(int argc, const char *argv[]) {
   Element main_element = create_none();
   void load_module(void *ptr) {
     ASSERT(NOT_NULL(ptr));
-    Element module = vm_add_module(vm, (Module*) ptr);
+    Element module = vm_add_module(vm, (Module *)ptr);
     if (NONE == main_element.type) {
       main_element = module;
     }
   }
   set_iterate(&modules, load_module);
-
   if (argstore_lookup_bool(store, ArgKey__EXECUTE)) {
     vm_start_execution(vm, main_element);
   }
@@ -66,9 +66,9 @@ int main(int argc, const char *argv[]) {
     interpret_from_file(stdin, "stdin", vm, interpret_statement);
   }
 
-//  memory_graph_print(vm_get_graph(vm), stdout);
-//  memory_graph_free_space((MemoryGraph*) vm_get_graph(vm));
-//  memory_graph_print(vm_get_graph(vm), stdout);
+  //  memory_graph_print(vm_get_graph(vm), stdout);
+  //  memory_graph_free_space((MemoryGraph *)vm_get_graph(vm));
+  //  memory_graph_print(vm_get_graph(vm), stdout);
   set_finalize(&modules);
   argstore_delete(store);
   argconfig_delete(config);
@@ -79,10 +79,11 @@ int main(int argc, const char *argv[]) {
 
   alloc_finalize();
 #ifdef DEBUG
-  printf("Maps: %d\nMap inserts: %d\nMap insert compares: %d\n"
-      "Map lookups: %d\nMap lookup compares: %d\n", MAP__count,
-      MAP__insert_count, MAP__insert_compares_count, MAP__lookup_count,
-      MAP__lookup_compares_count);
+  printf(
+      "Maps: %d\nMap inserts: %d\nMap insert compares: %d\n"
+      "Map lookups: %d\nMap lookup compares: %d\n",
+      MAP__count, MAP__insert_count, MAP__insert_compares_count,
+      MAP__lookup_count, MAP__lookup_compares_count);
 #endif
   return EXIT_SUCCESS;
 }

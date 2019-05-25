@@ -31,12 +31,12 @@ bool parser_finalize(Parser *parser) {
     const FileInfo *fi = parser->fi;
     const LineInfo *li = file_info_lookup(fi, tok->line);
     fprintf(stderr, "Error in '%s' at line %d: %s.\n", file_info_name(fi),
-        li->line_num, "Cannot parse");
+            li->line_num, "Cannot parse");
     fflush(stderr);
     if (NULL != fi && NULL != li && NULL != tok) {
-      int num_line_digits = (int) (log10(file_info_len(fi)) + 1);
+      int num_line_digits = (int)(log10(file_info_len(fi)) + 1);
       fprintf(stderr, "%*d: %s", num_line_digits, tok->line,
-          (NULL == li) ? "No LineInfo" : li->line_text);
+              (NULL == li) ? "No LineInfo" : li->line_text);
       if ('\n' != li->line_text[strlen(li->line_text) - 1]) {
         fprintf(stderr, "\n");
       }
@@ -54,12 +54,12 @@ bool parser_finalize(Parser *parser) {
     has_error = true;
   }
   void say_tokens(void *ptr) {
-    Token *tok = (Token *) ptr;
+    Token *tok = (Token *)ptr;
     fprintf(stderr, "Token(type=%d,line=%d,col=%d,text=%s)\n", tok->type,
-        tok->line, tok->col, tok->text);
-    token_delete((Token *) ptr);
+            tok->line, tok->col, tok->text);
+    token_delete((Token *)ptr);
   }
-  queue_deep_delete(&parser->queue, (Deleter) say_tokens);
+  queue_deep_delete(&parser->queue, (Deleter)say_tokens);
   map_delete(parser->exp_names);
   return has_error;
 }
@@ -67,13 +67,13 @@ bool parser_finalize(Parser *parser) {
 Token *parser_next__(Parser *parser, Token **target) {
   ASSERT_NOT_NULL(parser);
   Token *to_return;
-  while (parser->queue.size <= 0
-      && tokenize_line(&parser->line, parser->fi, &parser->queue, false))
+  while (parser->queue.size <= 0 &&
+         tokenize_line(&parser->line, parser->fi, &parser->queue, false))
     ;
   if (parser->queue.size == 0) {
     to_return = NULL;
   } else {
-    to_return = (Token *) queue_peek(&parser->queue);
+    to_return = (Token *)queue_peek(&parser->queue);
   }
 
   if (NULL != target) {

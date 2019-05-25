@@ -7,7 +7,7 @@ module struct
 class Map
   jmp   23
 
-@new
+@new(sz)
   set   sz
   res   sz
   push
@@ -31,16 +31,12 @@ class Map
   fld   keys
   res   self
   ret
-  jmp   129
+  jmp   125
 
-@__set__
+@__set__(k,v)
   push
-  tget  0
-  set   k
   peek
   res
-  tget  1
-  set   v
   res   hash
   push
   res   k
@@ -163,14 +159,25 @@ class Map
   res   None
   ret
   ret
-  jmp   72
+  jmp   83
 
-@__index__
+@__index__(k)
   set   k
   res   hash
   push
   res   k
   call
+  set   hval
+  res   hval
+  push
+  res   0
+  push
+  lt
+  ifn   5
+  res   hval
+  push
+  push  -1
+  mult
   set   hval
   res   hval
   push
@@ -240,7 +247,7 @@ class Map
   ret
   jmp   10
 
-@__in__
+@__in__(k)
   set   k
   res   self
   push
@@ -273,7 +280,7 @@ endclass
 class Set
   jmp   10
 
-@new
+@new(sz)
   set   sz
   res   Map
   push
@@ -286,7 +293,7 @@ class Set
   ret
   jmp   9
 
-@insert
+@insert(k)
   set   k
   res   k
   push
@@ -298,7 +305,7 @@ class Set
   ret
   jmp   7
 
-@__in__
+@__in__(k)
   set   k
   res   self
   get   map
@@ -336,37 +343,14 @@ class Cache
   fld   mutex
   res   self
   ret
-  jmp   76
+  jmp   53
 
-@get
+@get(k,factory,args,default)
   push
-  tget  0
-  set   k
   peek
-  tget  1
-  set   factory
   peek
-  tlen
-  push
-  push  2
-  lte
-  if    3
   peek
-  tget  2
-  jmp   1
-  res   None
-  set   args
-  peek
-  tlen
-  push
-  push  3
-  lte
-  if    3
-  peek
-  tget  3
-  jmp   1
-  res   ''
-  set   default
+  res
   res   self
   get   mutex
   push
@@ -414,362 +398,6 @@ class Cache
   call  release
   res   v
   ret
-  ret
-endclass
-
-
-class Node
-  jmp   13
-
-@new
-  res   Map
-  push
-  res   255
-  call
-  push
-  res   self
-  fld   children
-  res   None
-  push
-  res   self
-  fld   value
-  res   self
-  ret
-  jmp   56
-
-@to_s
-  res   'Node('
-  set   tos
-  res   self
-  get   value
-  ifn   8
-  res   tos
-  push
-  res   'value='
-  call  extend
-  push
-  res   self
-  get   value
-  call  extend
-  nblk
-  res   self
-  get   children
-  push
-  call  iter
-  push
-  dup
-  call  has_next
-  ifn   27
-  dup
-  call  next
-  push
-  tget  0
-  set   k
-  peek
-  res
-  tget  1
-  set   v
-  res   tos
-  push
-  res   concat
-  push
-  res   '),'
-  push
-  res   v
-  push
-  res   '->'
-  push
-  res   k
-  push
-  res   '('
-  push
-  tupl  5
-  call
-  call  extend
-  jmp   -30
-  res
-  bblck
-  res   tos
-  push
-  res   ')'
-  call  extend
-  ret
-endclass
-
-
-class Trie
-  jmp   8
-
-@new
-  res   Node
-  push
-  call
-  push
-  res   self
-  fld   root
-  res   self
-  ret
-  jmp   74
-
-@insert
-  push
-  tget  0
-  set   key
-  peek
-  res
-  tget  1
-  set   value
-  res   self
-  push
-  res   key
-  push
-  res   self
-  get   root
-  push
-  tupl  2
-  call  find_node
-  set   index_last_char
-  push
-  res   node
-  push
-  tupl  2
-  res   index_last_char
-  not
-  ifn   2
-  res   0
-  set   index_last_char
-  nblk
-  res   key
-  push
-  res   key
-  get   len
-  push
-  res   index_last_char
-  push
-  tupl  2
-  call  substr
-  push
-  call  iter
-  push
-  dup
-  call  has_next
-  ifn   25
-  dup
-  call  next
-  push
-  tget  0
-  set   i
-  peek
-  res
-  tget  1
-  set   char
-  res   Node
-  push
-  call
-  push
-  res   node
-  get   children
-  push
-  res   char
-  aset
-  res   node
-  get   children
-  push
-  res   char
-  aidx
-  set   node
-  jmp   -28
-  res
-  bblck
-  res   value
-  push
-  res   node
-  fld   value
-  ret
-  jmp   56
-
-@find_node
-  push
-  tget  0
-  set   node
-  peek
-  res
-  tget  1
-  set   key
-  res   None
-  set   index_last_char
-  nblk
-  res   key
-  push
-  call  iter
-  push
-  dup
-  call  has_next
-  ifn   31
-  dup
-  call  next
-  push
-  tget  0
-  set   i
-  peek
-  res
-  tget  1
-  set   char
-  res   node
-  get   children
-  push
-  res   char
-  call  __in__
-  if    9
-  res   i
-  set   index_last_char
-  res   index_last_char
-  push
-  res   node
-  push
-  tupl  2
-  ret
-  jmp   6
-  res   node
-  get   children
-  push
-  res   char
-  aidx
-  set   node
-  jmp   -34
-  res
-  bblck
-  res   index_last_char
-  push
-  res   node
-  push
-  tupl  2
-  ret
-  jmp   23
-
-@find
-  set   key
-  res   self
-  push
-  res   key
-  push
-  res   self
-  get   root
-  push
-  tupl  2
-  call  find_node
-  set   i
-  push
-  res   node
-  push
-  tupl  2
-  res   node
-  not
-  ifn   2
-  res   None
-  ret
-  res   node
-  get   value
-  ret
-  jmp   43
-
-@collect_child_values
-  set   node
-  res   node
-  get   value
-  ifn   5
-  res   node
-  get   value
-  push
-  anew  1
-  ret
-  anew
-  set   result
-  nblk
-  res   node
-  get   children
-  push
-  call  iter
-  push
-  dup
-  call  has_next
-  ifn   19
-  dup
-  call  next
-  push
-  tget  0
-  set   k
-  peek
-  res
-  tget  1
-  set   child
-  res   child
-  ifn   7
-  res   result
-  push
-  res   self
-  push
-  res   child
-  call  collect_child_values
-  call  extend
-  jmp   -22
-  res
-  bblck
-  res   result
-  ret
-  jmp   36
-
-@find_by_prefix
-  set   key
-  res   self
-  push
-  res   key
-  push
-  res   self
-  get   root
-  push
-  tupl  2
-  call  find_node
-  set   i
-  push
-  res   node
-  push
-  tupl  2
-  res   node
-  not
-  ifn   2
-  anew
-  ret
-  res   i
-  ifn   9
-  res   i
-  push
-  res   key
-  get   len
-  push
-  lt
-  ifn   2
-  anew
-  ret
-  res   self
-  push
-  res   node
-  call  collect_child_values
-  ret
-  jmp   12
-
-@to_s
-  res   concat
-  push
-  res   ')'
-  push
-  res   self
-  get   root
-  push
-  res   'Trie('
-  push
-  tupl  3
-  call
   ret
 endclass
 

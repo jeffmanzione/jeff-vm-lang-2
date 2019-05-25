@@ -77,6 +77,9 @@ char *METHOD_KEY;
 char *CALL_KEY;
 char *STACK_SIZE_NAME;
 char *IS_ITERATOR_BLOCK_KEY;
+char *ARGS_KEY;
+char *ARGS_NAME;
+char *THREADS_KEY;
 
 struct Chunk_ {
   char *block;
@@ -159,6 +162,9 @@ void strings_insert_constants() {
   CALL_KEY = strings_intern("call");
   STACK_SIZE_NAME = strings_intern("$stack_size");
   IS_ITERATOR_BLOCK_KEY = strings_intern("$is_iterator_block");
+  ARGS_KEY = strings_intern("$args");
+  ARGS_NAME = strings_intern("args");
+  THREADS_KEY = strings_intern("$threads");
 }
 
 void strings_init() {
@@ -167,7 +173,7 @@ void strings_init() {
   strings.tail = strings.chunk->block;
   strings.end = strings.tail + strings.chunk->sz;
   set_init(&strings.strings, DEFAULT_HASHTABLE_SIZE, string_hasher,
-      string_comparator);
+           string_comparator);
   strings_insert_constants();
 }
 
@@ -188,7 +194,7 @@ char *strings_intern_range(const char str[], int start, int end) {
 
 char *strings_intern(const char str[]) {
   mutex_await(strings.mutex, INFINITE);
-  char *str_lookup = (char *) set_lookup(&strings.strings, str);
+  char *str_lookup = (char *)set_lookup(&strings.strings, str);
   if (NULL != str_lookup) {
     mutex_release(strings.mutex);
     return str_lookup;

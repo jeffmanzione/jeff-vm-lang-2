@@ -15,6 +15,7 @@
 
 #include "datastructure/expando.h"
 #include "datastructure/map.h"
+#include "datastructure/queue2.h"
 #include "datastructure/set.h"
 #include "ltable/ltable.h"
 
@@ -35,7 +36,7 @@ typedef struct ElementContainer_ ElementContainer;
 typedef struct Thread_ Thread;
 typedef struct Object_ Objectt;
 typedef struct ExternalData_ ExternalData;
-typedef Element (*ExternalFunction)(VM *, Thread *, ExternalData *, Element);
+typedef Element (*ExternalFunction)(VM *, Thread *, ExternalData *, Element *);
 
 // Do not manually access any of these =(
 typedef enum { INT, FLOAT, CHAR } ValType;
@@ -105,14 +106,14 @@ Element string_add(VM *vm, Element str1, Element str2);
 
 Element create_tuple(MemoryGraph *graph);
 Element create_module(VM *vm, const Module *module);
-Element create_function(VM *vm, Element module, uint32_t ins,
-                        const char name[]);
+Element create_function(VM *vm, Element module, uint32_t ins, const char name[],
+                        Q *args);
 Element create_external_function(VM *vm, Element module, const char name[],
                                  ExternalFunction external_fn);
 Element create_external_method(VM *vm, Element class, const char name[],
                                ExternalFunction external_fn);
 Element create_method(VM *vm, Element module, uint32_t ins, Element class,
-                      const char name[]);
+                      const char name[], Q *args);
 Element create_method_instance(MemoryGraph *graph, Element object,
                                Element method);
 
@@ -121,8 +122,10 @@ Value value_negate(Value val);
 
 Element obj_lookup(Object *obj, CommonKey key);
 void obj_set_field(Element elt, const char field_name[], Element field_val);
+ElementContainer *obj_get_field_obj_raw(Object *obj, const char field_name[]);
 Element obj_get_field_obj(Object *obj, const char field_name[]);
 Element obj_get_field(Element elt, const char field_name[]);
+Element obj_get_field_ptr(Element *elt, const char field_name[]);
 Element obj_deep_lookup(Object *obj, const char name[]);
 void obj_delete_ptr(Object *obj, bool free_mem);
 

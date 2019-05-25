@@ -14,11 +14,13 @@
 #include "ltable/ltable.h"
 
 #define ISOBJECT(elt) ((elt).type == OBJECT)
-#define ISCLASS_OBJ(cobj) (class_class.obj == obj_lookup((cobj), CKey_class).obj)
-#define ISCLASS(elt) (ISOBJECT(elt) && class_class.obj ==                      \
-                                         obj_lookup((elt).obj, CKey_class).obj)
-#define ISTYPE(elt, class) (ISCLASS(class) && ISOBJECT(elt) &&                 \
-                               obj_lookup((elt).obj, CKey_class).obj == (class).obj)
+#define ISCLASS_OBJ(cobj) \
+  (class_class.obj == obj_lookup((cobj), CKey_class).obj)
+#define ISCLASS(elt) \
+  (ISOBJECT(elt) && class_class.obj == obj_lookup((elt).obj, CKey_class).obj)
+#define ISTYPE(elt, class)            \
+  (ISCLASS(class) && ISOBJECT(elt) && \
+   obj_lookup((elt).obj, CKey_class).obj == (class).obj)
 #define ISVALUE(elt) ((elt).type == VALUE)
 
 extern Element class_class;
@@ -34,15 +36,16 @@ extern Element class_external_method;
 extern Element class_methodinstance;
 extern Element class_module;
 extern Element class_thread;
+// extern Element class_context;
 
 void class_init(VM *vm);
 void class_fill_unsafe(VM *vm, Element class, const char class_name[],
-    Element parent_class);
+                       Element parent_class);
 Element class_create(VM *vm, const char class_name[], Element parent_class);
 Element class_create_list(VM *vm, const char class_name[],
-    Expando *parent_classes);
+                          Expando *parent_classes);
 void class_fill_list(VM *vm, Element class, const char class_name[],
-    Expando *parent_classes);
+                     Expando *parent_classes);
 
 bool inherits_from(Element class, Element super);
 

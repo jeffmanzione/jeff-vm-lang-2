@@ -1,6 +1,7 @@
 module builtin
 
 import io
+import math
 
 def load_module(path) {
   load_module__(path)  ; External C function
@@ -13,6 +14,9 @@ def str(input) {
 }
 
 def concat(args) {
+  if ~args {
+    return 'None'
+  }
   if ~(args.len) {
     return str(args)
   }
@@ -69,6 +73,13 @@ class Range {
   }
   def to_s() {
     ':'.join(str(self.start), str(self.inc), str(self.end))
+  }
+  def list() {
+    result = []
+    for i=self.start, i<self.end, i=i+self.inc {
+      result.append(i)
+    }
+    result
   }
 }
 
@@ -264,29 +275,48 @@ class Array {
   def partition(c, l, h) {
     x = self[h]
     i = l - 1
-    for j=l, j<=h-1, j=j+1 {
-      if c(self[j], x) <= 0 {
+    for j=l, j<h, j=j+1 {
+      if c(self[j], x) < 0 {
         i = i+1
-        tmp = self[i]
-        self[i] = self[j]
-        self[j] = tmp
+        self.swap(i,j)
       }
     }
-    tmp = self[i+1]
-    self[i+1] = self[h]
-    self[h] = tmp
-    i+1
+    i = i+1
+    self.swap(i,h)
+    i-1
   }
-  def qsort(c, l, h) {
-    if c(l, h) < 0 {
-      p = self.partition(c, l, h)
-      self.qsort(c, l, p-1)
-      self.qsort(c, p+1, h)
+  def introsort(maxdepth, c, l, h) {
+    if l < h {
+      ; If recursed too many times, switch to insertion sort.
+      if maxdepth <= 0 {
+        self.inssort(c,l,h)
+      } else { ; Otherwise quicksort.
+        p = self.partition(c, l, h)
+        self.introsort(maxdepth-1, c, l, p)
+        self.introsort(maxdepth-1, c, p+1, h)
+      }
     }
     self
   }
-  def sort(c) {
-    self.qsort(c, 0, self.len-1)
+  def inssort(c, l=0, h=self.len-1) {
+    i = l + 1
+    while i < h {
+      x = self[i]
+      j = i-1
+      while (j >= l)  {
+        if (self[j] <= x) {
+          break
+        }
+        j = j - 1
+      }
+      self.shift(j+1, i-(j+1), 1)
+      self[j+1] = x
+      i = i + 1
+    }
+    self
+  }
+  def sort() {
+    self.introsort(math.log(self.len) * 2, cmp, 0, self.len-1)
   }
   def iter() {
     IndexIterator(self)
@@ -315,21 +345,20 @@ class String {
     self[self.len] = elt
     self
   }
-  def extend(arr) {
+  def extend(arr, start=None, end=None) {
     if ~(arr is String) raise Error('Cannot extend something not a String.')
-    self.extend__(arr)
+    if start {
+      if (start < 0) | (start > arr.len) {
+        raise Error('Cannot extend with range before the start.')
+      }
+      if ~end {
+        end = arr.len
+      }
+      self.extend_range__(arr, start, end)
+    } else self.extend__(arr)
     self
   }
-  def find(args) {
-    index = 0
-    if args is Tuple {
-      substr = args[0]
-      index = args[1]
-    } else if args is String {
-      substr = args
-    } else {
-      raise Error(concat('Expected (String, int) or (String) input, but was.', args))
-    }
+  def find(substr, index=0) {
     self.find__(substr, index)
   }
   def __in__(substr) {

@@ -45,30 +45,35 @@ Element memory_graph_create_root_element(MemoryGraph *graph);
 Element memory_graph_new_node(MemoryGraph *graph);
 // Creates an edge from one node to another node
 void memory_graph_set_field(MemoryGraph *memory_graph, const Element parent,
-    const char field_name[], const Element field_val);
+                            const char field_name[], const Element field_val);
+void memory_graph_set_var(MemoryGraph *graph, const Element block,
+                          const char field_name[], const Element field_val);
 
 void memory_graph_array_push(MemoryGraph *graph, const Element parent,
-    const Element element);
+                             const Element element);
 
 void memory_graph_array_set(MemoryGraph *graph, const Element parent,
-    int64_t index, const Element element);
+                            int64_t index, const Element element);
 
 Element memory_graph_array_pop(MemoryGraph *graph, const Element parent);
 
 void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
-    const Element element);
+                                const Element element);
 Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent);
 
 Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
-    int index);
+                                  int index);
+
+void memory_graph_array_shift(MemoryGraph *graph, const Element parent,
+                              int start, int count, int shift);
 
 Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
-    const Element a2);
+                                const Element a2);
 
 void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,
-    const Element elt);
+                            const Element elt);
 // Removes all unreachable nodes in the graph
-void memory_graph_free_space(MemoryGraph *memory_graph);
+int memory_graph_free_space(MemoryGraph *memory_graph);
 
 void memory_graph_print(const MemoryGraph *graph, FILE *file);
 
@@ -76,10 +81,10 @@ Array *extract_array(Element element);
 
 Mutex memory_graph_mutex(const MemoryGraph *graph);
 
-//Element memory_graph_new_thread();
+// Element memory_graph_new_thread();
 
 const Node *node_for(const Element *e);
-void acquire_all_mutex(const Node * const n1, const Node * const n2);
-void release_all_mutex(const Node * const n1, const Node * const n2);
+void acquire_all_mutex(const Node *const n1, const Node *const n2);
+void release_all_mutex(const Node *const n1, const Node *const n2);
 
 #endif /* MEMORY_GRAPH_H_ */

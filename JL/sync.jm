@@ -11,7 +11,7 @@ module sync
 class AtomicInt
   jmp   11
 
-@new
+@new(orig)
   set   orig
   push  orig
   res   self
@@ -25,7 +25,7 @@ class AtomicInt
   ret
   jmp   11
 
-@set
+@set(v)
   set   v
   res   self
   gtsh  mutex
@@ -53,7 +53,7 @@ class AtomicInt
   ret
   jmp   15
 
-@inc
+@inc(a)
   set   a
   res   self
   gtsh  mutex
@@ -91,7 +91,7 @@ endclass
 class ThreadPoolExecutor
   jmp   66
 
-@new
+@new(num_threads)
   set   num_threads
   push  num_threads
   res   self
@@ -207,7 +207,7 @@ class ThreadPoolExecutor
   ret
   jmp   16
 
-@execute_future
+@execute_future(f)
   set   f
   res   self
   gtsh  mutex
@@ -224,12 +224,10 @@ class ThreadPoolExecutor
   call  unlock
   res   f
   ret
-  jmp   24
+  jmp   21
 
-@execute
+@execute(fn,args)
   push
-  tget  0
-  set   fn
   tlen
   push
   push  1
@@ -239,7 +237,6 @@ class ThreadPoolExecutor
   tget  1
   jmp   1
   res   None
-  set   args
   push  Future
   push  self
   push  args
@@ -255,18 +252,9 @@ endclass
 
 
 class Future
-  jmp   43
+  jmp   34
 
-@new
-  push
-  tget  0
-  set   fn
-  peek
-  tget  1
-  set   args
-  res
-  tget  2
-  set   ex
+@new(fn,args,ex)
   push  fn
   res   self
   fld   fn
@@ -375,7 +363,7 @@ class Future
   ret
   jmp   28
 
-@thenDo
+@thenDo(fn)
   set   fn
   push  Future
   res   self

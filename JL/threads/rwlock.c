@@ -11,7 +11,8 @@
 #include "../external/external.h"
 #include "thread_interface.h"
 
-Element RWLock_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element RWLock_constructor(VM *vm, Thread *t, ExternalData *data,
+                           Element *arg) {
   RWLock *lock = create_rwlock();
   if (NULL == lock) {
     return throw_error(vm, t, "Failed to create RWLock.");
@@ -20,7 +21,8 @@ Element RWLock_constructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element RWLock_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element RWLock_deconstructor(VM *vm, Thread *t, ExternalData *data,
+                             Element *arg) {
   RWLock *lock = map_lookup(&data->state, strings_intern("lock"));
   if (NULL == lock) {
     return create_none();
@@ -29,7 +31,7 @@ Element RWLock_deconstructor(VM *vm, Thread *t, ExternalData *data, Element arg)
   return data->object;
 }
 
-Element RWLock_begin_read(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element RWLock_begin_read(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   RWLock *lock = map_lookup(&data->state, strings_intern("lock"));
   if (NULL == lock) {
     return throw_error(vm, t, "Failed to begin read RWLock.");
@@ -38,7 +40,7 @@ Element RWLock_begin_read(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element RWLock_end_read(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element RWLock_end_read(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   RWLock *lock = map_lookup(&data->state, strings_intern("lock"));
   if (NULL == lock) {
     return throw_error(vm, t, "Failed to end read RWLock.");
@@ -47,7 +49,8 @@ Element RWLock_end_read(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element RWLock_begin_write(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element RWLock_begin_write(VM *vm, Thread *t, ExternalData *data,
+                           Element *arg) {
   RWLock *lock = map_lookup(&data->state, strings_intern("lock"));
   if (NULL == lock) {
     return throw_error(vm, t, "Failed to begin write RWLock.");
@@ -56,7 +59,7 @@ Element RWLock_begin_write(VM *vm, Thread *t, ExternalData *data, Element arg) {
   return data->object;
 }
 
-Element RWLock_end_write(VM *vm, Thread *t, ExternalData *data, Element arg) {
+Element RWLock_end_write(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   RWLock *lock = map_lookup(&data->state, strings_intern("lock"));
   if (NULL == lock) {
     return throw_error(vm, t, "Failed to end write RWLock.");
@@ -66,15 +69,16 @@ Element RWLock_end_write(VM *vm, Thread *t, ExternalData *data, Element arg) {
 }
 
 Element add_rwlock_class(VM *vm, Element module) {
-  Element rwlock_class = create_external_class(vm, module,
-      strings_intern("RWLock"), RWLock_constructor, RWLock_deconstructor);
+  Element rwlock_class =
+      create_external_class(vm, module, strings_intern("RWLock"),
+                            RWLock_constructor, RWLock_deconstructor);
   add_external_method(vm, rwlock_class, strings_intern("acquire_read"),
-      RWLock_begin_read);
+                      RWLock_begin_read);
   add_external_method(vm, rwlock_class, strings_intern("release_read"),
-      RWLock_end_read);
+                      RWLock_end_read);
   add_external_method(vm, rwlock_class, strings_intern("acquire_write"),
-      RWLock_begin_write);
+                      RWLock_begin_write);
   add_external_method(vm, rwlock_class, strings_intern("release_write"),
-      RWLock_end_write);
+                      RWLock_end_write);
   return rwlock_class;
 }

@@ -68,6 +68,9 @@ extern char *METHODS_KEY;
 extern char *CALL_KEY;
 extern char *STACK_SIZE_NAME;
 extern char *IS_ITERATOR_BLOCK_KEY;
+extern char *ARGS_KEY;
+extern char *ARGS_NAME;
+extern char *THREADS_KEY;
 
 typedef struct Chunk_ Chunk;
 

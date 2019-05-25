@@ -122,7 +122,7 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
       ARENA_DEALLOC(NodeEdge, (NodeEdge *)ptr);
     }
     set_iterate(&node->children, delete_node_edge);
-    set_iterate(&node->children, delete_node_edge);
+    set_iterate(&node->parents, delete_node_edge);
   }
   set_finalize(&node->children);
   set_finalize(&node->parents);
@@ -339,6 +339,40 @@ void memory_graph_set_field(MemoryGraph *graph, const Element parent,
   //  release_mutex(parent.obj->node->access_mutex);
 }
 
+void memory_graph_set_var(MemoryGraph *graph, const Element block,
+                          const char field_name[], const Element field_val) {
+  ASSERT_NOT_NULL(graph);
+  ASSERT(OBJECT == block.type);
+  ASSERT_NOT_NULL(block.obj);
+  ElementContainer *container = obj_get_field_obj_raw(block.obj, field_name);
+
+  Element relevant_block;
+  Element parent = block;
+  while (NULL == container) {
+    parent = obj_lookup(parent.obj, CKey_parent);
+    if (NONE == parent.type) break;
+    container = obj_get_field_obj_raw(parent.obj, field_name);
+  }
+  if (NULL == container) {
+    relevant_block = block;
+  } else {
+    relevant_block = parent;
+  }
+
+  // If the field is already set to an object, remove the edge to the old
+  // child node.
+  if (NULL != container && OBJECT == container->elt.type) {
+    memory_graph_dec_edge(graph, relevant_block.obj, container->elt.obj);
+  }
+  if (OBJECT == field_val.type) {
+    memory_graph_inc_edge(graph, relevant_block.obj, field_val.obj);
+  }
+
+  //  wait_for_mutex(parent.obj->node->access_mutex, INFINITE);
+  obj_set_field(relevant_block, field_name, field_val);
+  //  release_mutex(parent.obj->node->access_mutex);
+}
+
 void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
   ASSERT_NOT_NULL(graph);
   if (set_lookup(marked, node)) {
@@ -360,8 +394,11 @@ void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
   set_iterate(&node->children, traverse_subtree_helper);
 }
 
-void memory_graph_free_space(MemoryGraph *graph) {
+int memory_graph_free_space(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
+
+  int nodes_deleted = 0;
+
   Set *marked = set_create_default();
   void traverse_graph(void *ptr) {
     Node *node = (Node *)ptr;
@@ -377,11 +414,17 @@ void memory_graph_free_space(MemoryGraph *graph) {
     if (set_lookup(marked, node)) {
       return;
     }
+    //    printf("Deleting ");
+    //    obj_to_str(&node->obj, stdout);
+    //    printf("\n");
+    //    fflush(stdout);
     node_delete(graph, node, /*free_mem=*/true);
+    nodes_deleted++;
     ASSERT_NULL(set_lookup(&graph->nodes, node));
   }
   set_iterate(&graph->nodes, delete_node_if_not_marked);
   set_delete(marked);
+  return nodes_deleted;
 }
 
 Array *extract_array(Element element) {
@@ -437,6 +480,11 @@ Element memory_graph_array_pop(MemoryGraph *graph, const Element parent) {
 
 void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
                                 const Element element) {
+  //  DEBUGF("ENQUEUE");
+  //  elt_to_str(element, stdout);
+  //  printf("\n");
+  //  fflush(stdout);
+
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
   Array_enqueue(arr, element);
@@ -468,6 +516,12 @@ Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
 
 Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent) {
   ASSERT_NOT_NULL(graph);
+
+  //  DEBUGF("ARRAY DEQUEUE");
+  //  elt_to_str(parent, stdout);
+  //  printf("\n");
+  //  fflush(stdout);
+
   Array *arr = extract_array(parent);
   Element element = Array_dequeue(arr);
   if (OBJECT == element.type) {
@@ -489,6 +543,29 @@ Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
   memory_graph_set_field(graph, parent, LENGTH_KEY,
                          create_int(Array_size(arr)));
   return element;
+}
+
+void memory_graph_array_shift(MemoryGraph *graph, const Element parent,
+                              int start, int count, int shift) {
+  ASSERT_NOT_NULL(graph);
+  if (shift == 0 || count == 0) {
+    return;
+  }
+  Array *arr = extract_array(parent);
+  int i;
+  int i_begin = (shift > 0) ? start + count : start + shift;
+  int i_end = (shift > 0) ? start + count + shift : start;
+  int array_size = Array_size(arr);
+  for (i = i_begin; i < i_end && i < array_size; i++) {
+    Element element = Array_get(arr, i);
+    if (OBJECT == element.type) {
+      memory_graph_dec_edge(graph, parent.obj, element.obj);
+    }
+  }
+  // TODO: Need to inc edges of members that are now present twice.
+  Array_shift_amount(arr, start, count, shift);
+  memory_graph_set_field(graph, parent, LENGTH_KEY,
+                         create_int(Array_size(arr)));
 }
 
 void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,

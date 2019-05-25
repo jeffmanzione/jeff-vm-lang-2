@@ -35,30 +35,34 @@ module net
   push
   res   self
   fld   UTF_8
+  res   '<'
+  push
+  res   self
+  fld   LT
+  res   '>'
+  push
+  res   self
+  fld   GT
+  res   '&lt;'
+  push
+  res   self
+  fld   LT_ESCAPED
+  res   '&gt;'
+  push
+  res   self
+  fld   GT_ESCAPED
 
 class Header
-  jmp   45
+  jmp   33
 
-@new
+@new(protocol,version,status_code,status,content_type,charset)
   push
-  tget  0
-  set   protocol
   peek
-  tget  1
-  set   version
   peek
-  tget  2
-  set   status_code
   peek
-  tget  3
-  set   status
   peek
-  tget  4
-  set   content_type
   peek
   res
-  tget  5
-  set   charset
   res   protocol
   push
   res   self
@@ -127,7 +131,7 @@ endclass
 
   jmp   245
 
-@parse_header
+@parse_header(header_text)
   set   header_text
   res   header_text
   push
@@ -375,28 +379,16 @@ endclass
   ret
 
 class HttpRequest
-  jmp   45
+  jmp   33
 
-@new
+@new(type,path,params,protocol,version,map)
   push
-  tget  0
-  set   type
   peek
-  tget  1
-  set   path
   peek
-  tget  2
-  set   params
   peek
-  tget  3
-  set   protocol
   peek
-  tget  4
-  set   version
   peek
   res
-  tget  5
-  set   map
   res   type
   push
   res   self
@@ -451,10 +443,15 @@ class HttpRequest
   ret
 endclass
 
-  jmp   107
+  jmp   127
 
-@parse_request
+@parse_request(req)
   set   req
+  res   io
+  push
+  res   req
+  call  println
+  ctch  104
   res   req
   push
   res   '\r\n'
@@ -560,59 +557,195 @@ endclass
   tupl  6
   call
   ret
+  jmp   12
+  set   e
+  res   io
+  push
+  res   e
+  push
+  res   io
+  get   ERROR
+  push
+  tupl  2
+  call  fprintln
+  res   None
   ret
-  jmp   61
+  res   Nil
+  set   $try_goto
+  ret
+  jmp   198
 
-@html_escape
+@html_escape(text)
   set   text
-  res   ''
-  set   result
-  nblk
   res   0
   set   i
+  anew
+  set   lts
+  nblk
   res   i
   push
   res   text
   get   len
   push
   lt
-  ifn   44
+  ifn   30
   res   text
   push
   res   i
+  push
+  res   LT
+  push
+  tupl  2
+  call  find
+  set   f
+  res   f
+  not
+  ifn   1
+  jmp   17
+  res   i
+  push
+  res   f
+  push
+  add
+  set   i
+  res   lts
+  push
+  res   i
+  call  append
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -38
+  bblck
+  res   0
+  set   i
+  nblk
+  res   i
+  push
+  res   text
+  get   len
+  push
+  lt
+  ifn   30
+  res   text
+  push
+  res   i
+  push
+  res   GT
+  push
+  tupl  2
+  call  find
+  set   f
+  res   f
+  not
+  ifn   1
+  jmp   17
+  res   i
+  push
+  res   f
+  push
+  add
+  set   i
+  res   lts
+  push
+  res   i
+  call  append
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -38
+  bblck
+  res   lts
+  get   len
+  push
+  res   0
+  push
+  eq
+  ifn   4
+  res   text
+  push
+  call  copy
+  ret
+  res   lts
+  push
+  res   cmp
+  call  sort
+  res   ''
+  set   result
+  res   0
+  set   old_i
+  nblk
+  res   0
+  set   i
+  res   i
+  push
+  res   lts
+  get   len
+  push
+  lt
+  ifn   64
+  res   text
+  push
+  res   lts
+  push
+  res   i
+  aidx
   aidx
   set   c
+  res   result
+  push
+  res   lts
+  push
+  res   i
+  aidx
+  push
+  res   old_i
+  push
+  res   text
+  push
+  tupl  3
+  call  extend
+  res   lts
+  push
+  res   i
+  aidx
+  push
+  res   1
+  push
+  add
+  set   old_i
   res   c
   push
-  res   '<'
+  res   LT
   push
   res   0
   aidx
   push
   eq
-  if    19
+  if    14
   res   c
   push
-  res   '>'
+  res   GT
   push
   res   0
   aidx
   push
   eq
-  if    5
+  ifn   4
   res   result
   push
-  res   c
-  call  append
-  jmp   4
-  res   result
-  push
-  res   '&gt;'
+  res   GT_ESCAPED
   call  extend
   jmp   4
   res   result
   push
-  res   '&lt;'
+  res   LT_ESCAPED
   call  extend
   res   i
   push
@@ -620,9 +753,150 @@ endclass
   push
   add
   set   i
-  jmp   -50
+  jmp   -70
   bblck
   res   result
+  push
+  res   lts
+  push
+  res   lts
+  get   len
+  push
+  res   1
+  push
+  sub
+  aidx
+  push
+  res   text
+  push
+  tupl  2
+  call  extend
+  res   result
+  ret
+  ret
+
+class RequestHandler
+  jmp   6
+
+@new
+  anew
+  push
+  res   self
+  fld   handlers
+  res   self
+  ret
+  jmp   13
+
+@register(match_fn,handler)
+  push
+  peek
+  res
+  res   self
+  get   handlers
+  push
+  res   handler
+  push
+  res   match_fn
+  push
+  tupl  2
+  call  append
+  ret
+  jmp   6
+
+@register_else(handler)
+  set   handler
+  res   handler
+  push
+  res   self
+  fld   elseHandler
+  ret
+  jmp   59
+
+@handle(request,args)
+  push
+  peek
+  res
+  nblk
+  res   self
+  get   handlers
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   30
+  dup
+  call  next
+  push
+  tget  0
+  set   _
+  peek
+  tget  1
+  push
+  tget  0
+  set   match_fn
+  peek
+  res
+  tget  1
+  set   handler
+  res
+  res   match_fn
+  push
+  res   request
+  call
+  ifn   9
+  res   handler
+  push
+  res   args
+  push
+  res   request
+  push
+  tupl  2
+  call
+  ret
+  jmp   -33
+  res
+  bblck
+  res   self
+  get   elseHandler
+  ifn   9
+  res   self
+  push
+  res   args
+  push
+  res   request
+  push
+  tupl  2
+  call  elseHandler
+  ret
+  res   None
+  ret
+  ret
+endclass
+
+  jmp   22
+
+@readEntireFile(path)
+  set   path
+  res   io
+  push
+  res   concat
+  push
+  res   '\\'
+  push
+  res   path
+  push
+  res   '/'
+  call  split
+  call  join
+  push
+  res   '.'
+  push
+  tupl  2
+  call
+  call  FileReader
+  push
+  call  getlines
   ret
   ret
   exit  0
