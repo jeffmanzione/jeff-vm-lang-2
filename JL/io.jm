@@ -207,7 +207,8 @@ class FileWriter
   call  puts
   res   self
   gtsh  fi
-  res   '\n'
+  res   '
+'
   call  puts
   ret
   jmp   4

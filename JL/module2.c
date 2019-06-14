@@ -31,12 +31,18 @@ struct Module_ {
   Tape *tape;
 };
 
-Module *module_create_tape(FileInfo *fi, Tape *tape) {
+Module *module_create(FileInfo *fi) {
   Module *m = ALLOC2(Module);
   m->file = NULL;
   m->fi = fi;
-  m->tape = tape;
   m->fn = NULL;
+  m->tape = NULL;
+  return m;
+}
+
+Module *module_create_tape(FileInfo *fi, Tape *tape) {
+  Module *m = module_create(fi);
+  m->tape = tape;
   return m;
 }
 
@@ -59,7 +65,10 @@ const char *module_filename(const Module const *m) {
 FileInfo *module_fileinfo(const Module const *m) { return m->fi; }
 
 DEB_FN(const char *, module_name, const Module const *m) {
-  ASSERT_NOT_NULL(m);
+  ASSERT(NOT_NULL(m));
+  if (NULL == m->tape) {
+    return "?";
+  }
   return tape_modulename(m->tape);
 }
 
@@ -147,6 +156,8 @@ uint32_t module_size(const Module *m) {
 }
 
 const Tape *module_tape(const Module *m) { return m->tape; }
+
+void module_set_tape(Module *m, Tape *tape) { m->tape = tape; }
 
 void module_delete(Module *m) {
   ASSERT_NOT_NULL(m);

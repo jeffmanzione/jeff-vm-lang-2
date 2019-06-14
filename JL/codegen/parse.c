@@ -68,7 +68,7 @@ Token *parser_next__(Parser *parser, Token **target) {
   ASSERT_NOT_NULL(parser);
   Token *to_return;
   while (parser->queue.size <= 0 &&
-         tokenize_line(&parser->line, parser->fi, &parser->queue, false))
+         tokenize_line(&parser->line, parser->fi, &parser->queue, true))
     ;
   if (parser->queue.size == 0) {
     to_return = NULL;

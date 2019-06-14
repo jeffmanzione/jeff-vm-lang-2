@@ -39,7 +39,7 @@ class StackLine {
         tos.extend(concat(self.mod.name,'.', self.caller.name))
       }
     } else {
-      tos.extend(self.mod.name)
+      tos.extend('\t').extend(self.mod.name)
     }
     tos.extend(concat('(', self.token.fn, ':', self.token.line, ')'))
   }
@@ -53,9 +53,9 @@ class Error {
     for i=1, i<$thread.$saved_blocks.len, i=i+1 {
       block = $thread.$saved_blocks[i]
       ; Skip non-function call blocks
-      if block.$is_iterator_block {
-        continue
-      }
+      ;if block.$is_iterator_block {
+      ;  continue
+      ;}
       self.stack_lines.append(StackLine(block))
     }
   }

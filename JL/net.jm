@@ -68,13 +68,16 @@ class Header
 
 @to_s
   push  concat
-  push  '\r\n\r\n'
+  push  '
+
+'
   res   self
   gtsh  charset
   push  '; charset='
   res   self
   gtsh  content_type
-  push  '\r\nContent-Type: '
+  push  '
+Content-Type: '
   res   self
   gtsh  status
   push  ' '
@@ -160,7 +163,8 @@ endclass
   push  1
   add
   push
-  push  '\r\n'
+  push  '
+'
   tupl  2
   call  find
   push
@@ -238,7 +242,8 @@ endclass
   push  1
   add
   push
-  push  '\r\n'
+  push  '
+'
   tupl  2
   call  find
   push
@@ -310,16 +315,14 @@ class HttpRequest
   ret
 endclass
 
-  jmp   102
+  jmp   99
 
 @parse_request(req)
   set   req
-  push  io
-  res   req
-  call  println
   ctch  104
   push  req
-  res   '\r\n'
+  res   '
+'
   call  split
   set   parts
   push  parts
@@ -594,9 +597,10 @@ class RequestHandler
   res   self
   fld   elseHandler
   ret
-  jmp   44
+  jmp   41
 
-@handle(request,args)
+@handle(request)
+  set   request
   nblk
   res   self
   gtsh  handlers
@@ -604,7 +608,7 @@ class RequestHandler
   push
   dup
   call  has_next
-  ifn   23
+  ifn   21
   dup
   call  next
   push
@@ -620,41 +624,32 @@ class RequestHandler
   push  match_fn
   res   request
   call
-  ifn   6
+  ifn   4
   push  handler
-  push  args
-  push  request
-  tupl  2
+  res   request
   call
   ret
-  jmp   -26
+  jmp   -24
   res
   bblck
   res   self
   get   elseHandler
-  ifn   6
+  ifn   4
   push  self
-  push  args
-  push  request
-  tupl  2
+  res   request
   call  elseHandler
   ret
   res   None
   ret
 endclass
 
-  jmp   16
+  jmp   11
 
-@readEntireFile(path)
+@read_entire_file(path)
   set   path
   push  io
   push  concat
-  push  '\\'
   push  path
-  res   '/'
-  call  split
-  call  join
-  push
   push  '.'
   tupl  2
   call

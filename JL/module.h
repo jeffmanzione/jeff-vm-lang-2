@@ -18,8 +18,7 @@
 
 typedef struct Module_ Module;
 
-// Module *module_create(const char fn[]);
-// Module *module_create_file(FILE *file);
+Module *module_create(FileInfo *fi);
 Module *module_create_tape(FileInfo *fi, Tape *tape);
 const char *module_filename(const Module const *m);
 void module_set_filename(Module *m, const char fn[]);
@@ -42,6 +41,7 @@ int32_t module_ref(const Module *m, const char ref_name[]);
 const Map *module_fn_args(const Module *m);
 uint32_t module_size(const Module *m);
 const Tape *module_tape(const Module *m);
+void module_set_tape(Module *m, Tape *tape);
 
 typedef void (*ClassAction)(const char *class_name, const Map *methods);
 void module_iterate_classes(const Module *m, ClassAction action);

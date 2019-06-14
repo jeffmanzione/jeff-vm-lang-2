@@ -71,7 +71,7 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
   const Tape *t = oh->tape;
   Token tok;
   token_fill(&tok, WORD, 0, 0, tape_modulename(t));
-  tape_module(new_tape, &tok);
+  new_tape->module(new_tape, &tok);
   int i, old_len = tape_len(t);
   Expando *old_index = expando(int, DEFAULT_EXPANDO_SIZE);
   Expando *new_index = expando(int, DEFAULT_EXPANDO_SIZE);
@@ -80,14 +80,14 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
     if (NULL != (text = map_lookup(&oh->i_to_class_ends, (void *)i))) {
       Token tok;
       token_fill(&tok, WORD, 0, 0, text);
-      tape_endclass(new_tape, &tok);
+      new_tape->endclass(new_tape, &tok);
     }
     if (NULL != (text = map_lookup(&oh->i_to_class_starts, (void *)i))) {
       Token tok;
       token_fill(&tok, WORD, 0, 0, text);
       Expando *parents;
       if (NULL == (parents = map_lookup(&t->class_parents, text))) {
-        tape_class(new_tape, &tok);
+        new_tape->class(new_tape, &tok);
       } else {
         Queue q_parents;
         queue_init(&q_parents);
@@ -95,7 +95,7 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
           queue_add(&q_parents, *((char **)ptr));
         }
         expando_iterate(parents, add_parent_class);
-        tape_class_with_parents(new_tape, &tok, &q_parents);
+        new_tape->class_with_parents(new_tape, &tok, &q_parents);
         queue_shallow_delete(&q_parents);
       }
     }
@@ -104,9 +104,9 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
       token_fill(&tok, WORD, 0, 0, text);
       Q *args = map_lookup(&t->fn_args, (void *)i);
       if (NULL == args) {
-        tape_label(new_tape, &tok);
+        new_tape->label(new_tape, &tok);
       } else {
-        tape_function_with_args(new_tape, &tok, Q_copy(args));
+        new_tape->function_with_args(new_tape, &tok, Q_copy(args));
       }
     }
     const InsContainer *c = tape_get(t, i);

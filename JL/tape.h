@@ -23,20 +23,16 @@ typedef struct {
   const Token *token;
 } InsContainer;
 
-typedef struct {
-  Expando *ins;
-  const char *module_name;
-  Map refs, classes, class_starts, class_ends, class_parents, fn_args;
-  Queue class_prefs;
-} Tape;
+typedef struct _Tape Tape;
 
-void tape_init(Tape *tape);
-void tape_finalize(Tape *tape);
+typedef int (*TapeInsFn)(Tape *tape, Op op, Token *token);
+typedef int (*TapeInsTextFn)(Tape *tape, Op op, const char text[],
+                             Token *token);
+typedef int (*TapeInsIntFn)(Tape *tape, Op op, int val, Token *token);
+typedef int (*TapeLabelFn)(Tape *tape, Token *token);
+typedef int (*TapeLabelQFn)(Tape *tape, Token *token, Queue *tokens);
+typedef int (*TapeLabelArgsFn)(Tape *tape, Token *token, Q *args);
 
-Tape *tape_create();
-void tape_delete(Tape *tape);
-
-int tape_insc(Tape *tape, const InsContainer *insc);
 int tape_ins(Tape *tape, Op op, Token *token);
 int tape_ins_text(Tape *tape, Op op, const char text[], Token *token);
 int tape_ins_int(Tape *tape, Op op, int val, Token *token);
@@ -53,6 +49,41 @@ int tape_module(Tape *tape, Token *token);
 int tape_class(Tape *tape, Token *token);
 int tape_class_with_parents(Tape *tape, Token *token, Queue *tokens);
 int tape_endclass(Tape *tape, Token *token);
+
+typedef struct {
+  TapeInsFn ins, ins_no_arg, ins_neg, ins_anon;
+  TapeInsTextFn ins_text;
+  TapeInsIntFn ins_int;
+  TapeLabelFn label, anon_label, module, class, endclass;
+  TapeLabelQFn class_with_parents;
+  TapeLabelArgsFn function_with_args, anon_function_with_args;
+} TapeFns;
+
+Tape *tape_create_fns(TapeFns *fns);
+void tapefns_init(TapeFns *fns);
+
+struct _Tape {
+  Expando *instructions;
+  const char *module_name;
+  Map refs, classes, class_starts, class_ends, class_parents, fn_args;
+  Queue class_prefs;
+
+  TapeInsFn ins, ins_no_arg, ins_neg, ins_anon;
+  TapeInsTextFn ins_text;
+  TapeInsIntFn ins_int;
+  TapeLabelFn label, anon_label, module, class, endclass;
+  TapeLabelQFn class_with_parents;
+  TapeLabelArgsFn function_with_args, anon_function_with_args;
+};
+
+void tape_init(Tape *tape, TapeFns *fns);
+void tape_finalize(Tape *tape);
+
+Tape *tape_create();
+void tape_delete(Tape *tape);
+
+int tape_insc(Tape *tape, const InsContainer *insc);
+char *anon_fn_for_token(Token *token);
 
 InsContainer *tape_get_mutable(const Tape *tape, int i);
 const InsContainer *tape_get(const Tape *tape, int i);

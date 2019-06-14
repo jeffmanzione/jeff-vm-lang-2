@@ -1,0 +1,241 @@
+module toy_server
+  rmdl  io
+  mdst  io
+  rmdl  net
+  mdst  net
+  rmdl  struct
+  mdst  struct
+  res   1
+  set   NUM_THREADS
+
+class ToyServer
+  jmp   139
+
+@new
+  res   net
+  push
+  call  init
+  res   'HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+
+'
+  push
+  res   self
+  fld   header
+  res   net
+  push
+  res   NUM_THREADS
+  push
+  res   0
+  push
+  res   80
+  push
+  res   net
+  get   SOCK_STREAM
+  push
+  res   net
+  get   AF_INET
+  push
+  tupl  5
+  call  Socket
+  push
+  res   self
+  fld   sock
+  res   struct
+  push
+  call  Cache
+  push
+  res   self
+  fld   cache
+  res   net
+  push
+  call  RequestHandler
+  push
+  res   self
+  fld   handler
+  res   self
+  get   handler
+  push
+  jmp   24
+
+@$anon_25_27(request)
+  set   request
+  res   self
+  get   cache
+  push
+  res   request
+  push
+  jmp   8
+
+@$anon_26_36(request)
+  set   request
+  res   net
+  push
+  res   request
+  get   path
+  call  read_entire_file
+  ret
+  ret
+  res   self
+  get   $anon_26_36
+  push
+  res   request
+  get   path
+  push
+  tupl  3
+  call  get
+  ret
+  res   self
+  get   $anon_25_27
+  push
+  jmp   7
+
+@$anon_24_27(request)
+  set   request
+  res   request
+  get   path
+  push
+  res   '.ico'
+  call  ends_with
+  ret
+  res   self
+  get   $anon_24_27
+  push
+  tupl  2
+  call  register
+  res   self
+  get   handler
+  push
+  jmp   48
+
+@$anon_30_32(request)
+  set   request
+  res   self
+  get   cache
+  push
+  res   request
+  push
+  jmp   32
+
+@$anon_31_36(request)
+  set   request
+  res   net
+  push
+  res   request
+  get   path
+  call  read_entire_file
+  set   text
+  res   request
+  get   path
+  push
+  res   '.html'
+  call  ends_with
+  not
+  if    3
+  res   text
+  ret
+  jmp   14
+  res   ''
+  push
+  res   '<pre>'
+  call  extend
+  push
+  res   net
+  push
+  res   text
+  call  html_escape
+  call  extend
+  push
+  res   '</pre>'
+  call  extend
+  ret
+  ret
+  res   self
+  get   $anon_31_36
+  push
+  res   request
+  get   path
+  push
+  tupl  3
+  call  get
+  ret
+  res   self
+  get   $anon_30_32
+  call  register_else
+  res   self
+  ret
+  jmp   69
+
+@run
+  nblk
+  res   True
+  ifn   57
+  res   io
+  push
+  res   'Listening...'
+  call  println
+  res   self
+  get   sock
+  push
+  call  accept
+  set   handle
+  res   handle
+  push
+  call  receive
+  set   msg
+  res   handle
+  push
+  res   self
+  get   header
+  call  send
+  res   net
+  push
+  res   msg
+  call  parse_request
+  set   request
+  res   request
+  if    5
+  res   io
+  push
+  res   'Failed'
+  call  println
+  jmp   23
+  res   io
+  push
+  res   concat
+  push
+  res   request
+  push
+  res   'Fetching '
+  push
+  tupl  2
+  call
+  call  println
+  res   self
+  get   handler
+  push
+  res   request
+  call  handle
+  set   file_lines
+  res   file_lines
+  ifn   4
+  res   handle
+  push
+  res   file_lines
+  call  send
+  res   handle
+  push
+  call  close
+  jmp   -60
+  bblck
+  res   self
+  get   sock
+  push
+  call  close
+  res   net
+  push
+  call  cleanup
+  ret
+endclass
+
+  exit  0

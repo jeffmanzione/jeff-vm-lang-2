@@ -47,12 +47,14 @@ void vm_throw_error(VM *vm, Thread *t, Ins ins, const char fmt[], ...) {
   va_end(args);
   Element error_msg = string_create(vm, buffer);
   Element error_module = vm_lookup_module(vm, strings_intern("error"));
+  ASSERT(NONE != error_module.type);
   Element error_class = obj_get_field(error_module, strings_intern("Error"));
   Element curr_block = t_current_block(t);
 
+  Element io_module = vm_lookup_module(vm, strings_intern("io"));
+  ASSERT(NONE != io_module.type);
   // TODO: Why do I need to do this? It should automatically init the module.
-  vm_maybe_initialize_and_execute(vm, t,
-                                  vm_lookup_module(vm, strings_intern("io")));
+  vm_maybe_initialize_and_execute(vm, t, io_module);
 
   memory_graph_set_field(vm->graph, curr_block, ERROR_KEY, create_int(1));
   t_set_resval(t, error_msg);
@@ -81,12 +83,14 @@ void catch_error(VM *vm, Thread *t) {
   }
   if (catch_goto.type == NONE) {
     Element error_module = vm_lookup_module(vm, strings_intern("error"));
+    ASSERT(NONE != error_module.type);
     Element raise_error =
         obj_get_field(error_module, strings_intern("raise_error"));
 
+    Element io_module = vm_lookup_module(vm, strings_intern("io"));
+    ASSERT(NONE != io_module.type);
     // TODO: Why do I need to do this? It should automatically init the module.
-    vm_maybe_initialize_and_execute(vm, t,
-                                    vm_lookup_module(vm, strings_intern("io")));
+    vm_maybe_initialize_and_execute(vm, t, io_module);
 
     vm_call_fn(vm, t, error_module, raise_error);
     t_shift_ip(t, 1);
@@ -98,11 +102,9 @@ void catch_error(VM *vm, Thread *t) {
   fflush(stderr);
 }
 
-Element vm_lookup_module(const VM *vm, const char module_name[]) {
+DEB_FN(Element, vm_lookup_module, const VM *vm, const char module_name[]) {
   ASSERT(NOT_NULL(vm), NOT_NULL(module_name));
-  Element module = obj_get_field(vm->modules, module_name);
-  ASSERT(NONE != module.type);
-  return module;
+  return obj_get_field(vm->modules, module_name);
 }
 
 void vm_add_string_class(VM *vm) { merge_string_class(vm, class_string); }
@@ -432,7 +434,6 @@ void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
   //  elt_to_str(parent, stdout);
   //  printf("\n");
   //  fflush(stdout);
-
   vm_maybe_initialize_and_execute(vm, t, parent);
 
   Element new_block = t_new_block(t, parent, obj);
@@ -840,7 +841,6 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
   bool has_error = false;
   switch (ins.op) {
     case SET:
-      DEBUGF("Here");
       if (is_const_ref(block.obj, ins.str)) {
         vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
         return true;
@@ -982,6 +982,12 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       break;
     case RMDL:
       module = vm_lookup_module(vm, ins.str);
+      if (NONE == module.type) {
+        vm_throw_error(vm, t, ins,
+                       "Module '%s' does not exist. Did you include the file?",
+                       ins.str);
+        return true;
+      }
       t_set_resval(t, module);
       // TODO: Why do I need this for interpreter mode?
       memory_graph_set_field(vm->graph, block, ins.str, module);
@@ -1157,19 +1163,19 @@ bool execute(VM *vm, Thread *t) {
 
   Ins ins = t_current_ins(t);
 
-#ifdef DEBUG
+  //#ifdef DEBUG
   //  mutex_await(vm->debug_mutex, INFINITE);
-//  fflush(stderr);
-//  fprintf(stdout, "module(%s,t=%d) ",
-//  module_name(t_get_module(t).obj->module),
-//          (int)t->id);
-//  fflush(stdout);
-//  ins_to_str(ins, stdout);
-//  fprintf(stdout, "\n");
-//  fflush(stdout);
-//  fflush(stderr);
-//  mutex_release(vm->debug_mutex);
-#endif
+  //  fflush(stderr);
+  //  fprintf(stdout, "module(%s,t=%d) ",
+  //  module_name(t_get_module(t).obj->module),
+  //          (int)t->id);
+  //  fflush(stdout);
+  //  ins_to_str(ins, stdout);
+  //  fprintf(stdout, "\n");
+  //  fflush(stdout);
+  //  fflush(stderr);
+  //  mutex_release(vm->debug_mutex);
+  //#endif
 
   bool status;
   switch (ins.param) {
@@ -1215,15 +1221,8 @@ void vm_maybe_initialize_and_execute(VM *vm, Thread *t,
   t_new_block(t, module_element, module_element);
   t_set_module(t, module_element, 0);
   //  int i = 0;
-  while (execute(vm, t)) {
-    //    ////DEBUGF("EXECUTING INSTRUCTION #%d", i);
-    //    if (0 == ((i+1) % 100)) {
-    //      ////DEBUGF("FREEING SPACE YAY (%d)", i);
-    //      memory_graph_free_space(vm->graph);
-    //      ////DEBUGF("DONE FREEING SPACE", i);
-    //    }
-    //    i++;
-  }
+  while (execute(vm, t))
+    ;
   t_back(t);
 
   t_set_resval(t, memory_graph_array_pop(vm->graph, get_old_resvals(t)));

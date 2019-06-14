@@ -94,7 +94,9 @@ class Header
 @to_s
   res   concat
   push
-  res   '\r\n\r\n'
+  res   '
+
+'
   push
   res   self
   get   charset
@@ -104,7 +106,8 @@ class Header
   res   self
   get   content_type
   push
-  res   '\r\nContent-Type: '
+  res   '
+Content-Type: '
   push
   res   self
   get   status
@@ -227,7 +230,8 @@ endclass
   push
   add
   push
-  res   '\r\n'
+  res   '
+'
   push
   tupl  2
   call  find
@@ -337,7 +341,8 @@ endclass
   push
   add
   push
-  res   '\r\n'
+  res   '
+'
   push
   tupl  2
   call  find
@@ -443,18 +448,15 @@ class HttpRequest
   ret
 endclass
 
-  jmp   127
+  jmp   123
 
 @parse_request(req)
   set   req
-  res   io
-  push
-  res   req
-  call  println
   ctch  104
   res   req
   push
-  res   '\r\n'
+  res   '
+'
   call  split
   set   parts
   res   parts
@@ -810,12 +812,10 @@ class RequestHandler
   res   self
   fld   elseHandler
   ret
-  jmp   59
+  jmp   49
 
-@handle(request,args)
-  push
-  peek
-  res
+@handle(request)
+  set   request
   nblk
   res   self
   get   handlers
@@ -824,7 +824,7 @@ class RequestHandler
   push
   dup
   call  has_next
-  ifn   30
+  ifn   26
   dup
   call  next
   push
@@ -844,29 +844,21 @@ class RequestHandler
   push
   res   request
   call
-  ifn   9
+  ifn   5
   res   handler
   push
-  res   args
-  push
   res   request
-  push
-  tupl  2
   call
   ret
-  jmp   -33
+  jmp   -29
   res
   bblck
   res   self
   get   elseHandler
-  ifn   9
+  ifn   5
   res   self
   push
-  res   args
-  push
   res   request
-  push
-  tupl  2
   call  elseHandler
   ret
   res   None
@@ -874,21 +866,15 @@ class RequestHandler
   ret
 endclass
 
-  jmp   22
+  jmp   15
 
-@readEntireFile(path)
+@read_entire_file(path)
   set   path
   res   io
   push
   res   concat
   push
-  res   '\\'
-  push
   res   path
-  push
-  res   '/'
-  call  split
-  call  join
   push
   res   '.'
   push
@@ -897,6 +883,5 @@ endclass
   call  FileReader
   push
   call  getlines
-  ret
   ret
   exit  0

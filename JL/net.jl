@@ -69,7 +69,6 @@ class HttpRequest {
 }
 
 def parse_request(req) {
-  io.println(req)
   try {
     parts = req.split('\r\n')
     request = parts[0].trim()
@@ -140,19 +139,19 @@ class RequestHandler {
   def register_else(handler) {
     self.elseHandler = handler
   }
-  def handle(request, args) {
-    for _,(match_fn, handler) in self.handlers {
+  def handle(request) {
+    for _, (match_fn, handler) in self.handlers {
       if match_fn(request) {
-        return handler(request, args)
+        return handler(request)
       }
     }
     if self.elseHandler {
-      return self.elseHandler(request, args)
+      return self.elseHandler(request)
     }
     return None
   }
 }
 
-def readEntireFile(path) {
-  return io.FileReader(concat('.', '\\'.join(path.split('/')))).getlines()
+def read_entire_file(path) {
+  io.FileReader(concat('.', path)).getlines()
 }

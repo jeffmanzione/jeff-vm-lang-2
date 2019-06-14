@@ -212,15 +212,14 @@ class Array {
     }
     return self
   }
+  def elt_to_str(elt) {
+    if elt is String {
+      return '\''.extend(elt).extend('\'')
+    }
+    return str(elt)
+  }
   def to_s() {
-    strng = '['
-    if self.len > 0 {
-      strng.extend(str(self[0]))
-    }
-    for i=1, i<self.len, i=i+1 {
-      strng.extend(',').extend(str(self[i]))
-    }
-    strng.extend(']')
+    '['.extend(','.join(self.map(self.elt_to_str))).extend(']')
   }
   def map(f) {
     arr = []

@@ -1,0 +1,194 @@
+module toy_server
+  rmdl  io
+  mdst  io
+  rmdl  net
+  mdst  net
+  rmdl  struct
+  mdst  struct
+  res   1
+  set   NUM_THREADS
+
+class ToyServer
+  jmp   109
+
+@new
+  push  net
+  call  init
+  push  'HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+
+'
+  res   self
+  fld   header
+  push  net
+  push  NUM_THREADS
+  push  0
+  push  80
+  res   net
+  gtsh  SOCK_STREAM
+  res   net
+  gtsh  AF_INET
+  tupl  5
+  call  Socket
+  push
+  res   self
+  fld   sock
+  push  struct
+  call  Cache
+  push
+  res   self
+  fld   cache
+  push  net
+  call  RequestHandler
+  push
+  res   self
+  fld   handler
+  res   self
+  gtsh  handler
+  jmp   18
+
+@$anon_25_27(request)
+  set   request
+  res   self
+  gtsh  cache
+  push  request
+  jmp   6
+
+@$anon_26_36(request)
+  set   request
+  push  net
+  res   request
+  get   path
+  call  read_entire_file
+  ret
+  res   self
+  gtsh  $anon_26_36
+  res   request
+  gtsh  path
+  tupl  3
+  call  get
+  ret
+  res   self
+  gtsh  $anon_25_27
+  jmp   5
+
+@$anon_24_27(request)
+  set   request
+  gtsh  path
+  res   '.ico'
+  call  ends_with
+  ret
+  res   self
+  gtsh  $anon_24_27
+  tupl  2
+  call  register
+  res   self
+  gtsh  handler
+  jmp   40
+
+@$anon_30_32(request)
+  set   request
+  res   self
+  gtsh  cache
+  push  request
+  jmp   28
+
+@$anon_31_36(request)
+  set   request
+  push  net
+  res   request
+  get   path
+  call  read_entire_file
+  set   text
+  res   request
+  gtsh  path
+  res   '.html'
+  call  ends_with
+  not
+  if    3
+  res   text
+  ret
+  jmp   12
+  push  ''
+  res   '<pre>'
+  call  extend
+  push
+  push  net
+  res   text
+  call  html_escape
+  call  extend
+  push
+  res   '</pre>'
+  call  extend
+  ret
+  ret
+  res   self
+  gtsh  $anon_31_36
+  res   request
+  gtsh  path
+  tupl  3
+  call  get
+  ret
+  res   self
+  get   $anon_30_32
+  call  register_else
+  res   self
+  ret
+  jmp   52
+
+@run
+  nblk
+  res   True
+  ifn   42
+  push  io
+  res   'Listening...'
+  call  println
+  res   self
+  gtsh  sock
+  call  accept
+  set   handle
+  push  handle
+  call  receive
+  set   msg
+  push  handle
+  res   self
+  get   header
+  call  send
+  push  net
+  res   msg
+  call  parse_request
+  set   request
+  if    4
+  push  io
+  res   'Failed'
+  call  println
+  jmp   16
+  push  io
+  push  concat
+  push  request
+  push  'Fetching '
+  tupl  2
+  call
+  call  println
+  res   self
+  gtsh  handler
+  res   request
+  call  handle
+  set   file_lines
+  ifn   3
+  push  handle
+  res   file_lines
+  call  send
+  push  handle
+  call  close
+  jmp   -45
+  bblck
+  res   self
+  gtsh  sock
+  call  close
+  push  net
+  call  cleanup
+  ret
+endclass
+
+  exit  0

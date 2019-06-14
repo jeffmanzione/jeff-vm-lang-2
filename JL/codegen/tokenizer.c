@@ -15,9 +15,10 @@
 #include "../graph/memory.h"
 #include "../shared.h"
 
-char *keyword_to_type[] = { "if", "then", "else", "def", "new", "field",
-    "class", "while", "for", "break", "continue", "return", "as", "is", "try",
-    "catch", "raise", "import", "module", "exit", "in", "notin", "const" };
+char *keyword_to_type[] = {
+    "if",    "then",   "else",     "def",    "new", "field", "class", "while",
+    "for",   "break",  "continue", "return", "as",  "is",    "try",   "catch",
+    "raise", "import", "module",   "exit",   "in",  "notin", "const"};
 
 struct FileInfo_ {
   char *name;
@@ -34,9 +35,7 @@ LineInfo *line_info(FileInfo *fi, char line_text[], int line_num) {
   return li;
 }
 
-void line_info_delete(LineInfo *li) {
-  DEALLOC(li);
-}
+void line_info_delete(LineInfo *li) { DEALLOC(li); }
 
 FileInfo *file_info(const char fn[]) {
   FILE *file = FILE_FN(fn, "r");
@@ -74,10 +73,10 @@ void file_info_delete(FileInfo *fi) {
   DEALLOC(fi);
 }
 
-LineInfo* file_info_append(FileInfo *fi, char line_text[]) {
+LineInfo *file_info_append(FileInfo *fi, char line_text[]) {
   int num_lines = fi->num_lines;
-  LineInfo *li = fi->lines[fi->num_lines++] = line_info(fi, line_text,
-      num_lines);
+  LineInfo *li = fi->lines[fi->num_lines++] =
+      line_info(fi, line_text, num_lines);
   if (fi->num_lines >= fi->array_len) {
     fi->array_len += DEFAULT_NUM_LINES;
     fi->lines = REALLOC(fi->lines, LineInfo *, fi->array_len);
@@ -92,16 +91,12 @@ const LineInfo *file_info_lookup(const FileInfo *fi, int line_num) {
   return fi->lines[line_num - 1];
 }
 
-int file_info_len(const FileInfo *fi) {
-  return fi->num_lines;
-}
+int file_info_len(const FileInfo *fi) { return fi->num_lines; }
 
-const char *file_info_name(const FileInfo *fi) {
-  return fi->name;
-}
+const char *file_info_name(const FileInfo *fi) { return fi->name; }
 
 void token_fill(Token *tok, TokenType type, int line, int col,
-    const char text[]) {
+                const char text[]) {
   tok->type = type;
   tok->line = line;
   tok->col = col;
@@ -126,46 +121,42 @@ Token *token_copy(Token *tok) {
 
 bool is_special_char(const char c) {
   switch (c) {
-  case '(':
-  case ')':
-  case '{':
-  case '}':
-  case '[':
-  case ']':
-  case '+':
-  case '-':
-  case '*':
-  case '/':
-  case '\\':
-  case '%':
-  case '&':
-  case '|':
-  case '^':
-  case '~':
-  case '!':
-  case '?':
-  case '@':
-  case '#':
-  case '<':
-  case '>':
-  case '=':
-  case ',':
-  case ':':
-  case '.':
-  case '\'':
-    return true;
-  default:
-    return false;
+    case '(':
+    case ')':
+    case '{':
+    case '}':
+    case '[':
+    case ']':
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '\\':
+    case '%':
+    case '&':
+    case '|':
+    case '^':
+    case '~':
+    case '!':
+    case '?':
+    case '@':
+    case '#':
+    case '<':
+    case '>':
+    case '=':
+    case ',':
+    case ':':
+    case '.':
+    case '\'':
+      return true;
+    default:
+      return false;
   }
 }
 
-bool is_numeric(const char c) {
-  return ('0' <= c && '9' >= c);
-}
+bool is_numeric(const char c) { return ('0' <= c && '9' >= c); }
 
-bool is_number(const char c) {
-  return is_numeric(c) || '.' == c;
-}
+bool is_number(const char c) { return is_numeric(c) || '.' == c; }
 
 bool is_alphabetic(const char c) {
   return ('A' <= c && 'Z' >= c) || ('a' <= c && 'z' >= c);
@@ -177,19 +168,17 @@ bool is_alphanumeric(const char c) {
 
 bool is_any_space(const char c) {
   switch (c) {
-  case ' ':
-  case '\t':
-  case '\n':
-  case '\r':
-    return true;
-  default:
-    return false;
+    case ' ':
+    case '\t':
+    case '\n':
+    case '\r':
+      return true;
+    default:
+      return false;
   }
 }
 
-bool is_whitespace(const char c) {
-  return ' ' == c || '\t' == c;
-}
+bool is_whitespace(const char c) { return ' ' == c || '\t' == c; }
 
 void read_word_from_stream(FILE *stream, char *buff) {
   int i = 0;
@@ -211,30 +200,30 @@ void fill_str(char buff[], char *start, char *end) {
 
 char char_unesc(char u) {
   switch (u) {
-  case 'a':
-    return '\a';
-  case 'b':
-    return '\b';
-  case 'f':
-    return '\f';
-  case 'n':
-    return '\n';
-  case 'r':
-    return '\r';
-  case 't':
-    return '\t';
-  case 'v':
-    return '\v';
-  case '\\':
-    return '\\';
-  case '\'':
-    return '\'';
-  case '\"':
-    return '\"';
-  case '\?':
-    return '\?';
-  default:
-    return u;
+    case 'a':
+      return '\a';
+    case 'b':
+      return '\b';
+    case 'f':
+      return '\f';
+    case 'n':
+      return '\n';
+    case 'r':
+      return '\r';
+    case 't':
+      return '\t';
+    case 'v':
+      return '\v';
+    case '\\':
+      return '\\';
+    case '\'':
+      return '\'';
+    case '\"':
+      return '\"';
+    case '\?':
+      return '\?';
+    default:
+      return u;
   }
 }
 
@@ -258,101 +247,101 @@ TokenType resolve_type(const char word[], int word_len, int *in_comment) {
     *in_comment = false;
   } else {
     switch (word[0]) {
-    case '(':
-      type = LPAREN;
-      break;
-    case ')':
-      type = RPAREN;
-      break;
-    case '{':
-      type = LBRCE;
-      break;
-    case '}':
-      type = RBRCE;
-      break;
-    case '[':
-      type = LBRAC;
-      break;
-    case ']':
-      type = RBRAC;
-      break;
-    case '+':
-      type = word[1] == '+' ? INCREMENT : PLUS;
-      break;
-    case '-':
-      type = word[1] == '>' ? RARROW : (word[1] == '-' ? DECREMENT : MINUS);
-      break;
-    case '*':
-      type = STAR;
-      break;
-    case '/':
-      type = FSLASH;
-      break;
-    case '\\':
-      type = BSLASH;
-      break;
-    case '%':
-      type = PERCENT;
-      break;
-    case '&':
-      type = AMPER;
-      break;
-    case '|':
-      type = PIPE;
-      break;
-    case '^':
-      type = CARET;
-      break;
-    case '~':
-      type = TILDE;
-      break;
-    case '!':
-      type = word[1] == '=' ? NEQUIV : EXCLAIM;
-      break;
-    case '?':
-      type = QUESTION;
-      break;
-    case '@':
-      type = AT;
-      break;
-    case '#':
-      type = POUND;
-      break;
-    case '<':
-      type = word[1] == '-' ? LARROW : (word[1] == '=' ? LTHANEQ : LTHAN);
-      break;
-    case '>':
-      type = word[1] == '=' ? GTHANEQ : GTHAN;
-      break;
-    case '=':
-      type = word[1] == '=' ? EQUIV : EQUALS;
-      break;
-    case ',':
-      type = COMMA;
-      break;
-    case ':':
-      type = COLON;
-      break;
-    case '.':
-      type = PERIOD;
-      break;
-    case '\'':
-      type = STR;
-      break;
-    case CODE_COMMENT_CH:
-      type = SEMICOLON;
-      *in_comment = true;
-      break;
-    default:
-      if (is_number(word[0])) {
-        if (ends_with(word, "f") || contains_char(word, '.')) {
-          type = FLOATING;
+      case '(':
+        type = LPAREN;
+        break;
+      case ')':
+        type = RPAREN;
+        break;
+      case '{':
+        type = LBRCE;
+        break;
+      case '}':
+        type = RBRCE;
+        break;
+      case '[':
+        type = LBRAC;
+        break;
+      case ']':
+        type = RBRAC;
+        break;
+      case '+':
+        type = word[1] == '+' ? INCREMENT : PLUS;
+        break;
+      case '-':
+        type = word[1] == '>' ? RARROW : (word[1] == '-' ? DECREMENT : MINUS);
+        break;
+      case '*':
+        type = STAR;
+        break;
+      case '/':
+        type = FSLASH;
+        break;
+      case '\\':
+        type = BSLASH;
+        break;
+      case '%':
+        type = PERCENT;
+        break;
+      case '&':
+        type = AMPER;
+        break;
+      case '|':
+        type = PIPE;
+        break;
+      case '^':
+        type = CARET;
+        break;
+      case '~':
+        type = TILDE;
+        break;
+      case '!':
+        type = word[1] == '=' ? NEQUIV : EXCLAIM;
+        break;
+      case '?':
+        type = QUESTION;
+        break;
+      case '@':
+        type = AT;
+        break;
+      case '#':
+        type = POUND;
+        break;
+      case '<':
+        type = word[1] == '-' ? LARROW : (word[1] == '=' ? LTHANEQ : LTHAN);
+        break;
+      case '>':
+        type = word[1] == '=' ? GTHANEQ : GTHAN;
+        break;
+      case '=':
+        type = word[1] == '=' ? EQUIV : EQUALS;
+        break;
+      case ',':
+        type = COMMA;
+        break;
+      case ':':
+        type = COLON;
+        break;
+      case '.':
+        type = PERIOD;
+        break;
+      case '\'':
+        type = STR;
+        break;
+      case CODE_COMMENT_CH:
+        type = SEMICOLON;
+        *in_comment = true;
+        break;
+      default:
+        if (is_number(word[0])) {
+          if (ends_with(word, "f") || contains_char(word, '.')) {
+            type = FLOATING;
+          } else {
+            type = INTEGER;
+          }
         } else {
-          type = INTEGER;
+          type = word_type(word, word_len);
         }
-      } else {
-        type = word_type(word, word_len);
-      }
     }
   }
   return type;
@@ -361,32 +350,26 @@ TokenType resolve_type(const char word[], int word_len, int *in_comment) {
 bool is_complex(const char seq[]) {
   const char sec = seq[1];
   switch (seq[0]) {
-  case '+':
-    if (sec == '+' || sec == '=')
-      return true;
-    return false;
-  case '-':
-    if (sec == '-' || sec == '=' || sec == '>')
-      return true;
-    return false;
-  case '<':
-    if (sec == '-' || sec == '=' || sec == '<' || sec == '>')
-      return true;
-    return false;
-  case '>':
-    if (sec == '=' || sec == '>')
-      return true;
-    return false;
-  case '=':
-    if (sec == '=')
-      return true;
-    return false;
-  case '!':
-    if (sec == '=')
-      return true;
-    return false;
-  default:
-    return false;
+    case '+':
+      if (sec == '+' || sec == '=') return true;
+      return false;
+    case '-':
+      if (sec == '-' || sec == '=' || sec == '>') return true;
+      return false;
+    case '<':
+      if (sec == '-' || sec == '=' || sec == '<' || sec == '>') return true;
+      return false;
+    case '>':
+      if (sec == '=' || sec == '>') return true;
+      return false;
+    case '=':
+      if (sec == '=') return true;
+      return false;
+    case '!':
+      if (sec == '=') return true;
+      return false;
+    default:
+      return false;
   }
 }
 
@@ -438,13 +421,13 @@ int read_word(char **ptr, char word[], int *word_len) {
   tmp = *ptr;
   *ptr = index;
 
-//printf("\t'%s' %d %d\n", word, wrd_ln, *ptr - tmp);
+  // printf("\t'%s' %d %d\n", word, wrd_ln, *ptr - tmp);
 
   return *ptr - tmp;
 }
 
 int read_string(const char line[], char **index, char *word,
-bool escape_characters) {
+                bool escape_characters) {
   int word_i = 1;
   word[0] = '\'';
   while ('\'' != **index) {
@@ -462,7 +445,7 @@ bool escape_characters) {
 }
 
 bool tokenize_line(int *line_num, FileInfo *fi, Queue *queue,
-bool escape_characters) {
+                   bool escape_characters) {
   char line[MAX_LINE_LEN];
   char word[MAX_LINE_LEN];
   char *index;
@@ -494,16 +477,17 @@ bool escape_characters) {
       read_string(line, &index, word, escape_characters);
     }
 
-    if (ENDLINE == type && queue->size > 0 && queue_last(queue) != NULL
-        && ((Token *) queue_last(queue))->type == BSLASH) {
+    if (ENDLINE == type && queue->size > 0 && queue_last(queue) != NULL &&
+        ((Token *)queue_last(queue))->type == BSLASH) {
       Token *bslash = queue_last(queue);
       queue_remove_elt(queue, bslash);
       token_delete(bslash);
       tokenize_line(line_num, fi, queue, escape_characters);
-    } else if (ENDLINE != type
-        || (queue->size != 0 && ENDLINE != ((Token *) queue_last(queue))->type)) {
+    } else if (ENDLINE != type ||
+               (queue->size != 0 &&
+                ENDLINE != ((Token *)queue_last(queue))->type)) {
       queue_add(queue,
-          token_create(type, *line_num, col_num - strlen(word), word));
+                token_create(type, *line_num, col_num - strlen(word), word));
     }
 
     if (0 == chars_consumed) {
