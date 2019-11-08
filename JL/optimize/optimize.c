@@ -20,14 +20,15 @@
 #include "../instruction.h"
 #include "optimizers.h"
 
-#define is_goto(op) (((op) == JMP) || ((op) == IFN) || ((op) == IF))
+#define is_goto(op) \
+  (((op) == JMP) || ((op) == IFN) || ((op) == IF) || ((op) == CTCH))
 
 static Expando *optimizers = NULL;
 
 void optimize_init() {
   optimizers = expando(Optimizer, DEFAULT_EXPANDO_SIZE);
   register_optimizer("ResPush", optimizer_ResPush);
-  register_optimizer("SetRes", optimizer_SetRes);
+  //  register_optimizer("SetRes", optimizer_SetRes);
   register_optimizer("GetPush", optimizer_GetPush);
   register_optimizer("JmpRes", optimizer_JmpRes);
   register_optimizer("PushRes", optimizer_PushRes);

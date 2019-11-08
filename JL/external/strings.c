@@ -340,6 +340,37 @@ Element string_clear(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return data->object;
 }
 
+Element string_split(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  if (!ISTYPE(*arg, class_string)) {
+    return throw_error(vm, t, "Argument to String.split() must be a String.");
+  }
+  Element result = create_array(vm->graph);
+
+  int str_len = String_size(string);
+  String *delim = String_extract(*arg);
+  int delim_len = String_size(delim);
+  int i, last_delim_end = 0;
+  for (i = 0; i < str_len; ++i) {
+    if (0 == strncmp(string->table + i, delim->table, delim_len)) {
+      memory_graph_array_enqueue(
+          vm->graph, result,
+          string_create_len(vm, string->table + last_delim_end,
+                            i - last_delim_end));
+      i += delim_len;
+      last_delim_end = i;
+    }
+  }
+  if (last_delim_end < str_len - delim_len) {
+    memory_graph_array_enqueue(
+        vm->graph, result,
+        string_create_len(vm, string->table + last_delim_end,
+                          str_len - last_delim_end));
+  }
+  return result;
+}
+
 // Element string_hash(VM *vm, ExternalData *data, Element arg) {
 //  String *string = map_lookup(&data->state, STRING_NAME);
 //  ASSERT(NOT_NULL(string));
@@ -365,6 +396,7 @@ void merge_string_class(VM *vm, Element string_class) {
   add_external_method(vm, string_class, strings_intern("rshrink"),
                       string_rshrink);
   add_external_method(vm, string_class, strings_intern("clear"), string_clear);
+  add_external_method(vm, string_class, strings_intern("split"), string_split);
   //  add_external_function(vm, string_class, strings_intern("hash"),
   //  string_hash);
 }

@@ -43,6 +43,7 @@ def cmp(o1, o2) {
 }
 ; DO NOT CHANGE
 def eq(o1, o2) {
+  if o1 ^ o2 return False
   if hash(o1) != hash(o2) return False
   if (o1 is Object) & (o2 is Object) {
     return o1.eq(o2)
@@ -51,6 +52,10 @@ def eq(o1, o2) {
     return False
   }
   return Int(o1) == Int(o2)
+}
+
+def neq(o1, o2) {
+  ~eq(o1, o2)
 }
 
 class Range {
@@ -436,23 +441,23 @@ class String {
     }
     string
   }
-  def split(del) {
-    del_len = del.len
-    parts = []
-    last_delim_end = 0
-    for i=0, i < self.len, i=i+1 {
-      if equals_range(self, i, del, 0, del_len) {
-        parts.append(self.substr(last_delim_end, i))
-        i = i + del_len
-        last_delim_end = i
-      }
-      if i==self.len-1 & last_delim_end < self.len - del_len {
-        parts.append(self.substr(last_delim_end, self.len))
-      }
-    }
-
-    return parts
-  }
+;  def split(del) {
+;    del_len = del.len
+;    parts = []
+;    last_delim_end = 0
+;    for i=0, i < self.len, i=i+1 {
+;      if equals_range(self, i, del, 0, del_len) {
+;        parts.append(self.substr(last_delim_end, i))
+;        i = i + del_len
+;        last_delim_end = i
+;      }
+;      if i==self.len-1 & last_delim_end < self.len - del_len {
+;        parts.append(self.substr(last_delim_end, self.len))
+;      }
+;    }
+;
+;    return parts
+;  }
 }
 
 ; Immutable String
@@ -510,5 +515,29 @@ class KVIterator : Iterator {
   def next_internal2() {
     k = self.key_iter.next()[1]
     (k, self.container[k])
+  }
+}
+
+class Timer {
+  def start() {
+    self.start = now_usec()
+  }
+  def stop() {
+    now_usec() - self.start
+  }
+}
+
+class Stopwatch {
+  def start() {
+    self.start = now_usec()
+    self.times = []
+  }
+  def mark() {
+    time = now_usec() - self.start
+    self.times.append(time)
+    time
+  }
+  def times_usec() {
+    self.times
   }
 }

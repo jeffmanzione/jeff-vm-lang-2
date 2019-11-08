@@ -31,7 +31,9 @@ typedef struct MemoryGraph_ {
   Set /*<Node>*/ roots;
 
   //  Set/*<Thread>*/threads;
+#ifdef ENABLE_MEMORY_LOCK
   ThreadHandle access_mutex;
+#endif
 } MemoryGraph;
 
 NodeID new_id(MemoryGraph *graph) {
@@ -72,7 +74,9 @@ void ltable_fill() {
 
 MemoryGraph *memory_graph_create() {
   MemoryGraph *graph = ALLOC2(MemoryGraph);
+#ifdef ENABLE_MEMORY_LOCK
   graph->access_mutex = mutex_create(NULL);
+#endif
   set_init_default(&graph->nodes);
   set_init(&graph->roots, DEFAULT_TABLE_SZ, default_hasher, default_comparator);
   graph->rand_seeded = false;
@@ -102,15 +106,21 @@ Node *node_create(MemoryGraph *graph) {
   Node *node = ARENA_ALLOC(Node);
   // TODO: Instead of locking here, give each thread its own arena and merge
   // them when threads finish.
+#ifdef ENABLE_MEMORY_LOCK
   mutex_await(graph->access_mutex, INFINITE);
+#endif
   node->id = new_id(graph);
   set_insert(&graph->nodes, node);
+#ifdef ENABLE_MEMORY_LOCK
   mutex_release(graph->access_mutex);
+#endif
   set_init(&node->parents, DEFAULT_TABLE_SZ, node_edge_hasher,
            node_edge_comparator);
   set_init(&node->children, DEFAULT_TABLE_SZ, node_edge_hasher,
            node_edge_comparator);
+#ifdef ENABLE_MEMORY_LOCK
   node->access_mutex = mutex_create(NULL);
+#endif
   return node;
 }
 
@@ -127,11 +137,13 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
   set_finalize(&node->children);
   set_finalize(&node->parents);
   obj_delete_ptr(&node->obj, /*free_mem=*/free_mem);
+#ifdef ENABLE_MEMORY_LOCK
+  mutex_close(node->access_mutex);
+#endif
   if (free_mem) {
     set_remove(&graph->nodes, node);
     ARENA_DEALLOC(Node, node);
   }
-  mutex_close(node->access_mutex);
 }
 
 void memory_graph_delete(MemoryGraph *graph) {
@@ -169,7 +181,9 @@ void memory_graph_delete(MemoryGraph *graph) {
   fflush(stdout);
 #endif
   set_finalize(&graph->nodes);
+#ifdef ENABLE_MEMORY_LOCK
   mutex_close(graph->access_mutex);
+#endif
   DEALLOC(graph);
 }
 
@@ -197,6 +211,7 @@ NodeEdge *node_edge_create(Node *to) {
   return ne;
 }
 
+#ifdef ENABLE_MEMORY_LOCK
 void acquire_all_mutex(const Node *const n1, const Node *const n2) {
   if (n1 == NULL && n2 == NULL) {
     return;
@@ -237,6 +252,7 @@ void release_all_mutex(const Node *const n1, const Node *const n2) {
   mutex_release(second);
   mutex_release(first);
 }
+#endif
 
 DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
        const Object *const parent, const Object *const child) {
@@ -256,8 +272,9 @@ DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
   NodeEdge tmp_parent_edge = {parent_node, -1};
   NodeEdge *parent_edge;
 
+#ifdef ENABLE_MEMORY_LOCK
   acquire_all_mutex(parent_node, child_node);
-
+#endif
   // if There is already an edge, increase the edge count
   if (NULL != (child_edge = set_lookup(children_of_parent, &tmp_child_edge))) {
     child_edge->ref_count++;
@@ -272,8 +289,9 @@ DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
     // Create edge from child to parent
     set_insert(parents_of_child, node_edge_create(parent_node));
   }
-
+#ifdef ENABLE_MEMORY_LOCK
   release_all_mutex(parent_node, child_node);
+#endif
 }
 #define memory_graph_inc_edge(...) CALL_FN(memory_graph_inc_edge__, __VA_ARGS__)
 
@@ -300,8 +318,9 @@ DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
   ASSERT_NOT_NULL(parents_of_child);
   NodeEdge tmp_parent_edge = {parent_node, -1};
 
+#ifdef ENABLE_MEMORY_LOCK
   acquire_all_mutex(parent_node, child_node);
-
+#endif
   // Remove edge from parent to child
   NodeEdge *child_edge = set_lookup(children_of_parent, &tmp_child_edge);
   ASSERT_NOT_NULL(child_edge);
@@ -311,7 +330,9 @@ DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
   ASSERT_NOT_NULL(parent_edge);
   --parent_edge->ref_count;
 
+#ifdef ENABLE_MEMORY_LOCK
   release_all_mutex(parent_node, child_node);
+#endif
 }
 #define memory_graph_dec_edge(...) CALL_FN(memory_graph_dec_edge__, __VA_ARGS__)
 
@@ -333,10 +354,7 @@ void memory_graph_set_field(MemoryGraph *graph, const Element parent,
   if (OBJECT == field_val.type) {
     memory_graph_inc_edge(graph, parent.obj, field_val.obj);
   }
-
-  //  wait_for_mutex(parent.obj->node->access_mutex, INFINITE);
   obj_set_field(parent, field_name, field_val);
-  //  release_mutex(parent.obj->node->access_mutex);
 }
 
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
@@ -368,9 +386,7 @@ void memory_graph_set_var(MemoryGraph *graph, const Element block,
     memory_graph_inc_edge(graph, relevant_block.obj, field_val.obj);
   }
 
-  //  wait_for_mutex(parent.obj->node->access_mutex, INFINITE);
   obj_set_field(relevant_block, field_name, field_val);
-  //  release_mutex(parent.obj->node->access_mutex);
 }
 
 void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
@@ -385,8 +401,9 @@ void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
     ASSERT_NOT_NULL(child_edge->node);
     // Don't traverse edges which no longer are present
     if (child_edge->ref_count < 1) {
-      set_remove(&node->children, child_edge);
-      ARENA_DEALLOC(NodeEdge, child_edge);
+      // Cannot do set_remove because it breaks the iterator?
+      //      set_remove(&node->children, child_edge);
+      //      ARENA_DEALLOC(NodeEdge, child_edge);
       return;
     }
     traverse_subtree(graph, marked, child_edge->node);
@@ -399,13 +416,14 @@ int memory_graph_free_space(MemoryGraph *graph) {
 
   int nodes_deleted = 0;
 
-  Set *marked = set_create_default();
+  // default table size to # of nodes. This will avoid resizing the table.
+  Set *marked =
+      set_create(set_size(&graph->nodes) * 2, node_hasher, node_comparator);
   void traverse_graph(void *ptr) {
     Node *node = (Node *)ptr;
     ASSERT_NOT_NULL(node);
     traverse_subtree(graph, marked, node);
   }
-
   set_iterate(&graph->roots, traverse_graph);
 
   void delete_node_if_not_marked(void *p) {
@@ -414,10 +432,6 @@ int memory_graph_free_space(MemoryGraph *graph) {
     if (set_lookup(marked, node)) {
       return;
     }
-    //    printf("Deleting ");
-    //    obj_to_str(&node->obj, stdout);
-    //    printf("\n");
-    //    fflush(stdout);
     node_delete(graph, node, /*free_mem=*/true);
     nodes_deleted++;
     ASSERT_NULL(set_lookup(&graph->nodes, node));
@@ -614,6 +628,8 @@ void memory_graph_print(const MemoryGraph *graph, FILE *file) {
   fprintf(file, "}\n\n");
 }
 
+#ifdef ENABLE_MEMORY_LOCK
 Mutex memory_graph_mutex(const MemoryGraph *graph) {
   return graph->access_mutex;
 }
+#endif

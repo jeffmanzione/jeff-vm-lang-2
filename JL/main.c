@@ -66,9 +66,6 @@ int main(int argc, const char *argv[]) {
     interpret_from_file(stdin, "stdin", vm, interpret_statement);
   }
 
-  //  memory_graph_print(vm_get_graph(vm), stdout);
-  //  memory_graph_free_space((MemoryGraph *)vm_get_graph(vm));
-  //  memory_graph_print(vm_get_graph(vm), stdout);
   set_finalize(&modules);
   argstore_delete(store);
   argconfig_delete(config);

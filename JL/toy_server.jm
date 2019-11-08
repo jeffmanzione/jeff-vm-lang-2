@@ -5,19 +5,20 @@ module toy_server
   mdst  net
   rmdl  struct
   mdst  struct
-  res   1
-  set   NUM_THREADS
+  rmdl  sync
+  mdst  sync
+  push  1
+  res   self
+  fld   NUM_THREADS
 
 class ToyServer
-  jmp   109
+  jmp   144
 
 @new
   push  net
   call  init
-  push  'HTTP/1.1 200 OK
-Content-Type: text/html; charset=UTF-8
-
-'
+  res   net
+  gtsh  HEADER_GENERIC_200
   res   self
   fld   header
   push  net
@@ -45,16 +46,55 @@ Content-Type: text/html; charset=UTF-8
   fld   handler
   res   self
   gtsh  handler
+  jmp   17
+
+@$anon_22_28(request)
+  set   request
+  res   self
+  gtsh  cache
+  push  request
+  jmp   5
+
+@$anon_23_36(request)
+  set   request
+  push  net
+  res   '/index.html'
+  call  read_entire_file
+  ret
+  res   self
+  gtsh  $anon_23_36
+  res   request
+  gtsh  path
+  tupl  3
+  call  get
+  ret
+  res   self
+  gtsh  $anon_22_28
+  jmp   6
+
+@$anon_21_27(request)
+  set   request
+  res   request
+  gtsh  path
+  push  '/'
+  eq
+  ret
+  res   self
+  gtsh  $anon_21_27
+  tupl  2
+  call  register
+  res   self
+  gtsh  handler
   jmp   18
 
-@$anon_25_27(request)
+@$anon_28_27(request)
   set   request
   res   self
   gtsh  cache
   push  request
   jmp   6
 
-@$anon_26_36(request)
+@$anon_29_36(request)
   set   request
   push  net
   res   request
@@ -62,38 +102,39 @@ Content-Type: text/html; charset=UTF-8
   call  read_entire_file
   ret
   res   self
-  gtsh  $anon_26_36
+  gtsh  $anon_29_36
   res   request
   gtsh  path
   tupl  3
   call  get
   ret
   res   self
-  gtsh  $anon_25_27
-  jmp   5
+  gtsh  $anon_28_27
+  jmp   6
 
-@$anon_24_27(request)
+@$anon_27_27(request)
   set   request
+  res   request
   gtsh  path
   res   '.ico'
   call  ends_with
   ret
   res   self
-  gtsh  $anon_24_27
+  gtsh  $anon_27_27
   tupl  2
   call  register
   res   self
   gtsh  handler
   jmp   40
 
-@$anon_30_32(request)
+@$anon_33_32(request)
   set   request
   res   self
   gtsh  cache
   push  request
   jmp   28
 
-@$anon_31_36(request)
+@$anon_34_36(request)
   set   request
   push  net
   res   request
@@ -123,23 +164,23 @@ Content-Type: text/html; charset=UTF-8
   ret
   ret
   res   self
-  gtsh  $anon_31_36
+  gtsh  $anon_34_36
   res   request
   gtsh  path
   tupl  3
   call  get
   ret
   res   self
-  get   $anon_30_32
+  get   $anon_33_32
   call  register_else
   res   self
   ret
-  jmp   52
+  jmp   54
 
 @run
   nblk
   res   True
-  ifn   42
+  ifn   44
   push  io
   res   'Listening...'
   call  println
@@ -158,11 +199,12 @@ Content-Type: text/html; charset=UTF-8
   res   msg
   call  parse_request
   set   request
+  res   request
   if    4
   push  io
   res   'Failed'
   call  println
-  jmp   16
+  jmp   17
   push  io
   push  concat
   push  request
@@ -175,13 +217,14 @@ Content-Type: text/html; charset=UTF-8
   res   request
   call  handle
   set   file_lines
+  res   file_lines
   ifn   3
   push  handle
   res   file_lines
   call  send
   push  handle
   call  close
-  jmp   -45
+  jmp   -47
   bblck
   res   self
   gtsh  sock

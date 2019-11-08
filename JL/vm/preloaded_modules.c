@@ -8,6 +8,7 @@
 #include "../element.h"
 #include "../external/external.h"
 #include "../external/net/net.h"
+#include "../external/util/util.h"
 #include "../shared.h"
 #include "../threads/sync.h"
 
@@ -39,6 +40,7 @@ void maybe_merge_existing_source(VM *vm, Element module_element,
                                  const char fn[]) {
   if (starts_with(fn, BUILTIN_SRC)) {
     add_builtin_external(vm, module_element);
+    add_util_external(vm, module_element);
     add_global_builtin_external(vm, module_element);
   } else if (starts_with(fn, IO_SRC)) {
     add_io_external(vm, module_element);

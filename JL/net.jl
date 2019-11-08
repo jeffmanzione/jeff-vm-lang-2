@@ -18,6 +18,24 @@ self.GT = '>'
 self.LT_ESCAPED = '&lt;'
 self.GT_ESCAPED = '&gt;'
 
+self.HEADER_GENERIC_200 = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
+
+def init() {
+  if self.is_inited {
+    return
+  }
+  self.is_inited = True
+  self.init__()
+}
+
+def cleanup() {
+  if ~self.is_inited {
+    return
+  }
+  self.is_inited = False
+  self.cleanup__()
+}
+
 class Header {
   def new(protocol, version, status_code, status, content_type, charset) {
     self.protocol = protocol
@@ -71,6 +89,9 @@ class HttpRequest {
 def parse_request(req) {
   try {
     parts = req.split('\r\n')
+    if parts.len == 0 {
+      raise Error(concat('Invalid request: ', req))
+    }
     request = parts[0].trim()
     req_head = request.split(' ')
     type = req_head[0]

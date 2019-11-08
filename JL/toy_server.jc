@@ -5,20 +5,22 @@ module toy_server
   mdst  net
   rmdl  struct
   mdst  struct
+  rmdl  sync
+  mdst  sync
   res   1
-  set   NUM_THREADS
+  push
+  res   self
+  fld   NUM_THREADS
 
 class ToyServer
-  jmp   139
+  jmp   184
 
 @new
   res   net
   push
   call  init
-  res   'HTTP/1.1 200 OK
-Content-Type: text/html; charset=UTF-8
-
-'
+  res   net
+  get   HEADER_GENERIC_200
   push
   res   self
   fld   header
@@ -56,9 +58,59 @@ Content-Type: text/html; charset=UTF-8
   res   self
   get   handler
   push
+  jmp   23
+
+@$anon_22_28(request)
+  set   request
+  res   self
+  get   cache
+  push
+  res   request
+  push
+  jmp   7
+
+@$anon_23_36(request)
+  set   request
+  res   net
+  push
+  res   '/index.html'
+  call  read_entire_file
+  ret
+  ret
+  res   self
+  get   $anon_23_36
+  push
+  res   request
+  get   path
+  push
+  tupl  3
+  call  get
+  ret
+  res   self
+  get   $anon_22_28
+  push
+  jmp   8
+
+@$anon_21_27(request)
+  set   request
+  res   request
+  get   path
+  push
+  res   '/'
+  push
+  eq
+  ret
+  res   self
+  get   $anon_21_27
+  push
+  tupl  2
+  call  register
+  res   self
+  get   handler
+  push
   jmp   24
 
-@$anon_25_27(request)
+@$anon_28_27(request)
   set   request
   res   self
   get   cache
@@ -67,7 +119,7 @@ Content-Type: text/html; charset=UTF-8
   push
   jmp   8
 
-@$anon_26_36(request)
+@$anon_29_36(request)
   set   request
   res   net
   push
@@ -77,7 +129,7 @@ Content-Type: text/html; charset=UTF-8
   ret
   ret
   res   self
-  get   $anon_26_36
+  get   $anon_29_36
   push
   res   request
   get   path
@@ -86,11 +138,11 @@ Content-Type: text/html; charset=UTF-8
   call  get
   ret
   res   self
-  get   $anon_25_27
+  get   $anon_28_27
   push
   jmp   7
 
-@$anon_24_27(request)
+@$anon_27_27(request)
   set   request
   res   request
   get   path
@@ -99,7 +151,7 @@ Content-Type: text/html; charset=UTF-8
   call  ends_with
   ret
   res   self
-  get   $anon_24_27
+  get   $anon_27_27
   push
   tupl  2
   call  register
@@ -108,7 +160,7 @@ Content-Type: text/html; charset=UTF-8
   push
   jmp   48
 
-@$anon_30_32(request)
+@$anon_33_32(request)
   set   request
   res   self
   get   cache
@@ -117,7 +169,7 @@ Content-Type: text/html; charset=UTF-8
   push
   jmp   32
 
-@$anon_31_36(request)
+@$anon_34_36(request)
   set   request
   res   net
   push
@@ -151,7 +203,7 @@ Content-Type: text/html; charset=UTF-8
   ret
   ret
   res   self
-  get   $anon_31_36
+  get   $anon_34_36
   push
   res   request
   get   path
@@ -160,7 +212,7 @@ Content-Type: text/html; charset=UTF-8
   call  get
   ret
   res   self
-  get   $anon_30_32
+  get   $anon_33_32
   call  register_else
   res   self
   ret

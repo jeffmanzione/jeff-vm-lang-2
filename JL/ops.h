@@ -36,10 +36,6 @@
     return create_char(APPLY_INT(lhe.val, rhe.val, op));                      \
   }
 
-/*    if (lhs.type == OBJECT && rhs.type == OBJECT &&       \
-        lhs.obj == class_string.obj && rhs.obj == class_string.obj) \
-      return string_##name(lhs, rhs);                     \ */
-
 #define OPFUNC(op, name)                                                \
   OPDEF(name) {                                                         \
     if (lhe.type == OBJECT || lhe.type == NONE || rhe.type == OBJECT || \
@@ -70,10 +66,16 @@
     if (lhe.type == NONE) {                                     \
       lhe.val.type = INT;                                       \
       lhe.val.int_val = 0;                                      \
+    } else if (lhe.type != VALUE) {                             \
+      lhe.val.type = INT;                                       \
+      lhe.val.int_val = 1;                                      \
     }                                                           \
     if (rhe.type == NONE) {                                     \
       rhe.val.type = INT;                                       \
       rhe.val.int_val = 0;                                      \
+    } else if (rhe.type != VALUE) {                             \
+      rhe.val.type = INT;                                       \
+      rhe.val.int_val = 1;                                      \
     }                                                           \
     return APPLY(lhe.val, rhe.val, op) == 0 ? element_false(vm) \
                                             : element_true(vm); \
@@ -110,7 +112,6 @@ OPDEF_BOOLTYPE(lt);
 OPDEF_BOOLTYPE(lte);
 OPDEF_BOOLTYPE(and);
 OPDEF_BOOLTYPE(or);
-// OPDEF_SINGLE(not);
 OPDEF_SINGLE(notc);
 
 #endif /* OPS_H_ */

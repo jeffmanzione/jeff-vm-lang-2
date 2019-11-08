@@ -13,8 +13,8 @@
 #include "../error.h"
 
 bool string_is_true(const char str[]) {
-  if (0 == strcmp("True", str) || 0 == strcmp("true", str)
-      || 0 == strncmp("1", str, 1)) {
+  if (0 == strcmp("True", str) || 0 == strcmp("true", str) ||
+      0 == strncmp("1", str, 1)) {
     return true;
   }
   return false;
@@ -34,7 +34,7 @@ bool parse_int(const char val[], int32_t *int_val) {
   if (pEnd != val + strlen(val)) {
     return false;
   }
-  *int_val = (int) proto_val;
+  *int_val = (int32_t)proto_val;
   return true;
 }
 
@@ -47,7 +47,7 @@ bool parse_float(const char val[], float *float_val) {
   if (pEnd != val + strlen(val)) {
     return false;
   }
-  *float_val = (float) proto_val;
+  *float_val = (float)proto_val;
   return true;
 }
 
@@ -56,46 +56,46 @@ Arg arg_parse(ArgType type, const char val[]) {
   arg.used = true;
   arg.type = type;
   switch (type) {
-  case ArgType__string:
-    arg.string_val = val;
-    break;
-  case ArgType__bool:
-    if (!parse_bool(val, &arg.bool_val)) {
-      ERROR("Could not parse '%s' to BOOL.", val);
-    }
-    break;
-  case ArgType__int:
-    if (!parse_int(val, &arg.int_val)) {
-      ERROR("Could not parse '%s' to INT.", val);
-    }
-    break;
-  case ArgType__float:
-    if (!parse_float(val, &arg.float_val)) {
-      ERROR("Could not parse '%s' to FLOAT.", val);
-    }
-    break;
-  default:
-    ERROR("ArgType not specified.");
+    case ArgType__string:
+      arg.string_val = val;
+      break;
+    case ArgType__bool:
+      if (!parse_bool(val, &arg.bool_val)) {
+        ERROR("Could not parse '%s' to BOOL.", val);
+      }
+      break;
+    case ArgType__int:
+      if (!parse_int(val, &arg.int_val)) {
+        ERROR("Could not parse '%s' to INT.", val);
+      }
+      break;
+    case ArgType__float:
+      if (!parse_float(val, &arg.float_val)) {
+        ERROR("Could not parse '%s' to FLOAT.", val);
+      }
+      break;
+    default:
+      ERROR("ArgType not specified.");
   }
   return arg;
 }
 
 Arg arg_bool(bool bool_val) {
-  Arg arg = { .used = true, .type = ArgType__bool, .bool_val = bool_val };
+  Arg arg = {.used = true, .type = ArgType__bool, .bool_val = bool_val};
   return arg;
 }
 
 Arg arg_int(int32_t int_val) {
-  Arg arg = { .used = true, .type = ArgType__int, .int_val = int_val };
+  Arg arg = {.used = true, .type = ArgType__int, .int_val = int_val};
   return arg;
 }
 
 Arg arg_float(float float_val) {
-  Arg arg = { .used = true, .type = ArgType__float, .float_val = float_val };
+  Arg arg = {.used = true, .type = ArgType__float, .float_val = float_val};
   return arg;
 }
 
 Arg arg_string(const char string_val[]) {
-  Arg arg = { .used = true, .type = ArgType__string, .string_val = string_val };
+  Arg arg = {.used = true, .type = ArgType__string, .string_val = string_val};
   return arg;
 }

@@ -58,7 +58,6 @@ void thread_init(Thread *t, Element self, MemoryGraph *graph, Element root) {
 
 void thread_start(Thread *t, VM *vm) {
   ASSERT(NOT_NULL(t));
-  //  DEBUGF("thread_start(%d)", (int ) t->id);
   Element fn = obj_get_field(t->self, strings_intern("fn"));
   Element arg = obj_get_field(t->self, strings_intern("arg"));
   t_set_resval(t, arg);
@@ -78,9 +77,6 @@ void thread_start(Thread *t, VM *vm) {
     t_shift_ip(t, 1);
   } else {
     ERROR("NOOOOOOOOOO");
-    //    if (ISTYPE(fn, class_class)) {
-    //    vm_set_module(t->vm, t, t->self, 0);
-    //    vm_call_new(t->vm, t, fn);
   }
 
   while (execute(vm, t)) {
@@ -90,7 +86,6 @@ void thread_start(Thread *t, VM *vm) {
   }
   Element result = t_get_resval(t);
   memory_graph_set_field(vm->graph, t->self, strings_intern("result"), result);
-  //  DEBUGF("Thread end (%d).", (int ) t->id);
 }
 
 unsigned __stdcall thread_start_wrapper(void *ptr) {
@@ -121,11 +116,6 @@ Element Thread_constructor(VM *vm, Thread *t, ExternalData *data,
   Element e_fn = tuple_get(args, 0);
   if (!ISTYPE(e_fn, class_function) && !ISTYPE(e_fn, class_methodinstance) &&
       !ISTYPE(e_fn, class_method) && !ISTYPE(e_fn, class_class)) {
-    //    Element class_name = obj_lookup(obj_lookup(e_fn.obj, CKey_class).obj,
-    //        CKey_name);
-    //    DEBUGF("NEVER HERE. class_name=%*s",
-    //        String_size(String_extract(class_name)),
-    //        String_cstr(String_extract(class_name)));
     return throw_error(vm, t, "Thread must be passed a function or class.");
   }
   Element e_arg = tuple_get(args, 1);
@@ -262,8 +252,6 @@ Element t_popstack(Thread *t, bool *has_error) {
   ASSERT_NOT_NULL(t->stack.obj->array);
   if (Array_is_empty(t->stack.obj->array)) {
     *has_error = true;
-    //    vm_throw_error(vm, vm_current_ins(vm),
-    //        "Attempted to pop from the empty stack.");
     return create_none();
   }
   return memory_graph_array_dequeue(t->graph, t->stack);

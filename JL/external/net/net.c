@@ -23,8 +23,8 @@ Element net_cleanup(VM *vm, Thread *t, ExternalData *data, Element *arg) {
 }
 
 void add_net_external(VM *vm, Element module_element) {
-  add_external_function(vm, module_element, strings_intern("init"), net_init);
-  add_external_function(vm, module_element, strings_intern("cleanup"),
+  add_external_function(vm, module_element, strings_intern("init__"), net_init);
+  add_external_function(vm, module_element, strings_intern("cleanup__"),
                         net_cleanup);
   add_sockethandle_class(vm, module_element);
   add_socket_class(vm, module_element);

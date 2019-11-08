@@ -3,24 +3,27 @@ module toy_server
 import io
 import net
 import struct
+import sync
 
 
-NUM_THREADS = 1
+self.NUM_THREADS = 1
 
 class ToyServer {
 
   def new() {
-  
     net.init()
-
-    self.header = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
-
+    self.header = net.HEADER_GENERIC_200
     self.sock = net.Socket(net.AF_INET, net.SOCK_STREAM, 80, 0, NUM_THREADS)
-
     self.cache = struct.Cache()
 
     self.handler = net.RequestHandler()
 
+    self.handler.register(@(request) { request.path == '/' },
+                           @(request) {
+      self.cache.get(request.path, @(request) {
+        return net.read_entire_file('/index.html')
+      }, request)
+    })
     self.handler.register(@(request) {request.path.ends_with('.ico')}, 
                           @(request) {
       self.cache.get(request.path, @(request) {
@@ -46,6 +49,7 @@ class ToyServer {
       io.println('Listening...') 
       handle = self.sock.accept()
       msg = handle.receive()
+      
       handle.send(self.header)
       request = net.parse_request(msg)
       if request {    
@@ -58,9 +62,8 @@ class ToyServer {
         io.println('Failed')
       }
       handle.close()
-      ;io.println(concat('Deleted ', collect_garbage(), ' Objects.'))
+      io.println(concat('Deleted ', collect_garbage(), ' Objects.'))
     }
-
     self.sock.close()
     net.cleanup()
   }

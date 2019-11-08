@@ -27,7 +27,9 @@ typedef struct Node_ {
   Object obj;
   Set parents;
   Set children;
+#ifdef ENABLE_MEMORY_LOCK
   ThreadHandle access_mutex;
+#endif
 } Node;
 // Needed in header for arenas.
 typedef struct {
@@ -84,7 +86,10 @@ Mutex memory_graph_mutex(const MemoryGraph *graph);
 // Element memory_graph_new_thread();
 
 const Node *node_for(const Element *e);
+
+#ifdef ENABLE_MEMORY_LOCK
 void acquire_all_mutex(const Node *const n1, const Node *const n2);
 void release_all_mutex(const Node *const n1, const Node *const n2);
+#endif
 
 #endif /* MEMORY_GRAPH_H_ */

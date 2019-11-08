@@ -31,12 +31,10 @@ class Map
   fld   keys
   res   self
   ret
-  jmp   125
+  jmp   27
 
-@__set__(k,v)
-  push
-  peek
-  res
+@hash__(k)
+  set   k
   res   hash
   push
   res   k
@@ -44,21 +42,35 @@ class Map
   set   hval
   res   hval
   push
-  res   0
-  push
-  lt
-  ifn   5
-  res   hval
-  push
-  push  -1
-  mult
-  set   hval
-  res   hval
-  push
   res   self
   get   sz
   push
   mod
+  set   pos
+  res   pos
+  push
+  res   0
+  push
+  lt
+  ifn   5
+  res   pos
+  push
+  push  -1
+  mult
+  set   pos
+  res   pos
+  ret
+  ret
+  jmp   107
+
+@__set__(k,v)
+  push
+  peek
+  res
+  res   self
+  push
+  res   k
+  call  hash__
   set   pos
   res   self
   get   table
@@ -159,32 +171,14 @@ class Map
   res   None
   ret
   ret
-  jmp   83
+  jmp   65
 
 @__index__(k)
   set   k
-  res   hash
+  res   self
   push
   res   k
-  call
-  set   hval
-  res   hval
-  push
-  res   0
-  push
-  lt
-  ifn   5
-  res   hval
-  push
-  push  -1
-  mult
-  set   hval
-  res   hval
-  push
-  res   self
-  get   sz
-  push
-  mod
+  call  hash__
   set   pos
   res   self
   get   table

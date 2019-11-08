@@ -16,15 +16,15 @@
 #include <stdint.h>
 #endif
 
-#define ARENA_DEFINE(typename) \
-extern Arena ARENA__##typename;  \
-void *arena_alloc__##typename()
+#define ARENA_DEFINE(typename)    \
+  extern Arena ARENA__##typename; \
+  void *arena_alloc__##typename()
 
 #define ARENA_DECLARE(typename) Arena ARENA__##typename
 
 #define ARENA_INIT(typename) arena_init(&ARENA__##typename, sizeof(typename))
 #define ARENA_FINALIZE(typename) arena_finalize(&ARENA__##typename)
-#define ARENA_ALLOC(typename) (typename *) arena_alloc(&ARENA__##typename)
+#define ARENA_ALLOC(typename) (typename *)arena_alloc(&ARENA__##typename)
 #define ARENA_DEALLOC(typename, ptr) arena_dealloc(&ARENA__##typename, ptr)
 
 typedef struct Subarena_ Subarena;

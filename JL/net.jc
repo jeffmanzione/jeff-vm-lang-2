@@ -51,6 +51,44 @@ module net
   push
   res   self
   fld   GT_ESCAPED
+  res   'HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+
+'
+  push
+  res   self
+  fld   HEADER_GENERIC_200
+  jmp   12
+
+@init
+  res   self
+  get   is_inited
+  ifn   1
+  ret
+  res   True
+  push
+  res   self
+  fld   is_inited
+  res   self
+  push
+  call  init__
+  ret
+  jmp   13
+
+@cleanup
+  res   self
+  get   is_inited
+  not
+  ifn   1
+  ret
+  res   False
+  push
+  res   self
+  fld   is_inited
+  res   self
+  push
+  call  cleanup__
+  ret
 
 class Header
   jmp   33
@@ -448,17 +486,36 @@ class HttpRequest
   ret
 endclass
 
-  jmp   123
+  jmp   142
 
 @parse_request(req)
   set   req
-  ctch  104
+  ctch  123
   res   req
   push
   res   '
 '
   call  split
   set   parts
+  res   parts
+  get   len
+  push
+  res   0
+  push
+  eq
+  ifn   12
+  res   Error
+  push
+  res   concat
+  push
+  res   req
+  push
+  res   'Invalid request: '
+  push
+  tupl  2
+  call
+  call
+  rais
   res   parts
   push
   res   0

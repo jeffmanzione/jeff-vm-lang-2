@@ -271,6 +271,11 @@ Element create_method_instance(MemoryGraph *graph, Element object,
   Element elt = create_obj_of_class(graph, class_methodinstance);
   memory_graph_set_field(graph, elt, OBJ_KEY, object);
   memory_graph_set_field(graph, elt, METHOD_KEY, method);
+  Object *function_object =
+      *((Object **)expando_get(method.obj->parent_objs, 0));
+  memory_graph_set_field(
+      graph, object,
+      string_to_cstr(obj_get_field_obj(function_object, NAME_KEY)), elt);
   //  DEBUGF("B");
   return elt;
 }
@@ -520,7 +525,9 @@ void print_obj_fields(Object *obj, FILE *file) {
 }
 
 void obj_to_str(Object *obj, FILE *file) {
+#ifdef ENABLE_MEMORY_LOCK
   mutex_await(obj->node->access_mutex, INFINITE);
+#endif
   Element name, class = obj_get_field_obj(obj, CLASS_KEY);
   switch (obj->type) {
     case OBJ:
@@ -588,7 +595,10 @@ void obj_to_str(Object *obj, FILE *file) {
       fflush(file);
       break;
   }
+
+#ifdef ENABLE_MEMORY_LOCK
   mutex_release(obj->node->access_mutex);
+#endif
 }
 
 void elt_to_str(Element elt, FILE *file) {

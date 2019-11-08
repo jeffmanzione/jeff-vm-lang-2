@@ -43,13 +43,13 @@ Element Socket_constructor(VM *vm, Thread *t, ExternalData *data,
 
   map_insert(&data->state, strings_intern("socket"), socket);
   if (!socket_is_valid(socket)) {
-    return throw_error(vm, t, "Invalid Socket.");
+    return throw_error(vm, t, "Invalid socket.");
   }
   if (SOCKET_ERROR == socket_bind(socket)) {
-    return throw_error(vm, t, "Could not bind Socket.");
+    return throw_error(vm, t, "Could not bind to socket.");
   }
   if (SOCKET_ERROR == socket_listen(socket, tuple_get(tuple, 4).val.int_val)) {
-    return throw_error(vm, t, "Could not listen Socket.");
+    return throw_error(vm, t, "Could not listen to ocket.");
   }
   return data->object;
 }

@@ -10,10 +10,14 @@ class Map {
     self.table[self.sz] = None
     self.keys = []
   }
-  def __set__(const k, const v) {
+  def hash__(k) {
     hval = hash(k)
-    if hval < 0 hval = -hval
     pos = hval % self.sz
+    if pos < 0 pos = -pos
+    return pos
+  }
+  def __set__(const k, const v) {
+    pos = self.hash__(k)
     if ~self.table[pos] {
       self.table[pos] = [(k,v)]
       self.keys.append(k)
@@ -32,9 +36,7 @@ class Map {
     return None
   }
   def __index__(const k) {
-    hval = hash(k)
-    if hval < 0 hval = -hval
-    pos = hval % self.sz
+    pos = self.hash__(k)
     if ~self.table[pos] {
       return None
     }
@@ -87,7 +89,6 @@ class Cache {
     } catch e {
       v = default
     }
-    
     self.map[k] = v
     self.mutex.release()
     return v

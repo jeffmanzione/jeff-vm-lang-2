@@ -841,13 +841,14 @@ int codegen_try(SyntaxTree *tree, Tape *tape) {
   int num_lines = 0;
   Tape *try_body_tape = tape_create();
   int try_lines = codegen(try_body, try_body_tape);
+  tape_write(try_body_tape, stdout);
   Tape *catch_body_tape = tape_create();
   int catch_lines = codegen(catch_body, catch_body_tape);
 
   int goto_pos = try_lines - 1;
 
-  num_lines += tape->ins_int(tape, CTCH, goto_pos, tree->first->token);
-  num_lines += try_lines;
+  num_lines +=
+      tape->ins_int(tape, CTCH, goto_pos, tree->first->token) + try_lines;
   tape_append(tape, try_body_tape);
   num_lines += tape->ins_int(tape, JMP, catch_lines + 1, tree->first->token);
   // Expect error to be in resval
