@@ -39,12 +39,33 @@ module net
   push  '&gt;'
   res   self
   fld   GT_ESCAPED
+  push  '&'
+  res   self
+  fld   AMPER
+  push  '?'
+  res   self
+  fld   QUESTION
+  push  '='
+  res   self
+  fld   EQUALS
   push  'HTTP/1.1 200 OK
 Content-Type: text/html; charset=UTF-8
 
 '
   res   self
-  fld   HEADER_GENERIC_200
+  fld   HEADER_GENERIC_200_HTML
+  push  'HTTP/1.1 200 OK
+Content-Type: text/css; charset=UTF-8
+
+'
+  res   self
+  fld   HEADER_GENERIC_200_CSS
+  push  'HTTP/1.1 200 OK
+Content-Type: text/javascript; charset=UTF-8
+
+'
+  res   self
+  fld   HEADER_GENERIC_200_JS
   jmp   10
 
 @init
@@ -348,11 +369,98 @@ class HttpRequest
   ret
 endclass
 
-  jmp   112
+  jmp   84
+
+@parse_params(path)
+  set   path
+  push  path
+  res   QUESTION
+  call  split
+  set   query_parts
+  push  query_parts
+  res   0
+  aidx
+  set   path
+  push  struct
+  res   31
+  call  Map
+  set   params
+  nblk
+  push  range
+  res   query_parts
+  gtsh  len
+  push  1
+  tupl  2
+  call
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   52
+  dup
+  call  next
+  tget  1
+  set   i
+  push  query_parts
+  res   i
+  aidx
+  set   part
+  push  part
+  res   AMPER
+  call  split
+  set   param_parts
+  nblk
+  push  param_parts
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   30
+  dup
+  call  next
+  tget  1
+  set   param
+  push  param
+  res   EQUALS
+  call  split
+  set   kv
+  res   kv
+  gtsh  len
+  push  2
+  lt
+  if    10
+  push  kv
+  res   1
+  aidx
+  push
+  push  params
+  push  kv
+  res   0
+  aidx
+  aset
+  jmp   6
+  push  '1'
+  push  params
+  push  kv
+  res   0
+  aidx
+  aset
+  jmp   -33
+  res
+  bblck
+  jmp   -55
+  res
+  bblck
+  push  params
+  push  path
+  tupl  2
+  ret
+  jmp   121
 
 @parse_request(req)
   set   req
-  ctch  96
+  ctch  105
   push  req
   res   '
 '
@@ -389,6 +497,15 @@ endclass
   res   1
   aidx
   set   path
+  push  parse_params
+  res   path
+  call
+  push
+  tget  0
+  set   path
+  res
+  tget  1
+  set   params
   push  req_head
   res   2
   aidx
@@ -705,4 +822,205 @@ endclass
   push
   call  getlines
   ret
+
+class CachedTextRenderer
+  jmp   7
+
+@new
+  push  struct
+  call  Cache
+  push
+  res   self
+  fld   cache
+  res   self
+  ret
+  jmp   180
+
+@get(key,src,params)
+  res   self
+  gtsh  cache
+  push  params
+  push  src
+  tupl  2
+  push
+  jmp   112
+
+@$anon_210_38(src,params)
+  anew
+  set   indices
+  anew
+  set   parts
+  anew
+  set   keys
+  nblk
+  push  params
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   32
+  dup
+  call  next
+  push
+  tget  0
+  set   k
+  res
+  tget  1
+  set   v
+  push  src
+  res   k
+  call  find_all
+  set   k_inds
+  nblk
+  push  k_inds
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   10
+  dup
+  call  next
+  tget  1
+  set   k_ind
+  push  indices
+  push  k_ind
+  push  k
+  tupl  2
+  call  append
+  jmp   -13
+  res
+  bblck
+  jmp   -35
+  res
+  bblck
+  push  indices
+  jmp   12
+
+@$anon_220_20(t1,t2)
+  push  cmp
+  push  t2
+  res   1
+  aidx
+  push
+  push  t1
+  res   1
+  aidx
+  push
+  tupl  2
+  call
+  ret
+  res   self
+  get   $anon_220_20
+  call  sort
+  res   0
+  set   index
+  nblk
+  push  indices
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   28
+  dup
+  call  next
+  push
+  peek
+  tget  1
+  push
+  tget  0
+  set   key
+  res
+  tget  1
+  set   i
+  res
+  push  parts
+  push  src
+  push  i
+  push  index
+  tupl  2
+  call  substr
+  call  append
+  push  keys
+  res   key
+  call  append
+  push  i
+  res   key
+  gtsh  len
+  add
+  set   index
+  jmp   -31
+  res
+  bblck
+  push  parts
+  push  src
+  res   index
+  call  substr
+  call  append
+  push  keys
+  push  parts
+  tupl  2
+  ret
+  res   self
+  gtsh  $anon_210_38
+  push  key
+  tupl  3
+  call  get
+  set   parts_keys
+  res   ''
+  set   text
+  push  parts_keys
+  res   0
+  aidx
+  set   parts
+  push  parts_keys
+  res   1
+  aidx
+  set   keys
+  res   keys
+  gtsh  len
+  res   parts
+  gtsh  len
+  add
+  set   len
+  nblk
+  res   0
+  set   i
+  push
+  push  len
+  lt
+  ifn   29
+  push  i
+  push  2
+  mod
+  push
+  push  0
+  eq
+  if    10
+  push  text
+  push  params
+  push  keys
+  push  i
+  push  2
+  div
+  aidx
+  aidx
+  call  extend
+  jmp   7
+  push  text
+  push  parts
+  push  i
+  push  2
+  div
+  aidx
+  call  extend
+  push  i
+  push  1
+  add
+  set   i
+  jmp   -33
+  bblck
+  res   text
+  ret
+endclass
+
   exit  0

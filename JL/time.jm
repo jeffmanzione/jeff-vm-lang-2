@@ -1,0 +1,53 @@
+module time
+
+class Timer
+  jmp   8
+
+@reset
+  push  0
+  res   self
+  fld   start_usec
+  anew
+  push
+  res   self
+  fld   timestamps
+  ret
+  jmp   8
+
+@start
+  push  self
+  call  reset
+  push  now_usec
+  call
+  push
+  res   self
+  fld   start_usec
+  ret
+  jmp   16
+
+@mark(name)
+  set   name
+  push  now_usec
+  call
+  push
+  res   self
+  gtsh  start_usec
+  sub
+  set   elapsed
+  res   self
+  gtsh  timestamps
+  push  elapsed
+  push  name
+  tupl  2
+  call  append
+  res   elapsed
+  ret
+  jmp   3
+
+@elapsed_usec
+  res   self
+  get   timestamps
+  ret
+endclass
+
+  exit  0

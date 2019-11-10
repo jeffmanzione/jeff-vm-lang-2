@@ -1,6 +1,5 @@
 module struct
 
-import io
 import sync
 
 class Map {

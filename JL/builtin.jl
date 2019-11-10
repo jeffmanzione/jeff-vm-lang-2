@@ -365,6 +365,13 @@ class String {
   def find(substr, index=0) {
     self.find__(substr, index)
   }
+  def find_all(substr, index=0) {
+    ; Remove after the bug is fixed.
+    if ~index {
+      index = 0
+    }
+    self.find_all__(substr, index)
+  }
   def __in__(substr) {
     self.find(substr) != None
   }
@@ -434,8 +441,12 @@ class String {
   def iter() {
     IndexIterator(self)
   }
-  def substr(start, end) {
+  def substr(start, end=self.len) {
     string = ''
+    ; Remove once this bug is fixed
+    if ~end {
+      end = self.len
+    }
     for i = start, i < end, i = i + 1 {
       string.append(self[i])
     }
@@ -515,29 +526,5 @@ class KVIterator : Iterator {
   def next_internal2() {
     k = self.key_iter.next()[1]
     (k, self.container[k])
-  }
-}
-
-class Timer {
-  def start() {
-    self.start = now_usec()
-  }
-  def stop() {
-    now_usec() - self.start
-  }
-}
-
-class Stopwatch {
-  def start() {
-    self.start = now_usec()
-    self.times = []
-  }
-  def mark() {
-    time = now_usec() - self.start
-    self.times.append(time)
-    time
-  }
-  def times_usec() {
-    self.times
   }
 }

@@ -8,31 +8,28 @@
 #include "../element.h"
 #include "../external/external.h"
 #include "../external/net/net.h"
-#include "../external/util/util.h"
+#include "../external/time/time.h"
 #include "../shared.h"
 #include "../threads/sync.h"
 
 #ifdef DEBUG
-#define BUILTIN_SRC "builtin.jl"
-#define IO_SRC "io.jl"
-#define STRUCT_SRC "struct.jl"
-#define ERROR_SRC "error.jl"
-#define SYNC_SRC "sync.jl"
-#define NET_SRC "net.jl"
-#define MATH_SRC "math.jl"
+#define PREDEF_SRC(name, src_prefix) const char name[] = #src_prefix ".jl";
 #else
-#define BUILTIN_SRC "builtin.jb"
-#define IO_SRC "io.jb"
-#define STRUCT_SRC "struct.jb"
-#define ERROR_SRC "error.jb"
-#define SYNC_SRC "sync.jb"
-#define NET_SRC "net.jb"
-#define MATH_SRC "math.jb"
+#define PREDEF_SRC(name, src_prefix) const char name[] = #src_prefix ".jb";
 #endif
 
-const char *PRELOADED[] = {
+PREDEF_SRC(BUILTIN_SRC, builtin);
+PREDEF_SRC(IO_SRC, io);
+PREDEF_SRC(STRUCT_SRC, struct);
+PREDEF_SRC(ERROR_SRC, error);
+PREDEF_SRC(SYNC_SRC, sync);
+PREDEF_SRC(NET_SRC, net);
+PREDEF_SRC(MATH_SRC, math);
+PREDEF_SRC(TIME_SRC, time);
+
+const char *const PRELOADED[] = {
     //  BUILTIN_SRC,
-    IO_SRC, STRUCT_SRC, ERROR_SRC, SYNC_SRC, NET_SRC, MATH_SRC};
+    IO_SRC, STRUCT_SRC, ERROR_SRC, SYNC_SRC, NET_SRC, MATH_SRC, TIME_SRC};
 
 int preloaded_size() { return sizeof(PRELOADED) / sizeof(PRELOADED[0]); }
 
@@ -40,7 +37,6 @@ void maybe_merge_existing_source(VM *vm, Element module_element,
                                  const char fn[]) {
   if (starts_with(fn, BUILTIN_SRC)) {
     add_builtin_external(vm, module_element);
-    add_util_external(vm, module_element);
     add_global_builtin_external(vm, module_element);
   } else if (starts_with(fn, IO_SRC)) {
     add_io_external(vm, module_element);
@@ -48,5 +44,7 @@ void maybe_merge_existing_source(VM *vm, Element module_element,
     add_sync_external(vm, module_element);
   } else if (starts_with(fn, NET_SRC)) {
     add_net_external(vm, module_element);
+  } else if (starts_with(fn, TIME_SRC)) {
+    add_time_external(vm, module_element);
   }
 }

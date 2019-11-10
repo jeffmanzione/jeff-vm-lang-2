@@ -51,13 +51,39 @@ module net
   push
   res   self
   fld   GT_ESCAPED
+  res   '&'
+  push
+  res   self
+  fld   AMPER
+  res   '?'
+  push
+  res   self
+  fld   QUESTION
+  res   '='
+  push
+  res   self
+  fld   EQUALS
   res   'HTTP/1.1 200 OK
 Content-Type: text/html; charset=UTF-8
 
 '
   push
   res   self
-  fld   HEADER_GENERIC_200
+  fld   HEADER_GENERIC_200_HTML
+  res   'HTTP/1.1 200 OK
+Content-Type: text/css; charset=UTF-8
+
+'
+  push
+  res   self
+  fld   HEADER_GENERIC_200_CSS
+  res   'HTTP/1.1 200 OK
+Content-Type: text/javascript; charset=UTF-8
+
+'
+  push
+  res   self
+  fld   HEADER_GENERIC_200_JS
   jmp   12
 
 @init
@@ -486,11 +512,128 @@ class HttpRequest
   ret
 endclass
 
-  jmp   142
+  jmp   114
+
+@parse_params(path)
+  set   path
+  res   path
+  push
+  res   QUESTION
+  call  split
+  set   query_parts
+  res   query_parts
+  push
+  res   0
+  aidx
+  set   path
+  res   struct
+  push
+  res   31
+  call  Map
+  set   params
+  nblk
+  res   range
+  push
+  res   query_parts
+  get   len
+  push
+  res   1
+  push
+  tupl  2
+  call
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   74
+  dup
+  call  next
+  push
+  tget  0
+  set   _
+  peek
+  res
+  tget  1
+  set   i
+  res   query_parts
+  push
+  res   i
+  aidx
+  set   part
+  res   part
+  push
+  res   AMPER
+  call  split
+  set   param_parts
+  nblk
+  res   param_parts
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   44
+  dup
+  call  next
+  push
+  tget  0
+  set   _
+  peek
+  res
+  tget  1
+  set   param
+  res   param
+  push
+  res   EQUALS
+  call  split
+  set   kv
+  res   kv
+  get   len
+  push
+  res   2
+  push
+  lt
+  if    13
+  res   kv
+  push
+  res   1
+  aidx
+  push
+  res   params
+  push
+  res   kv
+  push
+  res   0
+  aidx
+  aset
+  jmp   9
+  res   '1'
+  push
+  res   params
+  push
+  res   kv
+  push
+  res   0
+  aidx
+  aset
+  jmp   -47
+  res
+  bblck
+  jmp   -77
+  res
+  bblck
+  res   params
+  push
+  res   path
+  push
+  tupl  2
+  ret
+  jmp   153
 
 @parse_request(req)
   set   req
-  ctch  123
+  ctch  134
   res   req
   push
   res   '
@@ -538,6 +681,17 @@ endclass
   res   1
   aidx
   set   path
+  res   parse_params
+  push
+  res   path
+  call
+  push
+  tget  0
+  set   path
+  peek
+  res
+  tget  1
+  set   params
   res   req_head
   push
   res   2
@@ -941,4 +1095,274 @@ endclass
   push
   call  getlines
   ret
+
+class CachedTextRenderer
+  jmp   8
+
+@new
+  res   struct
+  push
+  call  Cache
+  push
+  res   self
+  fld   cache
+  res   self
+  ret
+  jmp   248
+
+@get(key,src,params)
+  push
+  peek
+  peek
+  res
+  res   self
+  get   cache
+  push
+  res   params
+  push
+  res   src
+  push
+  tupl  2
+  push
+  jmp   150
+
+@$anon_210_38(src,params)
+  push
+  peek
+  res
+  anew
+  set   indices
+  anew
+  set   parts
+  anew
+  set   keys
+  nblk
+  res   params
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   43
+  dup
+  call  next
+  push
+  tget  0
+  set   k
+  peek
+  res
+  tget  1
+  set   v
+  res   src
+  push
+  res   k
+  call  find_all
+  set   k_inds
+  nblk
+  res   k_inds
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   18
+  dup
+  call  next
+  push
+  tget  0
+  set   _
+  peek
+  res
+  tget  1
+  set   k_ind
+  res   indices
+  push
+  res   k_ind
+  push
+  res   k
+  push
+  tupl  2
+  call  append
+  jmp   -21
+  res
+  bblck
+  jmp   -46
+  res
+  bblck
+  res   indices
+  push
+  jmp   18
+
+@$anon_220_20(t1,t2)
+  push
+  peek
+  res
+  res   cmp
+  push
+  res   t2
+  push
+  res   1
+  aidx
+  push
+  res   t1
+  push
+  res   1
+  aidx
+  push
+  tupl  2
+  call
+  ret
+  res   self
+  get   $anon_220_20
+  call  sort
+  res   0
+  set   index
+  nblk
+  res   indices
+  push
+  call  iter
+  push
+  dup
+  call  has_next
+  ifn   38
+  dup
+  call  next
+  push
+  tget  0
+  set   _
+  peek
+  tget  1
+  push
+  tget  0
+  set   key
+  peek
+  res
+  tget  1
+  set   i
+  res
+  res   parts
+  push
+  res   src
+  push
+  res   i
+  push
+  res   index
+  push
+  tupl  2
+  call  substr
+  call  append
+  res   keys
+  push
+  res   key
+  call  append
+  res   i
+  push
+  res   key
+  get   len
+  push
+  add
+  set   index
+  jmp   -41
+  res
+  bblck
+  res   parts
+  push
+  res   src
+  push
+  res   index
+  call  substr
+  call  append
+  res   keys
+  push
+  res   parts
+  push
+  tupl  2
+  ret
+  ret
+  res   self
+  get   $anon_210_38
+  push
+  res   key
+  push
+  tupl  3
+  call  get
+  set   parts_keys
+  res   ''
+  set   text
+  res   parts_keys
+  push
+  res   0
+  aidx
+  set   parts
+  res   parts_keys
+  push
+  res   1
+  aidx
+  set   keys
+  res   keys
+  get   len
+  push
+  res   parts
+  get   len
+  push
+  add
+  set   len
+  nblk
+  res   0
+  set   i
+  res   i
+  push
+  res   len
+  push
+  lt
+  ifn   43
+  res   i
+  push
+  res   2
+  push
+  mod
+  push
+  res   0
+  push
+  eq
+  if    15
+  res   text
+  push
+  res   params
+  push
+  res   keys
+  push
+  res   i
+  push
+  res   2
+  push
+  div
+  aidx
+  aidx
+  call  extend
+  jmp   11
+  res   text
+  push
+  res   parts
+  push
+  res   i
+  push
+  res   2
+  push
+  div
+  aidx
+  call  extend
+  res   i
+  push
+  res   1
+  push
+  add
+  set   i
+  jmp   -48
+  bblck
+  res   text
+  ret
+  ret
+endclass
+
   exit  0

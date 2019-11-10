@@ -99,6 +99,7 @@ Token *parser_next_skip_ln__(Parser *parser, Token **target) {
 
 SyntaxTree parse_file(FileInfo *src) {
   Parser parser;
+  DEBUGF("Parsing %s", file_info_name(src));
   parser_init(&parser, src);
   SyntaxTree m = file_level_statement_list(&parser);
   if (DBG) {

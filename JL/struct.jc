@@ -1,6 +1,4 @@
 module struct
-  rmdl  io
-  mdst  io
   rmdl  sync
   mdst  sync
 

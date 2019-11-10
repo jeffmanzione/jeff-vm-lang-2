@@ -23,6 +23,9 @@
 #include "../threads/thread_interface.h"
 #include "memory.h"
 
+// Large prime. May help initial startup.
+#define DEFAULT_NODE_TABLE_SZ 48337
+
 typedef struct MemoryGraph_ {
   // ID-related bools
   bool rand_seeded, use_rand;
@@ -77,7 +80,8 @@ MemoryGraph *memory_graph_create() {
 #ifdef ENABLE_MEMORY_LOCK
   graph->access_mutex = mutex_create(NULL);
 #endif
-  set_init_default(&graph->nodes);
+  set_init(&graph->nodes, DEFAULT_NODE_TABLE_SZ, default_hasher,
+           default_comparator);
   set_init(&graph->roots, DEFAULT_TABLE_SZ, default_hasher, default_comparator);
   graph->rand_seeded = false;
   graph->use_rand = false;
@@ -414,6 +418,10 @@ void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
 int memory_graph_free_space(MemoryGraph *graph) {
   ASSERT_NOT_NULL(graph);
 
+#ifdef ENABLE_MEMORY_LOCK
+  mutex_await(graph->access_mutex, INFINITE);
+#endif
+
   int nodes_deleted = 0;
 
   // default table size to # of nodes. This will avoid resizing the table.
@@ -438,6 +446,10 @@ int memory_graph_free_space(MemoryGraph *graph) {
   }
   set_iterate(&graph->nodes, delete_node_if_not_marked);
   set_delete(marked);
+
+#ifdef ENABLE_MEMORY_LOCK
+  mutex_release(graph->access_mutex);
+#endif
   return nodes_deleted;
 }
 

@@ -178,6 +178,49 @@ Element string_find(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return create_int((int64_t)(found_index - start_index));
 }
 
+Element string_find_all(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  if (!is_object_type(arg, TUPLE)) {
+    return throw_error(vm, t, "Expected more than one arg.");
+  }
+  Tuple *args = arg->obj->tuple;
+  if (tuple_size(args) != 2) {
+    return throw_error(vm, t, "Expected 2 arguments.");
+  }
+  Element string_arg = tuple_get(args, 0);
+  Element index = tuple_get(args, 1);
+  if (!ISTYPE(string_arg, class_string)) {
+    return throw_error(vm, t, "Only a String can be in a String.");
+  }
+  if (!is_value_type(&index, INT)) {
+    return throw_error(vm, t, "Expected a starting index.");
+  }
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  String *substr = String_extract(string_arg);
+  ASSERT(NOT_NULL(substr));
+
+  Element array = create_array(vm->graph);
+
+  if ((index.val.int_val + String_size(substr)) > String_size(string)) {
+    return throw_error(vm, t, "Index out of bounds.");
+  }
+  size_t chars_remaining = String_size(string) - index.val.int_val;
+
+  char *i_index = string->table + index.val.int_val;
+  const char *c_substr = substr->table;
+  int substr_len = String_size(substr);
+
+  while (NULL !=
+         (i_index = find_str(i_index, chars_remaining, c_substr, substr_len))) {
+    int index = i_index - string->table;
+    memory_graph_array_enqueue(vm->graph, array, create_int(index));
+    i_index++;
+    chars_remaining = String_size(string) - index - 1;
+  }
+
+  return array;
+}
+
 Element string_set(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   if (!is_object_type(arg, TUPLE)) {
     ERROR("Unknown input.");
@@ -371,6 +414,41 @@ Element string_split(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return result;
 }
 
+// Element string_partition(VM *vm, Thread *t, ExternalData *data, Element *arg)
+// {
+//  String *string = map_lookup(&data->state, STRING_NAME);
+//  ASSERT(NOT_NULL(string));
+//  if (!ISTYPE(*arg, class_array)) {
+//    return throw_error(vm, t,
+//                       "Partitioning String with something not an Array.");
+//  }
+//  Array *array = extract_array(arg);
+//  ASSERT(NOT_NULL(array));
+//  int i, array_len = Array_size(array);
+//  int pos = 0;
+//  for (i = 0; i < array_len; ++i) {
+//    Element elt = Array_get(array);
+//    if (!is_value_type(elt, INT)) {
+//      return throw_error(vm, t, "All indices must be Int.");
+//    }
+//    int index = arg->val.int_val;
+//    if (index > String_size(string)) {
+//      return throw_error(vm, t, "Index out of bounds.");
+//    }
+//    // Avoid empty strings.
+//    if (index == pos) {
+//      continue;
+//    }
+//    Element part = string_create_len(vm, array->table, index - pos);
+//    pos = index;
+//  }
+//
+// Element result = create_array(vm->graph);
+// int str_len = String_size(string);
+//
+// return result;
+//}
+
 // Element string_hash(VM *vm, ExternalData *data, Element arg) {
 //  String *string = map_lookup(&data->state, STRING_NAME);
 //  ASSERT(NOT_NULL(string));
@@ -384,6 +462,8 @@ void merge_string_class(VM *vm, Element string_class) {
                       string_index);
   add_external_method(vm, string_class, strings_intern("__set__"), string_set);
   add_external_method(vm, string_class, strings_intern("find__"), string_find);
+  add_external_method(vm, string_class, strings_intern("find_all__"),
+                      string_find_all);
   add_external_method(vm, string_class, strings_intern("extend__"),
                       string_extend);
   add_external_method(vm, string_class, strings_intern("extend_range__"),
@@ -397,6 +477,9 @@ void merge_string_class(VM *vm, Element string_class) {
                       string_rshrink);
   add_external_method(vm, string_class, strings_intern("clear"), string_clear);
   add_external_method(vm, string_class, strings_intern("split"), string_split);
+  //  add_external_method(vm, string_class,
+  //                      strings_intern("partition_expect_sorted__"),
+  //                      string_partition);
   //  add_external_function(vm, string_class, strings_intern("hash"),
   //  string_hash);
 }

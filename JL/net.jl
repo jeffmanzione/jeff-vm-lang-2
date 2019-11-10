@@ -17,8 +17,13 @@ self.LT = '<'
 self.GT = '>'
 self.LT_ESCAPED = '&lt;'
 self.GT_ESCAPED = '&gt;'
+self.AMPER = '&'
+self.QUESTION = '?'
+self.EQUALS = '='
 
-self.HEADER_GENERIC_200 = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
+self.HEADER_GENERIC_200_HTML = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
+self.HEADER_GENERIC_200_CSS = 'HTTP/1.1 200 OK\r\nContent-Type: text/css; charset=UTF-8\r\n\r\n'
+self.HEADER_GENERIC_200_JS = 'HTTP/1.1 200 OK\r\nContent-Type: text/javascript; charset=UTF-8\r\n\r\n'
 
 def init() {
   if self.is_inited {
@@ -86,6 +91,25 @@ class HttpRequest {
     }
 }
 
+def parse_params(path) {
+  query_parts = path.split(QUESTION)
+  path = query_parts[0]
+  params = struct.Map(31)
+  for (_,i) in range(1, query_parts.len) {
+    part = query_parts[i]
+    param_parts = part.split(AMPER)
+    for (_, param) in param_parts {
+      kv = param.split(EQUALS)
+      if kv.len < 2 {
+        params[kv[0]] = '1'
+      } else {
+        params[kv[0]] = kv[1]
+      }
+    }
+  }
+  (path, params)
+}
+
 def parse_request(req) {
   try {
     parts = req.split('\r\n')
@@ -96,6 +120,7 @@ def parse_request(req) {
     req_head = request.split(' ')
     type = req_head[0]
     path = req_head[1]
+    (path, params) = parse_params(path)
     protocol = req_head[2].split('/')
     
     map = struct.Map(51)
@@ -175,4 +200,45 @@ class RequestHandler {
 
 def read_entire_file(path) {
   io.FileReader(concat('.', path)).getlines()
+}
+
+class CachedTextRenderer {
+  def new() {
+    self.cache = struct.Cache()
+  }
+  def get(key, src, params) {
+    parts_keys = self.cache.get(key, @(src, params) {
+      indices = []
+      parts = []
+      keys = []
+      for (k, v) in params {
+        k_inds = src.find_all(k)
+        for (_, k_ind) in k_inds {
+          indices.append((k, k_ind))
+        }
+      }
+      indices.sort(@(t1, t2) cmp(t1[1], t2[1]))
+      index = 0
+      for (_, (key, i)) in indices {
+        parts.append(src.substr(index, i))
+        keys.append(key)
+        index = i + key.len
+      }
+      parts.append(src.substr(index))
+      return (parts, keys)
+    }, (src, params))
+    
+    text = ''
+    parts = parts_keys[0]
+    keys = parts_keys[1]
+    len = keys.len + parts.len
+    for i=0, i<len, i=i+1 {
+      if i%2 == 0 {
+        text.extend(parts[i / 2])
+      } else {
+        text.extend(params[keys[i / 2]])
+      }
+    }
+    return text
+  }
 }
