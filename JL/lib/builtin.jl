@@ -447,28 +447,8 @@ class String {
     if ~end {
       end = self.len
     }
-    for i = start, i < end, i = i + 1 {
-      string.append(self[i])
-    }
-    string
+    return self.substr__(start, end)
   }
-;  def split(del) {
-;    del_len = del.len
-;    parts = []
-;    last_delim_end = 0
-;    for i=0, i < self.len, i=i+1 {
-;      if equals_range(self, i, del, 0, del_len) {
-;        parts.append(self.substr(last_delim_end, i))
-;        i = i + del_len
-;        last_delim_end = i
-;      }
-;      if i==self.len-1 & last_delim_end < self.len - del_len {
-;        parts.append(self.substr(last_delim_end, self.len))
-;      }
-;    }
-;
-;    return parts
-;  }
 }
 
 ; Immutable String

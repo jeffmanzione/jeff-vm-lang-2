@@ -7,14 +7,19 @@
 
 #include "shared.h"
 
-#include <errno.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 
+#include "arena/strings.h"
 #include "error.h"
-#include "strings.h"
 #include "graph/memory.h"
+
+#ifdef _WIN32
+#define SLASH_CHAR '\\';
+#else
+#define SLASH_CHAR '/';
+#endif
 
 #ifdef DEBUG
 bool DBG = true;
@@ -23,7 +28,7 @@ bool DBG = false;
 #endif
 
 FILE *file_fn(const char fn[], const char op_type[], int line_num,
-    const char func_name[], const char file_name[]) {
+              const char func_name[], const char file_name[]) {
   if (NULL == fn) {
     error(line_num, func_name, file_name, "Unable to read file.");
   }
@@ -33,13 +38,13 @@ FILE *file_fn(const char fn[], const char op_type[], int line_num,
   FILE *file = fopen(fn, op_type);
   if (NULL == file) {
     error(line_num, func_name, file_name,
-        "Unable to read file '%s' with op '%s'.", fn, op_type);
+          "Unable to read file '%s' with op '%s'.", fn, op_type);
   }
   return file;
 }
 
 void file_op(FILE *file, FileHandler operation, int line_num,
-    const char func_name[], const char file_name[]) {
+             const char func_name[], const char file_name[]) {
   operation(file);
   if (0 != fclose(file)) {
     error(line_num, func_name, file_name, "File operation failed.");
@@ -80,17 +85,17 @@ void strcrepl(char *src, char from, char to) {
 }
 
 char *find_str(char *haystack, size_t haystack_len, const char *needle,
-    size_t needle_len) {
-//  DEBUGF("haystack='%*s'(%d), needle='%*s'(%d)", haystack_len, haystack,
-//      haystack_len, needle_len, needle, needle_len);
+               size_t needle_len) {
+  //  DEBUGF("haystack='%*s'(%d), needle='%*s'(%d)", haystack_len, haystack,
+  //      haystack_len, needle_len, needle, needle_len);
   int i, j;
   for (i = 0; i <= (haystack_len - needle_len); ++i) {
     for (j = 0; j < needle_len; ++j) {
-//      DEBUGF("i=%d, j=%d", i, j);
+      //      DEBUGF("i=%d, j=%d", i, j);
       if (haystack[i + j] != needle[j]) {
         break;
       } else if (j == (needle_len - 1)) {
-//        DEBUGF("found at i=%d", i);
+        //        DEBUGF("found at i=%d", i);
         return haystack + i;
       }
     }
@@ -108,20 +113,18 @@ bool contains_char(const char str[], char c) {
   return false;
 }
 
-uint32_t default_hasher(const void *ptr) {
-  return (uint32_t) ptr;
-}
+uint32_t default_hasher(const void *ptr) { return (uint32_t)ptr; }
 
 int32_t default_comparator(const void *ptr1, const void *ptr2) {
   return ptr1 - ptr2;
 }
 
 uint32_t string_hasher(const void *ptr) {
-  unsigned char *s = (unsigned char *) ptr;
+  unsigned char *s = (unsigned char *)ptr;
   uint32_t hval = FNV_1A_32_OFFSET;
   while (*s) {
     hval *= FNV_32_PRIME;
-    hval ^= (uint32_t) *s++;
+    hval ^= (uint32_t)*s++;
   }
   return hval;
 }
@@ -136,8 +139,8 @@ int32_t string_comparator(const void *ptr1, const void *ptr2) {
   if (NULL == ptr2) {
     return 1;
   }
-  uint32_t *lhs = (uint32_t *) ptr1;
-  uint32_t *rhs = (uint32_t *) ptr2;
+  uint32_t *lhs = (uint32_t *)ptr1;
+  uint32_t *rhs = (uint32_t *)ptr2;
 
   while (!HAS_NULL(*lhs) && !HAS_NULL(*rhs)) {
     uint32_t diff = *lhs - *rhs;
@@ -147,10 +150,10 @@ int32_t string_comparator(const void *ptr1, const void *ptr2) {
     lhs++;
     rhs++;
   }
-  return strncmp((char *) lhs, (char *) rhs, sizeof(uint32_t));
+  return strncmp((char *)lhs, (char *)rhs, sizeof(uint32_t));
 }
 
-//int getline(char **lineptr, size_t *n, FILE *stream) {
+// int getline(char **lineptr, size_t *n, FILE *stream) {
 //  static char line[256];
 //  char *ptr;
 //  unsigned int len;
@@ -239,4 +242,41 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
   *n = size;
 
   return p - bufptr - 1;
+}
+
+void split_path_file(const char path_file[], char **path, char **file_name,
+                     char **ext) {
+  char *slash = (char *)path_file, *next;
+  while ((next = strpbrk(slash + 1, "\\/"))) slash = next;
+  if (path_file != slash) slash++;
+  int path_len = slash - path_file;
+  *path = strings_intern_range(path_file, 0, path_len);
+  char *dot = (ext == NULL) ? NULL : strchr(slash + 1, '.');
+  int filename_len = (dot == NULL) ? strlen(path_file) - path_len : dot - slash;
+  *file_name = strings_intern_range(slash, 0, filename_len);
+  if (dot != NULL) {
+    *ext = strings_intern(dot);
+  } else if (ext != NULL) {
+    *ext = NULL;
+  }
+}
+
+char *combine_path_file(const char path[], const char file_name[],
+                        const char ext[]) {
+  int path_len = (ends_with(path, "/") || ends_with(path, "\\"))
+                     ? strlen(path) - 1
+                     : strlen(path);
+  int filename_len = strlen(file_name);
+  int ext_len = (NULL == ext) ? 0 : strlen(ext);
+  int full_len = path_len + 1 + filename_len + ext_len;
+  char *tmp = ALLOC_ARRAY2(char, full_len);
+  memmove(tmp, path, path_len);
+  tmp[path_len] = SLASH_CHAR;
+  memmove(tmp + path_len + 1, file_name, filename_len);
+  if (NULL != ext) {
+    memmove(tmp + path_len + 1 + filename_len, ext, ext_len);
+  }
+  char *result = strings_intern_range(tmp, 0, full_len);
+  DEALLOC(tmp);
+  return result;
 }

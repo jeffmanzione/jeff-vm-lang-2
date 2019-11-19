@@ -11,6 +11,8 @@
 #include "command/commandline.h"
 #include "module.h"
 
+char *guess_file_extension(const char dir[], const char file_prefix[]);
+
 Module *load_fn(const char fn[], const ArgStore *store);
 
 #endif /* FILE_LOAD_H_ */

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "arena/strings.h"
 #include "class.h"
@@ -138,8 +139,8 @@ Element maybe_create_class_with_parents(VM *vm, Element module_element,
   return class;
 }
 
-void vm_add_builtin(VM *vm) {
-  Module *builtin = load_fn(strings_intern(BUILTIN_SRC), vm->store);
+void vm_add_builtin(VM *vm, const char *builtin_fn) {
+  Module *builtin = load_fn(builtin_fn, vm->store);
   ASSERT(NOT_NULL(vm), NOT_NULL(builtin));
   Element builtin_element = create_module(vm, builtin);
   memory_graph_set_field(vm->graph, vm->modules, module_name(builtin),
@@ -151,7 +152,7 @@ void vm_add_builtin(VM *vm) {
   memory_graph_set_field(vm->graph, builtin_element, CLASSES_KEY,
                          classes = create_array(vm->graph));
 
-  maybe_merge_existing_source(vm, builtin_element, BUILTIN_SRC);
+  maybe_merge_existing_source(vm, builtin_element, builtin_fn);
 
   void add_ref(Pair * pair) {
     Element function =
@@ -302,15 +303,22 @@ VM *vm_create(ArgStore *store) {
                          (vm->modules = create_obj(vm->graph)));
   memory_graph_set_field(vm->graph, vm->root, NAME_KEY,
                          string_create(vm, MODULES));
-  vm_add_builtin(vm);
+
+  const char *builtin_dir = argstore_lookup_string(store, ArgKey__BUILTIN_DIR);
+  const Arg *builtin_files = argstore_get(store, ArgKey__BUILTIN_FILES);
+
+  const char *builtin_fn = guess_file_extension(builtin_dir, "builtin");
+  vm_add_builtin(vm, builtin_fn);
 
   memory_graph_set_field(vm->graph, vm->root, NIL_KEYWORD, create_none());
   memory_graph_set_field(vm->graph, vm->root, FALSE_KEYWORD, create_none());
   memory_graph_set_field(vm->graph, vm->root, TRUE_KEYWORD, create_int(1));
 
   int i;
-  for (i = 0; i < preloaded_size(); ++i) {
-    vm_merge_module(vm, PRELOADED[i]);
+  for (i = 0; i < builtin_files->count; ++i) {
+    const char *fn =
+        guess_file_extension(builtin_dir, builtin_files->stringlist_val[i]);
+    vm_merge_module(vm, fn);
   }
   return vm;
 }
@@ -1029,6 +1037,11 @@ void execute_tget(VM *vm, Thread *t, Ins ins, Element tuple, int64_t index) {
   t_set_resval(t, tuple_get(tuple.obj->tuple, index));
 }
 
+void vm_set_catch_goto(VM *vm, Thread *t, uint32_t index) {
+  memory_graph_set_field(vm->graph, t_current_block(t),
+                         strings_intern("$try_goto"), create_int(index));
+}
+
 bool execute_val_param(VM *vm, Thread *t, Ins ins) {
   Element elt = val_to_elt(ins.val), popped;
   Element tuple, array;
@@ -1120,9 +1133,7 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
     case CTCH:
       ASSERT(elt.type == VALUE, elt.val.type == INT);
       uint32_t ip = t_get_ip(t);
-      memory_graph_set_field(vm->graph, t_current_block(t),
-                             strings_intern("$try_goto"),
-                             create_int(ip + elt.val.int_val + 1));
+      vm_set_catch_goto(vm, t, ip + elt.val.int_val + 1);
       break;
     default:
       ERROR("Instruction op was not a val_param. op=%s",
@@ -1163,19 +1174,19 @@ bool execute(VM *vm, Thread *t) {
 
   Ins ins = t_current_ins(t);
 
-  //#ifdef DEBUG
-  //  mutex_await(vm->debug_mutex, INFINITE);
-  //  fflush(stderr);
-  //  fprintf(stdout, "module(%s,t=%d) ",
-  //  module_name(t_get_module(t).obj->module),
-  //          (int)t->id);
-  //  fflush(stdout);
-  //  ins_to_str(ins, stdout);
-  //  fprintf(stdout, "\n");
-  //  fflush(stdout);
-  //  fflush(stderr);
-  //  mutex_release(vm->debug_mutex);
-  //#endif
+  //  #ifdef DEBUG
+  //    mutex_await(vm->debug_mutex, INFINITE);
+  //    fflush(stderr);
+  //    fprintf(stdout, "module(%s,t=%d) ",
+  //    module_name(t_get_module(t).obj->module),
+  //            (int)t->id);
+  //    fflush(stdout);
+  //    ins_to_str(ins, stdout);
+  //    fprintf(stdout, "\n");
+  //    fflush(stdout);
+  //    fflush(stderr);
+  //    mutex_release(vm->debug_mutex);
+  //  #endif
 
   bool status;
   switch (ins.param) {

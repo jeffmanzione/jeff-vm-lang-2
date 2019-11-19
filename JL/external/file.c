@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "../arena/strings.h"
@@ -126,6 +127,30 @@ Element file_getline(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return string;
 }
 
+// This is vulnerable to files with \0 inside them.
+Element file_getall(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  FILE *file = map_lookup(&data->state, strings_intern("file"));
+  ASSERT(NOT_NULL(file));
+  // Get length of file to realloc size and avoid buffer reallocs.
+  fseek(file, 0, SEEK_END);
+  long fsize = ftell(file);
+  rewind(file);
+  // Create string and copy the file into it.
+  Element elt = string_create_len(vm, NULL, fsize);
+  String *string = String_extract(elt);
+  String_set(string, fsize - 1, '\0');
+  // Can be less than read on Windows because \r gets dropped.
+  int actually_read = fread(string->table, sizeof(char), fsize, file);
+
+  // If this happens then something is really wrong.
+  ASSERT(actually_read <= fsize);
+
+  String_rshrink(string, fsize - actually_read);
+  memory_graph_set_field(vm->graph, elt, LENGTH_KEY,
+                         create_int(String_size(string)));
+  return elt;
+}
+
 Element file_rewind(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   FILE *file = map_lookup(&data->state, strings_intern("file"));
   ASSERT(NOT_NULL(file));
@@ -141,6 +166,7 @@ Element create_file_class(VM *vm, Element module) {
   add_external_method(vm, file_class, strings_intern("puts__"), file_puts);
   add_external_method(vm, file_class, strings_intern("getline__"),
                       file_getline);
+  add_external_method(vm, file_class, strings_intern("getall__"), file_getall);
   add_external_method(vm, file_class, strings_intern("rewind__"), file_rewind);
   add_external_method(vm, file_class, strings_intern("close__"),
                       file_deconstructor);

@@ -47,23 +47,27 @@ int main(int argc, const char *argv[]) {
   set_iterate(argstore_sources(store), load_src);
   VM *vm = vm_create(store);
 
-  Element main_element = create_none();
-  void load_module(void *ptr) {
-    ASSERT(NOT_NULL(ptr));
-    Element module = vm_add_module(vm, (Module *)ptr);
-    if (NONE == main_element.type) {
-      main_element = module;
+  if (argstore_lookup_bool(store, ArgKey__EXECUTE) ||
+      argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
+    Element main_element = create_none();
+    void load_module(void *ptr) {
+      ASSERT(NOT_NULL(ptr));
+      Element module = vm_add_module(vm, (Module *)ptr);
+      if (NONE == main_element.type) {
+        main_element = module;
+      }
     }
-  }
-  set_iterate(&modules, load_module);
-  if (argstore_lookup_bool(store, ArgKey__EXECUTE)) {
-    vm_start_execution(vm, main_element);
-  }
-  if (argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
-    printf(
-        "Starting Interpreter.\nWrite code below. Press enter to evaluate.\n");
-    fflush(stdout);
-    interpret_from_file(stdin, "stdin", vm, interpret_statement);
+    set_iterate(&modules, load_module);
+    if (argstore_lookup_bool(store, ArgKey__EXECUTE)) {
+      vm_start_execution(vm, main_element);
+    }
+    if (argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
+      printf(
+          "Starting Interpreter.\nWrite code below. Press enter to "
+          "evaluate.\n");
+      fflush(stdout);
+      interpret_from_file(stdin, "stdin", vm, interpret_statement);
+    }
   }
 
   set_finalize(&modules);

@@ -15,8 +15,8 @@
 #include "../graph/memory.h"
 #include "../shared.h"
 
-#define DEFAULT_CHUNK_SIZE 8122
-#define DEFAULT_HASHTABLE_SIZE 511
+#define DEFAULT_CHUNK_SIZE 32488
+#define DEFAULT_HASHTABLE_SIZE 4091
 
 Strings strings;
 
@@ -105,66 +105,66 @@ void chunk_delete(Chunk *chunk) {
 }
 
 void strings_insert_constants() {
-  ROOT = strings_intern("$root");
-  RESULT_VAL = strings_intern("$resval");
-  STACK = strings_intern("$stack");
-  INS_INDEX = strings_intern("$ins");
-  TMP_VAL = strings_intern("$tmp");
-  IP_FIELD = strings_intern("$ip");
-  CALLER_KEY = strings_intern("$caller");
-  PARENT = strings_intern("$parent");
-  SAVED_BLOCKS = strings_intern("$saved_blocks");
-  INITIALIZED = strings_intern("$initialized");
-  CURRENT_BLOCK = strings_intern("$block");
-  OLD_RESVALS = strings_intern("$old_resvals");
-  PARENT_MODULE = strings_intern("module");
-  PARENT_CLASS = strings_intern("parent_class");
-  TRUE_KEYWORD = strings_intern("True");
-  FALSE_KEYWORD = strings_intern("False");
-  NIL_KEYWORD = strings_intern("Nil");
-  LENGTH_KEY = strings_intern("len");
-  SELF = strings_intern("self");
-  MODULE_FIELD = strings_intern("$module");
-  MODULES = strings_intern("$modules");
-  CLASS_KEY = strings_intern("class");
-  CLASSES_KEY = strings_intern("classes");
-  CONSTRUCTOR_KEY = strings_intern("new");
-  DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
-  PARENTS_KEY = strings_intern("parents");
-  NAME_KEY = strings_intern("name");
-  CLASS_NAME = strings_intern("Class");
-  OBJECT_NAME = strings_intern("Object");
-  ARRAY_NAME = strings_intern("Array");
-  STRING_NAME = strings_intern("String");
-  TUPLE_NAME = strings_intern("Tuple");
-  FUNCTION_NAME = strings_intern("Function");
-  EXTERNAL_FUNCTION_NAME = strings_intern("ExternalFunction");
-  EXTERNAL_METHOD_NAME = strings_intern("ExternalMethod");
-  METHOD_NAME = strings_intern("Method");
-  METHOD_INSTANCE_NAME = strings_intern("MethodInstance");
-  MODULE_NAME = strings_intern("Module");
-  ERROR_NAME = strings_intern("Error");
   ADDRESS_KEY = strings_intern("$adr");
-  IS_EXTERNAL_KEY = strings_intern("$is_external");
-  ERROR_KEY = strings_intern("$has_error");
-  ARRAYLIKE_INDEX_KEY = strings_intern("__index__");
-  ARRAYLIKE_SET_KEY = strings_intern("__set__");
-  BUILTIN_MODULE_NAME = strings_intern("builtin");
-  EQ_FN_NAME = strings_intern("eq");
-  NEQ_FN_NAME = strings_intern("neq");
-  IN_FN_NAME = strings_intern("__in__");
-  ITER_FN_NAME = strings_intern("iter");
-  NEXT_FN_NAME = strings_intern("next");
-  HAS_NEXT_FN_NAME = strings_intern("has_next");
-  OBJ_KEY = strings_intern("obj");
-  METHOD_KEY = strings_intern("method");
-  METHODS_KEY = strings_intern("$methods");
-  CALL_KEY = strings_intern("call");
-  STACK_SIZE_NAME = strings_intern("$stack_size");
-  IS_ITERATOR_BLOCK_KEY = strings_intern("$is_iterator_block");
   ARGS_KEY = strings_intern("$args");
   ARGS_NAME = strings_intern("args");
+  ARRAYLIKE_INDEX_KEY = strings_intern("__index__");
+  ARRAYLIKE_SET_KEY = strings_intern("__set__");
+  ARRAY_NAME = strings_intern("Array");
+  BUILTIN_MODULE_NAME = strings_intern("builtin");
+  CALLER_KEY = strings_intern("$caller");
+  CALL_KEY = strings_intern("call");
+  CLASSES_KEY = strings_intern("classes");
+  CLASS_KEY = strings_intern("class");
+  CLASS_NAME = strings_intern("Class");
+  CONSTRUCTOR_KEY = strings_intern("new");
+  CURRENT_BLOCK = strings_intern("$block");
+  DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
+  EQ_FN_NAME = strings_intern("eq");
+  ERROR_KEY = strings_intern("$has_error");
+  ERROR_NAME = strings_intern("Error");
+  EXTERNAL_FUNCTION_NAME = strings_intern("ExternalFunction");
+  EXTERNAL_METHOD_NAME = strings_intern("ExternalMethod");
+  FALSE_KEYWORD = strings_intern("False");
+  FUNCTION_NAME = strings_intern("Function");
+  HAS_NEXT_FN_NAME = strings_intern("has_next");
+  INITIALIZED = strings_intern("$initialized");
+  INS_INDEX = strings_intern("$ins");
+  IN_FN_NAME = strings_intern("__in__");
+  IP_FIELD = strings_intern("$ip");
+  IS_EXTERNAL_KEY = strings_intern("$is_external");
+  IS_ITERATOR_BLOCK_KEY = strings_intern("$is_iterator_block");
+  ITER_FN_NAME = strings_intern("iter");
+  LENGTH_KEY = strings_intern("len");
+  METHODS_KEY = strings_intern("$methods");
+  METHOD_INSTANCE_NAME = strings_intern("MethodInstance");
+  METHOD_KEY = strings_intern("method");
+  METHOD_NAME = strings_intern("Method");
+  MODULES = strings_intern("$modules");
+  MODULE_FIELD = strings_intern("$module");
+  MODULE_NAME = strings_intern("Module");
+  NAME_KEY = strings_intern("name");
+  NEQ_FN_NAME = strings_intern("neq");
+  NEXT_FN_NAME = strings_intern("next");
+  NIL_KEYWORD = strings_intern("Nil");
+  OBJECT_NAME = strings_intern("Object");
+  OBJ_KEY = strings_intern("obj");
+  OLD_RESVALS = strings_intern("$old_resvals");
+  PARENT = strings_intern("$parent");
+  PARENTS_KEY = strings_intern("parents");
+  PARENT_CLASS = strings_intern("parent_class");
+  PARENT_MODULE = strings_intern("module");
+  RESULT_VAL = strings_intern("$resval");
+  ROOT = strings_intern("$root");
+  SAVED_BLOCKS = strings_intern("$saved_blocks");
+  SELF = strings_intern("self");
+  STACK = strings_intern("$stack");
+  STACK_SIZE_NAME = strings_intern("$stack_size");
+  STRING_NAME = strings_intern("String");
   THREADS_KEY = strings_intern("$threads");
+  TMP_VAL = strings_intern("$tmp");
+  TRUE_KEYWORD = strings_intern("True");
+  TUPLE_NAME = strings_intern("Tuple");
 }
 
 void strings_init() {

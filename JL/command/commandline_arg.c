@@ -10,7 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../arena/strings.h"
 #include "../error.h"
+#include "../graph/memory.h"
 
 bool string_is_true(const char str[]) {
   if (0 == strcmp("True", str) || 0 == strcmp("true", str) ||
@@ -51,6 +53,27 @@ bool parse_float(const char val[], float *float_val) {
   return true;
 }
 
+bool parse_stringlist(const char val[], char ***stringlist_val, int *count) {
+  int comma_count = 0;
+  char *pos = (char *)val;
+  while (NULL != (pos = strchr(pos, ','))) {
+    comma_count++;
+    pos++;
+  }
+  *count = comma_count + 1;
+  *stringlist_val = ALLOC_ARRAY2(char *, comma_count + 1);
+
+  char *prev = (char *)val;
+  pos = (char *)val;
+  int index = 0;
+  while (NULL != (pos = strchr(prev, ','))) {
+    (*stringlist_val)[index++] = strings_intern_range(prev, 0, pos - prev);
+    prev = pos + 1;
+  }
+  (*stringlist_val)[index] = strings_intern(prev);
+  return true;
+}
+
 Arg arg_parse(ArgType type, const char val[]) {
   Arg arg;
   arg.used = true;
@@ -72,6 +95,11 @@ Arg arg_parse(ArgType type, const char val[]) {
     case ArgType__float:
       if (!parse_float(val, &arg.float_val)) {
         ERROR("Could not parse '%s' to FLOAT.", val);
+      }
+      break;
+    case ArgType__stringlist:
+      if (!parse_stringlist(val, &arg.stringlist_val, &arg.count)) {
+        ERROR("Could not parse '%s' to STRING LIST.", val);
       }
       break;
     default:
@@ -97,5 +125,13 @@ Arg arg_float(float float_val) {
 
 Arg arg_string(const char string_val[]) {
   Arg arg = {.used = true, .type = ArgType__string, .string_val = string_val};
+  return arg;
+}
+
+Arg arg_stringlist(const char string_val[]) {
+  Arg arg = {.used = true, .type = ArgType__stringlist};
+  if (!parse_stringlist(string_val, &arg.stringlist_val, &arg.count)) {
+    ERROR("Could not parse '%s' to STRING LIST.", string_val);
+  }
   return arg;
 }

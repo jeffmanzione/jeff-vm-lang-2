@@ -59,10 +59,14 @@ typedef Action Deleter;
 
 uint32_t default_hasher(const void *ptr);
 int32_t default_comparator(const void *ptr1, const void *ptr2);
-
 uint32_t string_hasher(const void *ptr);
 int32_t string_comparator(const void *ptr1, const void *ptr2);
 
 int getline(char **lineptr, size_t *n, FILE *stream);
+
+void split_path_file(const char path_file[], char **path, char **file_name,
+                     char **ext);
+char *combine_path_file(const char path[], const char file_name[],
+                        const char ext[]);
 
 #endif /* SHARED_H_ */

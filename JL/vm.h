@@ -49,6 +49,8 @@ void vm_call_new(VM *vm, Thread *t, Element class);
 
 void vm_start_execution(VM *vm, Element module);
 
+void vm_set_catch_goto(VM *vm, Thread *t, uint32_t index);
+
 bool execute(VM *vm, Thread *t);
 
 #endif /* VM_H_ */

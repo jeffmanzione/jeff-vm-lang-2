@@ -18,6 +18,7 @@ class FileInternal {
   def rewind() self.file.rewind__()
   def gets(n) self.file.gets__(n)
   def getline() self.file.getline__()
+  def getlines() self.file.getall__()
   def puts(s) self.file.puts__(s)
   def close() self.file.close__()
 }
@@ -29,18 +30,13 @@ class FileReader {
   def rewind() self.fi.rewind()
   def gets(n) self.fi.gets(n)
   def getline() self.fi.getline()
-  def getlines() {
-    lines = ''
-    while (line = self.getline()) {
-      lines.extend(line)
-    }
-    lines
-  }
+  def getlines() self.fi.getlines()
+  def getall() self.fi.getall()
   def close() self.fi.close()
 }
 
 class FileWriter {
-  def new(fn, append, binary) {
+  def new(fn, append=False, binary=False) {
     self.fi = FileInternal(fn, 'w', append, binary)
   }
   def rewind() self.fi.rewind()
@@ -52,9 +48,9 @@ class FileWriter {
   def close() self.fi.close()
 }
 
-self.IN = FileReader('__STDIN__', False)
-self.OUT = FileWriter('__STDOUT__', True, False)
-self.ERROR = FileWriter('__STDERR__', False, False)
+self.IN = FileReader('__STDIN__')
+self.OUT = FileWriter('__STDOUT__', True)
+self.ERROR = FileWriter('__STDERR__', True)
 
 def fprint(f, a) {
   f.write(str(a))

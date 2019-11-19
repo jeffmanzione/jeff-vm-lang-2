@@ -5,12 +5,15 @@
  *      Author: Jeff
  */
 
+#include "../arena/strings.h"
 #include "strings.h"
 
 #include <inttypes.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
-#include "../arena/strings.h"
 #include "../class.h"
 #include "../codegen/tokenizer.h"
 #include "../datastructure/array.h"
@@ -19,9 +22,9 @@
 #include "../datastructure/tuple.h"
 #include "../element.h"
 #include "../error.h"
-#include "../graph/memory.h"
 #include "../graph/memory_graph.h"
-#include "../vm.h"
+#include "../ltable/ltable.h"
+#include "../shared.h"
 #include "external.h"
 
 Element stringify__(VM *vm, Thread *t, ExternalData *ed, Element *argument) {
@@ -74,8 +77,13 @@ void String_append_cstr(String *string, const char src[], size_t len) {
 }
 
 String *String_of(VM *vm, ExternalData *data, const char *src, size_t len) {
-  ASSERT(NOT_NULL(src));
-  String *string = String_create_copy(src, len);
+  ASSERT(NOT_NULL(vm), NOT_NULL(data));
+  String *string;
+  if (NULL != src) {
+    string = String_create_copy(src, len);
+  } else {
+    string = String_create_sz(len);
+  }
   String_fill(vm, data, string);
   return string;
 }
@@ -202,7 +210,8 @@ Element string_find_all(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   Element array = create_array(vm->graph);
 
   if ((index.val.int_val + String_size(substr)) > String_size(string)) {
-    return throw_error(vm, t, "Index out of bounds.");
+    return throw_error(vm, t,
+                       "Index out of bounds. Was %d, array length is %d.");
   }
   size_t chars_remaining = String_size(string) - index.val.int_val;
 
@@ -414,40 +423,41 @@ Element string_split(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return result;
 }
 
-// Element string_partition(VM *vm, Thread *t, ExternalData *data, Element *arg)
-// {
-//  String *string = map_lookup(&data->state, STRING_NAME);
-//  ASSERT(NOT_NULL(string));
-//  if (!ISTYPE(*arg, class_array)) {
-//    return throw_error(vm, t,
-//                       "Partitioning String with something not an Array.");
-//  }
-//  Array *array = extract_array(arg);
-//  ASSERT(NOT_NULL(array));
-//  int i, array_len = Array_size(array);
-//  int pos = 0;
-//  for (i = 0; i < array_len; ++i) {
-//    Element elt = Array_get(array);
-//    if (!is_value_type(elt, INT)) {
-//      return throw_error(vm, t, "All indices must be Int.");
-//    }
-//    int index = arg->val.int_val;
-//    if (index > String_size(string)) {
-//      return throw_error(vm, t, "Index out of bounds.");
-//    }
-//    // Avoid empty strings.
-//    if (index == pos) {
-//      continue;
-//    }
-//    Element part = string_create_len(vm, array->table, index - pos);
-//    pos = index;
-//  }
-//
-// Element result = create_array(vm->graph);
-// int str_len = String_size(string);
-//
-// return result;
-//}
+Element string_substr(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  if (!is_object_type(arg, TUPLE)) {
+    return throw_error(vm, t, "Expected more than one arg.");
+  }
+  Tuple *args = arg->obj->tuple;
+  if (tuple_size(args) != 2) {
+    return throw_error(vm, t, "Expected 2 arguments.");
+  }
+  Element index_start = tuple_get(args, 0);
+  if (!is_value_type(&index_start, INT)) {
+    return throw_error(vm, t, "Expected start_index to be Int.");
+  }
+
+  Element index_end = tuple_get(args, 1);
+  if (!is_value_type(&index_end, INT)) {
+    return throw_error(vm, t, "Expected end_index to be an Int.");
+  }
+
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+
+  int64_t start = index_start.val.int_val;
+  int64_t end = index_end.val.int_val;
+
+  if (start < 0 || start > String_size(string)) {
+    return throw_error(vm, t, "start_index out of bounds.");
+  }
+  if (end < 0 || end > String_size(string)) {
+    return throw_error(vm, t, "end_index out of bounds.");
+  }
+  if (end < start) {
+    return throw_error(vm, t, "start_index > end_index.");
+  }
+  return string_create_len(vm, String_cstr(string) + start, end - start);
+}
 
 // Element string_hash(VM *vm, ExternalData *data, Element arg) {
 //  String *string = map_lookup(&data->state, STRING_NAME);
@@ -468,6 +478,8 @@ void merge_string_class(VM *vm, Element string_class) {
                       string_extend);
   add_external_method(vm, string_class, strings_intern("extend_range__"),
                       string_extend_range);
+  add_external_method(vm, string_class, strings_intern("substr__"),
+                      string_substr);
   add_external_method(vm, string_class, strings_intern("trim"), string_trim);
   add_external_method(vm, string_class, strings_intern("ltrim"), string_ltrim);
   add_external_method(vm, string_class, strings_intern("rtrim"), string_rtrim);

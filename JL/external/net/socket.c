@@ -12,10 +12,12 @@
 
 #include "../../arena/strings.h"
 #include "../../class.h"
+#include "../../datastructure/array.h"
 #include "../../datastructure/map.h"
 #include "../../datastructure/tuple.h"
 #include "../../element.h"
 #include "../../error.h"
+#include "../../graph/memory_graph.h"
 #include "../external.h"
 #include "../strings.h"
 
@@ -129,12 +131,21 @@ Element SocketHandle_send(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   if (NULL == sh) {
     return throw_error(vm, t, "Weird Socket error.");
   }
-  if (!ISTYPE(*arg, class_string)) {
+  if (ISTYPE(*arg, class_string)) {
+    String *msg = String_extract(*arg);
+    sockethandle_send(sh, String_cstr(msg), String_size(msg));
+    return create_none();
+  } else if (ISTYPE(*arg, class_array)) {
+    Array *arr = extract_array(*arg);
+    int i, arr_len = Array_size(arr);
+    for (i = 0; i < arr_len; ++i) {
+      String *msg = String_extract(Array_get(arr, i));
+      sockethandle_send(sh, String_cstr(msg), String_size(msg));
+    }
+    return create_none();
+  } else {
     return throw_error(vm, t, "Cannot send non-string.");
   }
-  String *msg = String_extract(*arg);
-  sockethandle_send(sh, String_cstr(msg), String_size(msg));
-  return create_none();
 }
 
 Element SocketHandle_receive(VM *vm, Thread *t, ExternalData *data,

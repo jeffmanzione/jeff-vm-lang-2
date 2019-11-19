@@ -84,6 +84,10 @@ class Error {
   }
 }
 
+def display_error(e) {
+  io.fprintln(io.ERROR, e)
+}
+
 def raise_error(e) {
   io.fprintln(io.ERROR, e)
   exit

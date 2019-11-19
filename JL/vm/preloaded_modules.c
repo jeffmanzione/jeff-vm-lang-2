@@ -5,6 +5,7 @@
  *      Author: Jeff
  */
 
+#include "../command/commandline.h"
 #include "../element.h"
 #include "../external/external.h"
 #include "../external/net/net.h"
@@ -12,39 +13,27 @@
 #include "../shared.h"
 #include "../threads/sync.h"
 
-#ifdef DEBUG
-#define PREDEF_SRC(name, src_prefix) const char name[] = #src_prefix ".jl";
-#else
-#define PREDEF_SRC(name, src_prefix) const char name[] = #src_prefix ".jb";
-#endif
-
-PREDEF_SRC(BUILTIN_SRC, builtin);
-PREDEF_SRC(IO_SRC, io);
-PREDEF_SRC(STRUCT_SRC, struct);
-PREDEF_SRC(ERROR_SRC, error);
-PREDEF_SRC(SYNC_SRC, sync);
-PREDEF_SRC(NET_SRC, net);
-PREDEF_SRC(MATH_SRC, math);
-PREDEF_SRC(TIME_SRC, time);
-
-const char *const PRELOADED[] = {
-    //  BUILTIN_SRC,
-    IO_SRC, STRUCT_SRC, ERROR_SRC, SYNC_SRC, NET_SRC, MATH_SRC, TIME_SRC};
-
-int preloaded_size() { return sizeof(PRELOADED) / sizeof(PRELOADED[0]); }
+#define ENDS_WITH_ANY(fn, src_prefix)                                      \
+  (ends_with(fn, #src_prefix ".jl") || ends_with(fn, #src_prefix ".jm") || \
+   ends_with(fn, #src_prefix ".jb"))
 
 void maybe_merge_existing_source(VM *vm, Element module_element,
                                  const char fn[]) {
-  if (starts_with(fn, BUILTIN_SRC)) {
+  const char *builtin_prefix =
+      argstore_lookup_string(vm->store, ArgKey__BUILTIN_DIR);
+  if (!starts_with(fn, builtin_prefix)) {
+    return;
+  }
+  if (ENDS_WITH_ANY(fn, builtin)) {
     add_builtin_external(vm, module_element);
     add_global_builtin_external(vm, module_element);
-  } else if (starts_with(fn, IO_SRC)) {
+  } else if (ENDS_WITH_ANY(fn, io)) {
     add_io_external(vm, module_element);
-  } else if (starts_with(fn, SYNC_SRC)) {
+  } else if (ENDS_WITH_ANY(fn, sync)) {
     add_sync_external(vm, module_element);
-  } else if (starts_with(fn, NET_SRC)) {
+  } else if (ENDS_WITH_ANY(fn, net)) {
     add_net_external(vm, module_element);
-  } else if (starts_with(fn, TIME_SRC)) {
+  } else if (ENDS_WITH_ANY(fn, time)) {
     add_time_external(vm, module_element);
   }
 }

@@ -29,8 +29,11 @@ static Element global_main_module;
 int interpret_from_file_statement(Parser *p, VM *vm, Thread *th, Element m,
                                   Tape *t, InterpretFn fn) {
   SyntaxTree st = file_level_statement(p);
+
   int num_ins = codegen(&st, t);
-  fn(vm, th, m, t, num_ins);
+
+  // # actually executed. May include catch body.
+  num_ins = fn(vm, th, m, t, num_ins);
   expression_tree_delete(&st);
   return num_ins;
 }
@@ -127,13 +130,26 @@ int interpret_from_file(FILE *f, const char filename[], VM *vm,
   return num_ins;
 }
 
-void interpret_statement(VM *vm, Thread *t, Element m, Tape *tape,
-                         int num_ins) {
+int interpret_statement(VM *vm, Thread *t, Element m, Tape *tape, int num_ins) {
   t_set_module(t, m, tape_len(tape) - num_ins);
-#ifdef DEBUG
-  tape_write_range(tape, tape_len(tape) - num_ins, tape_len(tape), stdout);
-  fflush(stdout);
-#endif
+  // Prevents error from bailing out of main funciton. +1 for to jump over the
+  // jump.
+  vm_set_catch_goto(vm, t, t_get_ip(t) + num_ins + 1);
+
+  // Adds catch body.
+  // What token to use?
+  Token *token = (Token *)tape_get(tape, tape_len(tape) - 1)->token;
+  num_ins += tape->ins_int(tape, JMP, 6, token) +
+             tape->ins_no_arg(tape, PUSH, token) +
+             tape->ins_text(tape, RMDL, strings_intern("error"), token) +
+             tape->ins_text(tape, MDST, strings_intern("error"), token) +
+             tape->ins_no_arg(tape, RES, token) +
+             tape->ins_text(tape, PUSH, strings_intern("error"), token) +
+             tape->ins_text(tape, CALL, strings_intern("display_error"), token);
+  //#ifdef DEBUG
+  //  tape_write_range(tape, tape_len(tape) - num_ins, tape_len(tape), stdout);
+  //  fflush(stdout);
+  //#endif
   do {
 #ifdef DEBUG
     ins_to_str(t_current_ins(t), stdout);
@@ -144,4 +160,5 @@ void interpret_statement(VM *vm, Thread *t, Element m, Tape *tape,
       break;
     }
   } while (t_get_ip(t) < tape_len(module_tape(t_get_module(t).obj->module)));
+  return num_ins;
 }

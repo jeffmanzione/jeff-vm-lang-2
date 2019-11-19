@@ -25,7 +25,10 @@ class ToyServer {
       request.path = '/index.html'
       server.handler.handle(server, request, params)
     })
-    self.handler.register(@(server, request, params) {request.path.ends_with('.ico') | request.path.ends_with('.css') | request.path.ends_with('.js')}, 
+    self.handler.register(@(server, request, params) {
+      request.path.ends_with('.ico')
+          | request.path.ends_with('.css')
+          | request.path.ends_with('.js')}, 
                           @(server, request, params) {
       self.cache.get(request.path, @(request) {
         index = net.read_entire_file(request.path)
@@ -63,8 +66,8 @@ class ToyServer {
   }
   
   def handle_requests() {
+    io.println(concat('Thread ', $thread.id, ' is listening...'))
     while (True) {
-      io.println(concat('Thread ', $thread.id, ' is listening...'))
       timer = time.Timer()
       handle = self.sock.accept()
       timer.start()
@@ -77,7 +80,6 @@ class ToyServer {
       if request {
         handle.send(self.get_header(request))
         timer.mark('Header sent')
-        io.println(concat('Fetching ', request))
         params = self.make_params(str(time.now_usec()))
         timer.mark('Params created')
         file_lines = self.handler.handle(self, request, params)
@@ -89,8 +91,12 @@ class ToyServer {
       } else {
         io.println('Failed: ', msg)
       }
-      self.pretty_print_timer(request, timer.elapsed_usec())
       handle.close()
+      if self.num_threads > 1 {
+        self.ex.execute(self.pretty_print_timer, (request, timer.elapsed_usec()))
+      } else {
+        self.pretty_print_timer, (request, timer.elapsed_usec())
+      }
     }
   }
   
@@ -108,10 +114,8 @@ class ToyServer {
   
   def run() {
     if self.num_threads > 1 {
-      for _ in range(0, self.num_threads) {
-        self.ex.execute(@(server) {
-          server.handle_requests()
-        }, self)
+      for _ in range(0, self.num_threads-1) {
+        self.ex.execute(self.handle_requests)
       }
       while True {
         sync.sleep(100000)
@@ -120,6 +124,7 @@ class ToyServer {
       self.handle_requests()
     }
     self.sock.close()
+    self.log.close()
     net.cleanup()
   }
 }

@@ -2,6 +2,7 @@ module net
 
 import io
 import struct
+import time
 
 self.SOCKET_ERROR = -1
 self.AF_INET = 2
@@ -20,6 +21,11 @@ self.GT_ESCAPED = '&gt;'
 self.AMPER = '&'
 self.QUESTION = '?'
 self.EQUALS = '='
+self.WHITE_SPACE = ' '
+self.F_SLASH = '/'
+self.COLON = ':'
+self.RETURN_NEWLINE = '\r\n'
+
 
 self.HEADER_GENERIC_200_HTML = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
 self.HEADER_GENERIC_200_CSS = 'HTTP/1.1 200 OK\r\nContent-Type: text/css; charset=UTF-8\r\n\r\n'
@@ -87,7 +93,17 @@ class HttpRequest {
       self.map = map
     }
     def to_s() {
-      concat(self.type, ' ', self.path, ' ', self.protocol, '/', self.version)
+      ret = concat(self.type, WHITE_SPACE, self.path)
+      if self.params & (self.params.keys.len > 0) {
+        ret.extend(QUESTION)
+        param_arr = []
+        for (k, v) in self.params {
+          param_arr.append(concat(k, EQUALS, v))
+        }
+        ret.extend(AMPER.join(param_arr))
+      }
+      ret.extend(concat(WHITE_SPACE, self.protocol, F_SLASH, self.version))
+      return ret
     }
 }
 
@@ -112,23 +128,23 @@ def parse_params(path) {
 
 def parse_request(req) {
   try {
-    parts = req.split('\r\n')
+    parts = req.split(RETURN_NEWLINE)
     if parts.len == 0 {
       raise Error(concat('Invalid request: ', req))
     }
     request = parts[0].trim()
-    req_head = request.split(' ')
+    req_head = request.split(WHITE_SPACE)
     type = req_head[0]
     path = req_head[1]
     (path, params) = parse_params(path)
-    protocol = req_head[2].split('/')
+    protocol = req_head[2].split(F_SLASH)
     
-    map = struct.Map(51)
-    for i=1, i<parts.len, i=i+1 {
-      kv = parts[i].split(':')
-      map[kv[0].trim()] = kv[1].trim()
-    }
-    return HttpRequest(type, path, [], protocol[0], protocol[1], map)
+    ;map = struct.Map(51)
+    ;for i=1, i<parts.len, i=i+1 {
+    ;  kv = parts[i].split(COLON)
+    ;  map[kv[0].trim()] = kv[1].trim()
+    ;}
+    return HttpRequest(type, path, params, protocol[0], protocol[1], None)
   } catch e {
     io.fprintln(io.ERROR, e)
     return None
@@ -199,7 +215,10 @@ class RequestHandler {
 }
 
 def read_entire_file(path) {
-  io.FileReader(concat('.', path)).getlines()
+  f = io.FileReader(concat('.', path))
+  text = f.getlines()
+  f.close()
+  return text
 }
 
 class CachedTextRenderer {
@@ -211,10 +230,11 @@ class CachedTextRenderer {
       indices = []
       parts = []
       keys = []
-      for (k, v) in params {
-        k_inds = src.find_all(k)
-        for (_, k_ind) in k_inds {
-          indices.append((k, k_ind))
+      for i=0, i< params.keys.len, i=i+1 {
+        k_inds = src.find_all(params.keys[i])
+        k_inds_len = k_inds.len
+        for j=0, i < k_inds_len, j=j+1 {
+          indices.append((params.keys[i], k_inds[j]))
         }
       }
       indices.sort(@(t1, t2) cmp(t1[1], t2[1]))
