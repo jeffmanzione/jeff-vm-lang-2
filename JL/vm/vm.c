@@ -14,26 +14,26 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "arena/strings.h"
-#include "class.h"
-#include "codegen/tokenizer.h"
-#include "datastructure/array.h"
-#include "datastructure/map.h"
-#include "datastructure/tuple.h"
-#include "error.h"
-#include "external/external.h"
-#include "external/strings.h"
-#include "file_load.h"
-#include "graph/memory.h"
-#include "graph/memory_graph.h"
-#include "instruction.h"
-#include "module.h"
-#include "ops.h"
-#include "shared.h"
-#include "tape.h"
-#include "threads/sync.h"
-#include "threads/thread.h"
-#include "vm/preloaded_modules.h"
+#include "../arena/strings.h"
+#include "../class.h"
+#include "../codegen/tokenizer.h"
+#include "../datastructure/array.h"
+#include "../datastructure/map.h"
+#include "../datastructure/tuple.h"
+#include "../error.h"
+#include "../external/external.h"
+#include "../external/strings.h"
+#include "../file_load.h"
+#include "../memory/memory.h"
+#include "../memory/memory_graph.h"
+#include "../program/instruction.h"
+#include "../program/module.h"
+#include "../program/ops.h"
+#include "../program/tape.h"
+#include "../shared.h"
+#include "../threads/sync.h"
+#include "../threads/thread.h"
+#include "../vm/preloaded_modules.h"
 
 void vm_to_string(const VM *vm, Element elt, FILE *target);
 void execute_tget(VM *vm, Thread *t, Ins ins, Element tuple, int64_t index);
@@ -151,7 +151,6 @@ void vm_add_builtin(VM *vm, const char *builtin_fn) {
   Element classes;
   memory_graph_set_field(vm->graph, builtin_element, CLASSES_KEY,
                          classes = create_array(vm->graph));
-
   maybe_merge_existing_source(vm, builtin_element, builtin_fn);
 
   void add_ref(Pair * pair) {
@@ -169,7 +168,6 @@ void vm_add_builtin(VM *vm, const char *builtin_fn) {
     memory_graph_array_enqueue(vm->graph, classes, class);
     memory_graph_set_field(vm->graph, builtin_element, class_name, class);
     memory_graph_set_field(vm->graph, class, PARENT_MODULE, builtin_element);
-
     Element methods_array;
     if (NONE == (methods_array = obj_get_field(class, METHODS_KEY)).type) {
       memory_graph_set_field(vm->graph, class, METHODS_KEY,
@@ -250,11 +248,19 @@ void vm_merge_module(VM *vm, const char fn[]) {
 
   maybe_merge_existing_source(vm, module_element, fn);
 
+  Element functions_array;
+  if (NONE ==
+      (functions_array = obj_get_field(module_element, FUNCTIONS_KEY)).type) {
+    memory_graph_set_field(vm->graph, module_element, FUNCTIONS_KEY,
+                           (functions_array = create_array(vm->graph)));
+  }
+
   void add_ref(Pair * pair) {
     Element function =
         create_function(vm, module_element, (uint32_t)pair->value, pair->key,
                         (Q *)map_lookup(module_fn_args(module), pair->value));
     memory_graph_set_field(vm->graph, module_element, pair->key, function);
+    memory_graph_array_enqueue(vm->graph, functions_array, function);
   }
   map_iterate(module_refs(module), add_ref);
 
@@ -1017,6 +1023,51 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
         fflush(stdout);
       }
       break;
+    case ADD:
+      resval = t_get_resval(t);
+      obj = vm_lookup(vm, t, ins.str);
+      if (ISTYPE(resval, class_string) && ISTYPE(obj, class_string)) {
+        t_set_resval(t, string_add(vm, resval, obj));
+        break;
+      }
+      t_set_resval(t, operator_add(vm, t, ins, t_get_resval(t), obj));
+      break;
+    case SUB:
+      t_set_resval(t, operator_sub(vm, t, ins, t_get_resval(t),
+                                   vm_lookup(vm, t, ins.str)));
+      break;
+    case DIV:
+      t_set_resval(t, operator_div(vm, t, ins, t_get_resval(t),
+                                   vm_lookup(vm, t, ins.str)));
+      break;
+    case MULT:
+      t_set_resval(t, operator_mult(vm, t, ins, t_get_resval(t),
+                                    vm_lookup(vm, t, ins.str)));
+      break;
+    case MOD:
+      t_set_resval(t, operator_mod(vm, t, ins, t_get_resval(t),
+                                   vm_lookup(vm, t, ins.str)));
+      break;
+    case LT:
+      t_set_resval(t, operator_lt(vm, t, ins, t_get_resval(t),
+                                  vm_lookup(vm, t, ins.str)));
+      break;
+    case LTE:
+      t_set_resval(t, operator_lte(vm, t, ins, t_get_resval(t),
+                                   vm_lookup(vm, t, ins.str)));
+      break;
+    case EQ:
+      t_set_resval(t, operator_eq(vm, t, ins, t_get_resval(t),
+                                  vm_lookup(vm, t, ins.str)));
+      break;
+    case GT:
+      t_set_resval(t, operator_gt(vm, t, ins, t_get_resval(t),
+                                  vm_lookup(vm, t, ins.str)));
+      break;
+    case GTE:
+      t_set_resval(t, operator_gte(vm, t, ins, t_get_resval(t),
+                                   vm_lookup(vm, t, ins.str)));
+      break;
     default:
       ERROR("Instruction op was not a id_param");
   }
@@ -1048,6 +1099,36 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
   bool has_error = false;
   int i;
   switch (ins.op) {
+    case ADD:
+      t_set_resval(t, operator_add(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case SUB:
+      t_set_resval(t, operator_sub(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case DIV:
+      t_set_resval(t, operator_div(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case MULT:
+      t_set_resval(t, operator_mult(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case MOD:
+      t_set_resval(t, operator_mod(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case LT:
+      t_set_resval(t, operator_lt(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case LTE:
+      t_set_resval(t, operator_lte(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case EQ:
+      t_set_resval(t, operator_eq(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case GT:
+      t_set_resval(t, operator_gt(vm, t, ins, t_get_resval(t), elt));
+      break;
+    case GTE:
+      t_set_resval(t, operator_gte(vm, t, ins, t_get_resval(t), elt));
+      break;
     case EXIT:
       t_set_resval(t, elt);
       return false;
@@ -1174,19 +1255,19 @@ bool execute(VM *vm, Thread *t) {
 
   Ins ins = t_current_ins(t);
 
-  //  #ifdef DEBUG
-  //    mutex_await(vm->debug_mutex, INFINITE);
-  //    fflush(stderr);
-  //    fprintf(stdout, "module(%s,t=%d) ",
-  //    module_name(t_get_module(t).obj->module),
-  //            (int)t->id);
-  //    fflush(stdout);
-  //    ins_to_str(ins, stdout);
-  //    fprintf(stdout, "\n");
-  //    fflush(stdout);
-  //    fflush(stderr);
-  //    mutex_release(vm->debug_mutex);
-  //  #endif
+  //#ifdef DEBUG
+  //  mutex_await(vm->debug_mutex, INFINITE);
+  //  fflush(stderr);
+  //  fprintf(stdout, "module(%s,t=%d) ",
+  //  module_name(t_get_module(t).obj->module),
+  //          (int)t->id);
+  //  fflush(stdout);
+  //  ins_to_str(ins, stdout);
+  //  fprintf(stdout, "\n");
+  //  fflush(stdout);
+  //  fflush(stderr);
+  //  mutex_release(vm->debug_mutex);
+  //#endif
 
   bool status;
   switch (ins.param) {

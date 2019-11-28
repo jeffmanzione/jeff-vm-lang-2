@@ -10,7 +10,7 @@
 
 #include "../datastructure/expando.h"
 #include "../element.h"
-#include "../tape.h"
+#include "../program/tape.h"
 #include "syntax.h"
 #include "tokenizer.h"
 

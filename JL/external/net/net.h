@@ -9,7 +9,7 @@
 #define EXTERNAL_NET_NET_H_
 
 #include "../../element.h"
-#include "../../vm.h"
+#include "../../vm/vm.h"
 
 void add_net_external(VM *vm, Element module_element);
 

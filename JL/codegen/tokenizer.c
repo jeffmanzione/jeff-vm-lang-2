@@ -12,7 +12,7 @@
 #include "../arena/arena.h"
 #include "../arena/strings.h"
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 #include "../shared.h"
 
 char *keyword_to_type[] = {

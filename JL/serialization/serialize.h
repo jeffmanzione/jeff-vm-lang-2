@@ -10,7 +10,7 @@
 
 #include "../datastructure/map.h"
 #include "../element.h"
-#include "../tape.h"
+#include "../program/tape.h"
 #include "buffer.h"
 
 #define serialize_type(buffer, type, val) serialize_bytes(buffer, ((char *) (&(val))), sizeof(type))

@@ -8,8 +8,8 @@
 #include "expression.h"
 
 #include "../datastructure/expando.h"
-#include "../graph/memory.h"
-#include "../instruction.h"
+#include "../memory/memory.h"
+#include "../program/instruction.h"
 #include "syntax.h"
 
 #define Populate(name, stree) \

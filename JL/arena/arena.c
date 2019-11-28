@@ -13,8 +13,8 @@
 #include "../codegen/tokenizer.h"
 #include "../element.h"
 #include "../error.h"
-#include "../graph/memory.h"
-#include "../graph/memory_graph.h"
+#include "../memory/memory.h"
+#include "../memory/memory_graph.h"
 
 ARENA_DECLARE(ElementContainer);
 ARENA_DECLARE(Node);

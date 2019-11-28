@@ -1,5 +1,6 @@
 module net
 
+import error
 import io
 import struct
 import time
@@ -26,6 +27,7 @@ self.F_SLASH = '/'
 self.COLON = ':'
 self.RETURN_NEWLINE = '\r\n'
 
+self.NOT_FOUND = 'Could not find file.'
 
 self.HEADER_GENERIC_200_HTML = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
 self.HEADER_GENERIC_200_CSS = 'HTTP/1.1 200 OK\r\nContent-Type: text/css; charset=UTF-8\r\n\r\n'
@@ -152,31 +154,12 @@ def parse_request(req) {
 }
 
 def html_escape(text) {
-  i = 0
-  lts = []
-  while i < text.len {
-    f = text.find(LT, i)
-    if ~f {
-      break
-    }
-    i = i + f
-    lts.append(i)
-    i=i+1
-  }
-  i = 0
-  while i < text.len {
-    f = text.find(GT, i)
-    if ~f {
-      break
-    }
-    i = i + f
-    lts.append(i)
-    i=i+1
-  }
-  
-  if lts.len == 0 {
+  lts = text.find_all(LT)
+  gts = text.find_all(GT)  
+  if (lts.len == 0)  & (gts.len == 0){
     return text.copy()
   }
+  lts.extend(gts)
   lts.sort(cmp)
   result = ''
   old_i = 0
@@ -187,7 +170,7 @@ def html_escape(text) {
     if c == LT[0] then result.extend(LT_ESCAPED)
     else if c == GT[0] then result.extend(GT_ESCAPED)
   }
-  result.extend(text, lts[lts.len-1])
+  result.extend(text, lts[lts.len-1] + 1)
   return result
 }
 
@@ -247,11 +230,17 @@ class CachedTextRenderer {
       parts.append(src.substr(index))
       return (parts, keys)
     }, (src, params))
-    
-    text = ''
+
+    if ~parts_keys | (parts_keys is error.Error) {
+      return NOT_FOUND
+    }
     parts = parts_keys[0]
     keys = parts_keys[1]
     len = keys.len + parts.len
+    text = ''
+    if len == 1 {
+      return parts[0]
+    }
     for i=0, i<len, i=i+1 {
       if i%2 == 0 {
         text.extend(parts[i / 2])

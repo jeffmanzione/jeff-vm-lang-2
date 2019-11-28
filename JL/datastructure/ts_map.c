@@ -7,7 +7,7 @@
 
 #include "ts_map.h"
 
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 void ts_map_init(TsMap *map, uint32_t size, Hasher hasher,
     Comparator comparator) {

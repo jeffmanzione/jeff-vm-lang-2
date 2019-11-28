@@ -12,8 +12,8 @@
 
 #include "../datastructure/expando.h"
 #include "../datastructure/map.h"
-#include "../instruction.h"
-#include "../tape.h"
+#include "../program/instruction.h"
+#include "../program/tape.h"
 
 typedef struct {
   enum {

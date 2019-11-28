@@ -11,7 +11,7 @@
 #include "../class.h"
 #include "../error.h"
 #include "../file_load.h"
-#include "../vm.h"
+#include "../vm/vm.h"
 
 Element load_module__(VM *vm, Thread *thread, ExternalData *ed,
                       Element *argument) {

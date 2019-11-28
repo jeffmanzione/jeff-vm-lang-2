@@ -8,7 +8,7 @@
 #ifndef CODEGEN_H_
 #define CODEGEN_H_
 
-#include "../tape.h"
+#include "../program/tape.h"
 #include "syntax.h"
 
 int codegen(SyntaxTree *tree, Tape *tape);

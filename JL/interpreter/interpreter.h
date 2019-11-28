@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #include "../element.h"
-#include "../tape.h"
+#include "../program/tape.h"
 
 typedef int (*InterpretFn)(VM *vm, Thread *thread, Element module, Tape *tape,
                            int num_ins);

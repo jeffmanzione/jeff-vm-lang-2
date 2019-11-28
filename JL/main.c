@@ -17,11 +17,11 @@
 #include "element.h"
 #include "error.h"
 #include "file_load.h"
-#include "graph/memory.h"
-#include "graph/memory_graph.h"
 #include "interpreter/interpreter.h"
+#include "memory/memory.h"
+#include "memory/memory_graph.h"
 #include "optimize/optimize.h"
-#include "vm.h"
+#include "vm/vm.h"
 
 int main(int argc, const char *argv[]) {
   alloc_init();
@@ -67,6 +67,8 @@ int main(int argc, const char *argv[]) {
           "evaluate.\n");
       fflush(stdout);
       interpret_from_file(stdin, "stdin", vm, interpret_statement);
+      printf("Goodbye.\n");
+      fflush(stdout);
     }
   }
 

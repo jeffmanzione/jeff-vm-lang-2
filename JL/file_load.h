@@ -9,7 +9,7 @@
 #define FILE_LOAD_H_
 
 #include "command/commandline.h"
-#include "module.h"
+#include "program/module.h"
 
 char *guess_file_extension(const char dir[], const char file_prefix[]);
 

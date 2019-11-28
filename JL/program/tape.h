@@ -5,17 +5,17 @@
  *      Author: Jeff
  */
 
-#ifndef TAPE_H_
-#define TAPE_H_
+#ifndef PROGRAM_TAPE_H_
+#define PROGRAM_TAPE_H_
 
 #include <stddef.h>
 #include <stdio.h>
 
-#include "codegen/tokenizer.h"
-#include "datastructure/expando.h"
-#include "datastructure/map.h"
-#include "datastructure/queue.h"
-#include "datastructure/queue2.h"
+#include "../codegen/tokenizer.h"
+#include "../datastructure/expando.h"
+#include "../datastructure/map.h"
+#include "../datastructure/queue.h"
+#include "../datastructure/queue2.h"
 #include "instruction.h"
 
 typedef struct {
@@ -108,4 +108,4 @@ void tape_populate_mappings(const Tape *tape, Map *i_to_refs,
 void tape_clear_mappings(Map *i_to_refs, Map *i_to_class_starts,
                          Map *i_to_class_ends);
 
-#endif /* TAPE_H_ */
+#endif /* PROGRAM_TAPE_H_ */

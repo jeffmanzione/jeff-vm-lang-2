@@ -5,7 +5,7 @@
  *      Author: Jeff
  */
 
-#include "memory.h"
+#include "../memory/memory.h"
 
 #include <math.h>
 #include <stdarg.h>

@@ -5,14 +5,14 @@
  *      Author: Dad
  */
 
-#ifndef MODULE_H_
-#define MODULE_H_
+#ifndef PROGRAM_MODULE_H_
+#define PROGRAM_MODULE_H_
 
 #include <stdint.h>
 
-#include "codegen/tokenizer.h"
-#include "datastructure/map.h"
-#include "error.h"
+#include "../codegen/tokenizer.h"
+#include "../datastructure/map.h"
+#include "../error.h"
 #include "instruction.h"
 #include "tape.h"
 
@@ -48,4 +48,4 @@ void module_iterate_classes(const Module *m, ClassAction action);
 
 void module_delete(Module *module);
 
-#endif /* MODULE_H_ */
+#endif /* PROGRAM_MODULE_H_ */

@@ -15,11 +15,11 @@
 #include "../datastructure/map.h"
 #include "../datastructure/tuple.h"
 #include "../external/external.h"
-#include "../graph/memory.h"
-#include "../graph/memory_graph.h"
 #include "../ltable/ltable.h"
-#include "../module.h"
-#include "../vm.h"
+#include "../memory/memory.h"
+#include "../memory/memory_graph.h"
+#include "../program/module.h"
+#include "../vm/vm.h"
 
 void t_set_module_for_block(Thread *t, Element module_element, uint32_t ip,
                             Element block);

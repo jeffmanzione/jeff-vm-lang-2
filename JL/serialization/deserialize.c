@@ -9,7 +9,7 @@
 
 #include "../element.h"
 #include "../error.h"
-#include "../instruction.h"
+#include "../program/instruction.h"
 
 #define deserialize_type(file, type, p) deserialize_bytes(file, sizeof(type), ((char *)p), sizeof(type))
 

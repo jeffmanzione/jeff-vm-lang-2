@@ -12,7 +12,7 @@
 
 #include "../arena/strings.h"
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 bool string_is_true(const char str[]) {
   if (0 == strcmp("True", str) || 0 == strcmp("true", str) ||

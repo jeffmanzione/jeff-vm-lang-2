@@ -20,11 +20,11 @@
 #include "error.h"
 #include "external/external.h"
 #include "external/strings.h"
-#include "graph/memory_graph.h"
 #include "ltable/ltable.h"
-#include "module.h"
+#include "memory/memory_graph.h"
+#include "program/module.h"
 #include "threads/thread_interface.h"
-#include "vm.h"
+#include "vm/vm.h"
 
 Element create_obj_of_class_unsafe_inner(MemoryGraph *graph, Map *objs,
                                          Element class);

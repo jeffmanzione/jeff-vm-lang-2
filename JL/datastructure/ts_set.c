@@ -7,7 +7,7 @@
 
 #include "ts_set.h"
 
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 TsSet *ts_set_create(uint32_t table_size, Hasher hasher, Comparator comparator) {
   TsSet *set = ALLOC(TsSet);

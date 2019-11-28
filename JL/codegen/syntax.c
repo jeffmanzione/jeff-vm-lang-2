@@ -10,7 +10,7 @@
 #include "../datastructure/map.h"
 #include "../datastructure/queue.h"
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 #include "parse.h"
 
 void print_tabs(FILE *file, int num_tabs) {
@@ -418,7 +418,7 @@ ImplSyntax(or_expression, And(xor_expression, or_expression1));
 //    or_expression
 //    or_expression is identifier
 ImplSyntax(is_expression,
-           Or(And(or_expression, TypeLn(IS_T), identifier), or_expression));
+           Or(And(or_expression, TypeLn(IS_T), or_expression), or_expression));
 
 // conditional_expression
 //    or_expression

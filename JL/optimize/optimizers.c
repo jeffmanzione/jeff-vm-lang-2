@@ -9,8 +9,8 @@
 #include <string.h>
 
 #include "../datastructure/map.h"
-#include "../instruction.h"
-#include "../tape.h"
+#include "../program/instruction.h"
+#include "../program/tape.h"
 #include "optimizer.h"
 
 void optimizer_ResPush(OptimizeHelper *oh, const Tape *const tape, int start,
@@ -233,6 +233,50 @@ void optimizer_PushRes2(OptimizeHelper *oh, const Tape *const tape, int start,
         NULL == map_lookup(&oh->i_gotos, (void *)(i))) {
       o_Remove(oh, i);
       o_Remove(oh, i - 1);
+    }
+  }
+}
+
+bool is_math_op(Op op) {
+  switch (op) {
+    case ADD:
+    case SUB:
+    case DIV:
+    case MULT:
+    case MOD:
+    case LT:
+    case LTE:
+    case GTE:
+    case GT:
+    case EQ:
+      return true;
+    default:
+      return false;
+  }
+}
+
+// Run after ResPush.
+// Consider allowing second param to be ID. Would need ot add to
+// execute_id_param.
+void optimizer_SimpleMath(OptimizeHelper *oh, const Tape *const tape, int start,
+                          int end) {
+  int i;
+  for (i = start + 2; i < end; i++) {
+    const InsContainer *first = tape_get(tape, i - 2);
+    const InsContainer *second = tape_get(tape, i - 1);
+    const InsContainer *third = tape_get(tape, i);
+    if (PUSH == first->ins.op && PUSH == second->ins.op &&
+        is_math_op(third->ins.op) &&
+        (second->ins.param == VAL_PARAM || second->ins.param == ID_PARAM) &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i)) &&
+        NULL == map_lookup(&oh->i_gotos, (void *)(i - 1))) {
+      if (first->ins.param == NO_PARAM) {
+        o_Remove(oh, i - 2);
+      } else {
+        o_SetOp(oh, i - 2, RES);
+      }
+      o_SetOp(oh, i - 1, third->ins.op);
+      o_Remove(oh, i);
     }
   }
 }

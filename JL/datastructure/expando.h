@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <stdlib.h> // Keep
 
-#include "../graph/memory.h" // Keep
+#include "../memory/memory.h" // Keep
 #include "../shared.h" // Keep
 
 typedef struct Expando_ Expando;

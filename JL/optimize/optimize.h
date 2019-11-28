@@ -8,7 +8,7 @@
 #ifndef OPTIMIZE_H_
 #define OPTIMIZE_H_
 
-#include "../tape.h"
+#include "../program/tape.h"
 #include "optimizer.h"
 
 void optimize_init();

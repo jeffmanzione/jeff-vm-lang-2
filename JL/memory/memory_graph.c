@@ -5,7 +5,7 @@
  *      Author: Jeff
  */
 
-#include "memory_graph.h"
+#include "../memory/memory_graph.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -19,9 +19,9 @@
 #include "../datastructure/tuple.h"
 #include "../error.h"
 #include "../ltable/ltable.h"
+#include "../memory/memory.h"
 #include "../shared.h"
 #include "../threads/thread_interface.h"
-#include "memory.h"
 
 // Large prime. May help initial startup.
 #define DEFAULT_NODE_TABLE_SZ 48337

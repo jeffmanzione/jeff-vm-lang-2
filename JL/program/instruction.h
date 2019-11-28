@@ -5,14 +5,14 @@
  *      Author: Jeff
  */
 
-#ifndef INSTRUCTION_H_
-#define INSTRUCTION_H_
+#ifndef PROGRAM_INSTRUCTION_H_
+#define PROGRAM_INSTRUCTION_H_
 
 #include <stdint.h>
 #include <stdio.h>
 
-#include "codegen/tokenizer.h"
-#include "element.h"
+#include "../codegen/tokenizer.h"
+#include "../element.h"
 
 typedef enum {
   NOP,
@@ -24,7 +24,7 @@ typedef enum {
   PUSH,
   PEEK,
   PSRS,  // PUSH+RES
-  NOT,  // where !1 == Nil
+  NOT,   // where !1 == Nil
   NOTC,  // C-like NOT, where !1 == 0
   GT,
   LT,
@@ -76,8 +76,10 @@ typedef enum {
 } Op;
 
 typedef enum {
-  NO_PARAM, VAL_PARAM, ID_PARAM,
-//  GOTO_PARAM,
+  NO_PARAM,
+  VAL_PARAM,
+  ID_PARAM,
+  //  GOTO_PARAM,
   STR_PARAM,
 } ParamType;
 
@@ -96,7 +98,7 @@ Op op_type(const char word[]);
 Ins instruction(Op);
 Ins instruction_val(Op, Value);
 Ins instruction_id(Op, const char[]);
-//Ins instruction_goto(Op, uint32_t);
+// Ins instruction_goto(Op, uint32_t);
 Ins instruction_str(Op, const char[]);
 Ins noop_instruction();
 void ins_to_str(Ins, FILE *);
@@ -104,4 +106,4 @@ Value token_to_val(Token *);
 
 extern const char *instructions[];
 
-#endif /* INSTRUCTION_H_ */
+#endif /* PROGRAM_INSTRUCTION_H_ */

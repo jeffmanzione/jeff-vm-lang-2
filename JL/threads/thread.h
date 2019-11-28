@@ -6,7 +6,7 @@
 
 #include "../element.h"
 #include "../error.h"
-#include "../instruction.h"
+#include "../program/instruction.h"
 #include "thread_interface.h"
 
 typedef struct VM_ VM;

@@ -14,8 +14,8 @@
 #include "../datastructure/queue.h"
 #include "../datastructure/queue2.h"
 #include "../error.h"
-#include "../instruction.h"
-#include "../tape.h"
+#include "../program/instruction.h"
+#include "../program/tape.h"
 #include "syntax.h"
 #include "tokenizer.h"
 

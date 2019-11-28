@@ -11,15 +11,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "arena/strings.h"
-#include "codegen/tokenizer.h"
-#include "datastructure/map.h"
-#include "datastructure/queue.h"
-#include "error.h"
-#include "graph/memory.h"
+#include "../arena/strings.h"
+#include "../codegen/tokenizer.h"
+#include "../datastructure/map.h"
+#include "../datastructure/queue.h"
+#include "../error.h"
+#include "../memory/memory.h"
+#include "../shared.h"
 #include "instruction.h"
 #include "module.h"
-#include "shared.h"
 #include "tape.h"
 
 #define DEFAULT_PROGRAM_SIZE 256

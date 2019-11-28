@@ -5,10 +5,10 @@
  *      Author: Jeff
  */
 
-#ifndef OPS_H_
-#define OPS_H_
+#ifndef PROGRAM_OPS_H_
+#define PROGRAM_OPS_H_
 
-#include "element.h"
+#include "../element.h"
 #include "instruction.h"
 
 #define VAL_OF(val)                \
@@ -114,4 +114,4 @@ OPDEF_BOOLTYPE(and);
 OPDEF_BOOLTYPE(or);
 OPDEF_SINGLE(notc);
 
-#endif /* OPS_H_ */
+#endif /* PROGRAM_OPS_H_ */

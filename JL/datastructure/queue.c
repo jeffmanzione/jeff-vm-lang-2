@@ -10,7 +10,7 @@
 #include <stdbool.h>
 
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 size_t queue_size(const Queue const * q) {
   return q->size;

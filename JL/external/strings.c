@@ -22,8 +22,8 @@
 #include "../datastructure/tuple.h"
 #include "../element.h"
 #include "../error.h"
-#include "../graph/memory_graph.h"
 #include "../ltable/ltable.h"
+#include "../memory/memory_graph.h"
 #include "../shared.h"
 #include "external.h"
 

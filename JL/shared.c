@@ -12,8 +12,9 @@
 #include <sys/types.h>
 
 #include "arena/strings.h"
+#include "codegen/tokenizer.h"
 #include "error.h"
-#include "graph/memory.h"
+#include "memory/memory.h"
 
 #ifdef _WIN32
 #define SLASH_CHAR '\\';
@@ -279,4 +280,24 @@ char *combine_path_file(const char path[], const char file_name[],
   char *result = strings_intern_range(tmp, 0, full_len);
   DEALLOC(tmp);
   return result;
+}
+
+int count_chars(const char str[], char c) {
+  int count = 0;
+  char *ptr = (char *)str;
+  while ((ptr = strchr(ptr++, c)) != NULL) {
+    count++;
+  }
+  return count;
+}
+
+int string_unescape(const char escaped_str[], char *buffer, size_t buffer_len) {
+  ASSERT(NOT_NULL(escaped_str), NOT_NULL(buffer), buffer_len > 0);
+  int i = 0;
+  char *ptr = (char *)escaped_str;
+  while (*ptr != 0 && i < buffer_len - 1) {
+    buffer[i++] = (*(ptr++) == '\\') ? char_unesc(*(++ptr)) : *(ptr - 1);
+  }
+  buffer[i] = 0;
+  return i;
 }

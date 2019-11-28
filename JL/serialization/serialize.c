@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "../error.h"
-#include "../instruction.h"
+#include "../program/instruction.h"
 
 int serialize_bytes(WBuffer *buffer, const char *start, int num_bytes) {
   buffer_write(buffer, start, num_bytes);

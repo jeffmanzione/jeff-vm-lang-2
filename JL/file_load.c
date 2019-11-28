@@ -23,10 +23,10 @@
 #include "codegen/tokenizer.h"
 #include "datastructure/queue.h"
 #include "error.h"
-#include "graph/memory.h"
+#include "memory/memory.h"
 #include "optimize/optimize.h"
+#include "program/tape.h"
 #include "shared.h"
-#include "tape.h"
 
 char *guess_file_extension(const char dir[], const char file_prefix[]) {
   size_t fn_len = strlen(dir) + strlen(file_prefix) + 3;
@@ -111,7 +111,6 @@ Module *load_fn_jm(const char fn[], const ArgStore *store) {
   if (out_binary) {
     make_dir_if_does_not_exist(bout_dir);
   }
-
   if (should_optimize) {
     if (out_unoptimized) {
       FILE *file =
@@ -127,6 +126,7 @@ Module *load_fn_jm(const char fn[], const ArgStore *store) {
     tape_write_binary(tape, file);
     fclose(file);
   }
+
   Module *module = module_create_tape(fi, tape);
   module_set_filename(module, fn);
   return module;

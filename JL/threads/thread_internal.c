@@ -10,7 +10,7 @@
 #include <stddef.h>
 #include <windows.h>
 
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 void sleep_thread(ulong duration) { Sleep(duration); }
 

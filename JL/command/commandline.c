@@ -13,7 +13,7 @@
 #include "../arena/strings.h"
 #include "../datastructure/map.h"
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 #define ARGSTORE_LOOKUP_RETVAL(typet, retval)                             \
   retval argstore_lookup_##typet(const ArgStore *store, ArgKey key) {     \

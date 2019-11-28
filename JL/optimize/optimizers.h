@@ -8,7 +8,7 @@
 #ifndef OPTIMIZERS_H_
 #define OPTIMIZERS_H_
 
-#include "../tape.h"
+#include "../program/tape.h"
 #include "optimizer.h"
 
 void optimizer_ResPush(OptimizeHelper *oh, const Tape *const tape, int start,
@@ -39,4 +39,7 @@ void optimizer_PeekPeek(OptimizeHelper *oh, const Tape *const tape, int start,
                         int end);
 void optimizer_PushRes2(OptimizeHelper *oh, const Tape *const tape, int start,
                         int end);
+
+void optimizer_SimpleMath(OptimizeHelper *oh, const Tape *const tape, int start,
+                          int end);
 #endif /* OPTIMIZERS_H_ */

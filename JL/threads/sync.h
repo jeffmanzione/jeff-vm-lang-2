@@ -9,7 +9,7 @@
 #define THREADS_SYNC_H_
 
 #include "../element.h"
-#include "../vm.h"
+#include "../vm/vm.h"
 
 void add_sync_external(VM *vm, Element module_element);
 

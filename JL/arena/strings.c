@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 #include "../shared.h"
 
 #define DEFAULT_CHUNK_SIZE 32488
@@ -20,66 +20,67 @@
 
 Strings strings;
 
-char *ROOT;
-char *RESULT_VAL;
-char *STACK;
-char *INS_INDEX;
-char *TMP_VAL;
-char *IP_FIELD;
-char *CALLER_KEY;
-char *PARENT;
-char *SAVED_BLOCKS;
-char *INITIALIZED;
-char *CURRENT_BLOCK;
-char *OLD_RESVALS;
-char *PARENT_MODULE;
-char *PARENT_CLASS;
-char *TRUE_KEYWORD;
-char *FALSE_KEYWORD;
-char *NIL_KEYWORD;
-char *LENGTH_KEY;
-char *SELF;
-char *MODULE_FIELD;
-char *MODULES;
-char *CLASS_KEY;
-char *CLASSES_KEY;
-char *CONSTRUCTOR_KEY;
-char *DECONSTRUCTOR_KEY;
-char *PARENTS_KEY;
-char *NAME_KEY;
-char *CLASS_NAME;
-char *OBJECT_NAME;
-char *ARRAY_NAME;
-char *STRING_NAME;
-char *TUPLE_NAME;
-char *FUNCTION_NAME;
-char *EXTERNAL_FUNCTION_NAME;
-char *EXTERNAL_METHOD_NAME;
-char *METHOD_NAME;
-char *METHOD_INSTANCE_NAME;
-char *MODULE_NAME;
-char *ERROR_NAME;
 char *ADDRESS_KEY;
-char *IS_EXTERNAL_KEY;
-char *ERROR_KEY;
-char *ARRAYLIKE_INDEX_KEY;
-char *ARRAYLIKE_SET_KEY;
-char *BUILTIN_MODULE_NAME;
-char *EQ_FN_NAME;
-char *NEQ_FN_NAME;
-char *IN_FN_NAME;
-char *ITER_FN_NAME;
-char *NEXT_FN_NAME;
-char *HAS_NEXT_FN_NAME;
-char *OBJ_KEY;
-char *METHODS_KEY;
-char *METHOD_KEY;
-char *CALL_KEY;
-char *STACK_SIZE_NAME;
-char *IS_ITERATOR_BLOCK_KEY;
 char *ARGS_KEY;
 char *ARGS_NAME;
+char *ARRAYLIKE_INDEX_KEY;
+char *ARRAYLIKE_SET_KEY;
+char *ARRAY_NAME;
+char *BUILTIN_MODULE_NAME;
+char *CALLER_KEY;
+char *CALL_KEY;
+char *CLASSES_KEY;
+char *CLASS_KEY;
+char *CLASS_NAME;
+char *CONSTRUCTOR_KEY;
+char *CURRENT_BLOCK;
+char *DECONSTRUCTOR_KEY;
+char *EQ_FN_NAME;
+char *ERROR_KEY;
+char *ERROR_NAME;
+char *EXTERNAL_FUNCTION_NAME;
+char *EXTERNAL_METHOD_NAME;
+char *FALSE_KEYWORD;
+char *FUNCTION_NAME;
+char *FUNCTIONS_KEY;
+char *HAS_NEXT_FN_NAME;
+char *INITIALIZED;
+char *INS_INDEX;
+char *IN_FN_NAME;
+char *IP_FIELD;
+char *IS_EXTERNAL_KEY;
+char *IS_ITERATOR_BLOCK_KEY;
+char *ITER_FN_NAME;
+char *LENGTH_KEY;
+char *METHODS_KEY;
+char *METHOD_INSTANCE_NAME;
+char *METHOD_KEY;
+char *METHOD_NAME;
+char *MODULES;
+char *MODULE_FIELD;
+char *MODULE_NAME;
+char *NAME_KEY;
+char *NEQ_FN_NAME;
+char *NEXT_FN_NAME;
+char *NIL_KEYWORD;
+char *OBJECT_NAME;
+char *OBJ_KEY;
+char *OLD_RESVALS;
+char *PARENT;
+char *PARENTS_KEY;
+char *PARENT_CLASS;
+char *PARENT_MODULE;
+char *RESULT_VAL;
+char *ROOT;
+char *SAVED_BLOCKS;
+char *SELF;
+char *STACK;
+char *STACK_SIZE_NAME;
+char *STRING_NAME;
 char *THREADS_KEY;
+char *TMP_VAL;
+char *TRUE_KEYWORD;
+char *TUPLE_NAME;
 
 struct Chunk_ {
   char *block;
@@ -127,6 +128,7 @@ void strings_insert_constants() {
   EXTERNAL_METHOD_NAME = strings_intern("ExternalMethod");
   FALSE_KEYWORD = strings_intern("False");
   FUNCTION_NAME = strings_intern("Function");
+  FUNCTIONS_KEY = strings_intern("functions");
   HAS_NEXT_FN_NAME = strings_intern("has_next");
   INITIALIZED = strings_intern("$initialized");
   INS_INDEX = strings_intern("$ins");

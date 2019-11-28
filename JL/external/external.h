@@ -12,7 +12,7 @@
 
 #include "../datastructure/map.h"
 #include "../element.h"
-#include "../vm.h"
+#include "../vm/vm.h"
 
 // Protect with methods
 typedef struct ExternalData_ {

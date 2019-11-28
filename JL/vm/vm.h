@@ -5,16 +5,16 @@
  *      Author: Jeff
  */
 
-#ifndef VM_H_
-#define VM_H_
+#ifndef VM_VM_H_
+#define VM_VM_H_
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "command/commandline.h"
-#include "element.h"
-#include "instruction.h"
-#include "threads/thread_interface.h"
+#include "../command/commandline.h"
+#include "../element.h"
+#include "../program/instruction.h"
+#include "../threads/thread_interface.h"
 
 #define vm_lookup_module(...) CALL_FN(vm_lookup_module__, __VA_ARGS__)
 
@@ -53,4 +53,4 @@ void vm_set_catch_goto(VM *vm, Thread *t, uint32_t index);
 
 bool execute(VM *vm, Thread *t);
 
-#endif /* VM_H_ */
+#endif /* VM_VM_H_ */

@@ -7,17 +7,18 @@
 
 #include "tape.h"
 
+#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
 
-#include "arena/strings.h"
-#include "datastructure/queue2.h"
-#include "element.h"
-#include "error.h"
-#include "graph/memory.h"
-#include "serialization/buffer.h"
-#include "serialization/deserialize.h"
-#include "serialization/serialize.h"
+#include "../arena/strings.h"
+#include "../datastructure/queue2.h"
+#include "../element.h"
+#include "../error.h"
+#include "../memory/memory.h"
+#include "../serialization/buffer.h"
+#include "../serialization/deserialize.h"
+#include "../serialization/serialize.h"
 
 #define DEFAULT_TAPE_SIZE 1024
 
@@ -144,7 +145,6 @@ int tape_insc(Tape *tape, const InsContainer *insc) {
 }
 
 int tape_ins(Tape *tape, Op op, Token *token) {
-  //  DEBUGF("tape_ins");
   InsContainer c = insc_create(token);
   switch (token->type) {
     case INTEGER:
@@ -152,8 +152,7 @@ int tape_ins(Tape *tape, Op op, Token *token) {
       c.ins = instruction_val(op, token_to_val(token));
       break;
     case STR:
-      c.ins = instruction_str(
-          op, strings_intern_range(token->text, 1, strlen(token->text) - 1));
+      c.ins = instruction_str(op, token->text);
       break;
     case WORD:
     default:
@@ -263,7 +262,7 @@ int tape_class(Tape *tape, Token *token) {
 int tape_class_with_parents(Tape *tape, Token *token, Queue *q_parents) {
   tape->class(tape, token);
   Expando *parents = expando(char *, 2);
-  while (q_parents->size > 0) {
+  while (queue_size(q_parents) > 0) {
     char *parent = queue_remove(q_parents);
     expando_append(parents, &parent);
   }
@@ -341,6 +340,45 @@ size_t tape_len(const Tape *const tape) {
   return expando_len(tape->instructions);
 }
 
+void string_escaped(const char input[], FILE *file) {
+  int i, len = strlen(input);
+  for (i = 0; i < len; ++i) {
+    char ch = input[i];
+    switch (ch) {
+      case '\"':
+        fputs("\\\"", file);
+        break;
+      case '\'':
+        fputs("\\\'", file);
+        break;
+      case '\\':
+        fputs("\\\\", file);
+        break;
+      case '\a':
+        fputs("\\a", file);
+        break;
+      case '\b':
+        fputs("\\b", file);
+        break;
+      case '\n':
+        fputs("\\n", file);
+        break;
+      case '\t':
+        fputs("\\t", file);
+        break;
+      case '\r':
+        fputs("\\r", file);
+        break;
+      // and so on
+      default:
+        if (iscntrl(ch))
+          fprintf(file, "\\%03o", ch);
+        else
+          fputc(ch, file);
+    }
+  }
+}
+
 void insc_to_str(const InsContainer *c, FILE *file) {
   if (c->ins.param == NO_PARAM) {
     fprintf(file, "  %s", instructions[(int)c->ins.op]);
@@ -352,7 +390,9 @@ void insc_to_str(const InsContainer *c, FILE *file) {
       fprintf(file, "%s", c->ins.id);
       break;
     case STR_PARAM:
-      fprintf(file, "'%s'", c->ins.str);
+      fprintf(file, "'");
+      string_escaped(c->ins.str, file);
+      fprintf(file, "'");
       break;
     case VAL_PARAM:
       val_to_str(c->ins.val, file);
@@ -490,7 +530,8 @@ void tape_read_ins(Tape *const tape, Queue *tokens) {
     }
     Q_enqueue(args, (char *)((Token *)queue_remove(tokens))->text);
     Token *comma;
-    while ((comma = queue_remove(tokens)) != NULL && comma->type == COMMA) {
+    while ((comma = queue_peek(tokens)) != NULL && comma->type == COMMA) {
+      queue_remove(tokens);
       // Complex args are null.
       if (((Token *)queue_peek(tokens))->type == COMMA) {
         Q_enqueue(args, NULL);
@@ -515,10 +556,11 @@ void tape_read_ins(Tape *const tape, Queue *tokens) {
     queue_init(&parents);
     while (COMMA == ((Token *)queue_peek(tokens))->type) {
       queue_remove(tokens);
-      queue_add(&parents, queue_remove(tokens));
+      queue_add(&parents, ((Token *)queue_remove(tokens))->text);
     }
     tape->class_with_parents(tape, class_name, &parents);
     queue_shallow_delete(&parents);
+    return;
   }
   if (0 == strcmp(CLASSEND_KEYWORD, first->text)) {
     tape->endclass(tape, first);

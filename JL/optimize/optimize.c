@@ -17,7 +17,7 @@
 #include "../datastructure/set.h"
 #include "../element.h"
 #include "../error.h"
-#include "../instruction.h"
+#include "../program/instruction.h"
 #include "optimizers.h"
 
 #define is_goto(op) \
@@ -29,7 +29,6 @@ void optimize_init() {
   optimizers = expando(Optimizer, DEFAULT_EXPANDO_SIZE);
   register_optimizer("ResPush", optimizer_ResPush);
   //  register_optimizer("SetRes", optimizer_SetRes);
-  register_optimizer("GetPush", optimizer_GetPush);
   register_optimizer("JmpRes", optimizer_JmpRes);
   register_optimizer("PushRes", optimizer_PushRes);
   register_optimizer("ResPush2", optimizer_ResPush2);
@@ -41,6 +40,8 @@ void optimize_init() {
   register_optimizer("PushResEmpty", optimizer_PushResEmpty);
   register_optimizer("PeekRes-SecondPass", optimizer_PeekRes);
   register_optimizer("PushRes2", optimizer_PushRes2);
+  register_optimizer("SimpleMath", optimizer_SimpleMath);
+  register_optimizer("GetPush", optimizer_GetPush);
 }
 
 void optimize_finalize() { expando_delete(optimizers); }

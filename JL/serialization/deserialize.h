@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #include "../datastructure/expando.h"
-#include "../tape.h"
+#include "../program/tape.h"
 
 #define deserialize_type(file, type, p) deserialize_bytes(file, sizeof(type), ((char *)p), sizeof(type))
 

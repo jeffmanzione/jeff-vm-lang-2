@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 WBuffer *buffer_init(WBuffer * const buffer, FILE *file, size_t size) {
   buffer->file = file;
@@ -21,7 +21,6 @@ WBuffer *buffer_init(WBuffer * const buffer, FILE *file, size_t size) {
 }
 
 void buffer_flush(WBuffer * const buffer) {
-//  DEBUGF("FLUSHING");
   ASSERT(NOT_NULL(buffer));
   S_ASSERT(
       fwrite(buffer->buff, sizeof(char), buffer->pos, buffer->file)
@@ -37,20 +36,15 @@ void buffer_finalize(WBuffer * const buffer) {
 }
 
 void buffer_write(WBuffer * const buffer, const char *start, int num_bytes) {
-//  DEBUGF("buffer_write(buffer,...,%d)", num_bytes);
   ASSERT(NOT_NULL(buffer), NOT_NULL(start), num_bytes >= 0);
   int i = 0;
   while (i < num_bytes) {
-//    DEBUGF("buffer_write\ti=%d, num_bytes=%d", i, num_bytes);
     if (buffer->buff_size == buffer->pos) {
       buffer_flush(buffer);
     }
-//    DEBUGF("buffer_write\tbuffer->pos=%d", buffer->pos);
     int write_amount = min((buffer->buff_size - buffer->pos), num_bytes - i);
-//    DEBUGF("buffer_write\twrite_amount=%d", write_amount);
     memcpy(buffer->buff + buffer->pos, start + i, write_amount);
     buffer->pos += write_amount;
-//    DEBUGF("buffer_write\tbuffer->pos=%d", buffer->pos);
     i += write_amount;
   }
 }

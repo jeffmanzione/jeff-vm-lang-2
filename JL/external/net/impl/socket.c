@@ -13,7 +13,7 @@
 #undef max
 #undef min
 
-#include "../../../graph/memory.h"
+#include "../../../memory/memory.h"
 
 struct Socket_ {
   struct sockaddr_in in;

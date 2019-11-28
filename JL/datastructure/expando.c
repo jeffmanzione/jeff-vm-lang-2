@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 struct Expando_ {
   char *arr;

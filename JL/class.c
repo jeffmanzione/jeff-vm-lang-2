@@ -11,8 +11,8 @@
 #include "element.h"
 #include "error.h"
 #include "external/external.h"
-#include "graph/memory_graph.h"
-#include "vm.h"
+#include "memory/memory_graph.h"
+#include "vm/vm.h"
 
 Element class_class;
 Element class_object;
@@ -28,7 +28,6 @@ Element class_methodinstance;
 Element class_module;
 Element class_error;
 Element class_thread;
-Element class_context;
 
 void class_fill(VM *vm, Element class, const char class_name[],
                 Element parent_class);
@@ -49,7 +48,6 @@ void class_init(VM *vm) {
   class_module = create_class_stub(vm->graph);
   class_error = create_class_stub(vm->graph);
   class_thread = create_class_stub(vm->graph);
-  //  class_context = create_class_stub(vm->graph);
 
   class_fill(vm, class_object, OBJECT_NAME, create_none());
   class_fill(vm, class_class, CLASS_NAME, class_object);
@@ -67,20 +65,17 @@ void class_init(VM *vm) {
   class_fill(vm, class_module, MODULE_NAME, class_object);
   class_fill(vm, class_error, ERROR_NAME, class_object);
   class_fill(vm, class_thread, strings_intern("Thread"), class_object);
-  //  class_fill(vm, class_context, strings_intern("Context"), class_object);
   merge_object_class(vm);
   merge_array_class(vm);
 }
 
 void class_fill_base(VM *vm, Element class, const char class_name[],
                      Element parents_array) {
-  // DEBUGF("class_fill_base begin %s", class_name);
   memory_graph_set_field(vm->graph, class, PARENTS_KEY, parents_array);
   memory_graph_set_field(vm->graph, class, NAME_KEY,
                          string_create(vm, class_name));
   memory_graph_set_field(vm->graph, vm->root, class_name, class);
   fill_object_unsafe(vm->graph, class, class_class);
-  // DEBUGF("class_fill_base end");
 }
 
 void class_fill(VM *vm, Element class, const char class_name[],
@@ -124,11 +119,6 @@ Element class_create_list(VM *vm, const char class_name[],
 }
 
 bool inherits_from(Element class, Element super) {
-  //  elt_to_str(class, stdout);
-  //  printf("\n");
-  //  elt_to_str(super, stdout);
-  //  printf("\n\n");
-  //  fflush(stdout);
   ASSERT(ISCLASS(class), ISCLASS(super));
   if (class.obj == super.obj) {
     return true;

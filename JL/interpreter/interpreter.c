@@ -11,17 +11,19 @@
 #include <stdint.h>
 
 #include "../arena/strings.h"
+#include "../class.h"
 #include "../codegen/codegen.h"
 #include "../codegen/parse.h"
 #include "../codegen/syntax.h"
 #include "../codegen/tokenizer.h"
 #include "../datastructure/map.h"
 #include "../datastructure/queue2.h"
-#include "../graph/memory_graph.h"
-#include "../instruction.h"
-#include "../module.h"
+#include "../external/strings.h"
+#include "../memory/memory_graph.h"
+#include "../program/instruction.h"
+#include "../program/module.h"
 #include "../threads/thread.h"
-#include "../vm.h"
+#include "../vm/vm.h"
 
 static VM *global_vm;
 static Element global_main_module;
@@ -100,29 +102,33 @@ int interpret_from_file(FILE *f, const char filename[], VM *vm,
   while (true) {
     num_ins += interpret_from_file_statement(&p, vm, thread, global_main_module,
                                              tape, fn);
-    if (tape_get(tape, tape_len(tape) - 1)->ins.op == EXIT) {
+    if (tape_get(tape, t_get_ip(thread) - 1)->ins.op == EXIT) {
       break;
     }
     fflush(stdout);
     fflush(stderr);
     printf("<-- ");
-    //  vm_call_fn(vm, t, vm_lookup_module(vm, BUILTIN_MODULE_NAME),
-    //             obj_get_field(vm_lookup_module(vm, BUILTIN_MODULE_NAME),
-    //                           strings_intern("str")));
-    //  t_shift_ip(t, 1);
-    //  do {
-    //#ifdef DEBUG
-    //    ins_to_str(t_current_ins(t), stdout);
-    //    printf("\n");
-    //    fflush(stdout);
-    //#endif
-    //    if (!execute(vm, t)) {
-    //      break;
-    //    }
-    //  } while (t_get_ip(t) <
-    //  tape_len(module_tape(t_get_module(t).obj->module)));
-    elt_to_str(t_get_resval(thread), stdout);
-    printf("\n");
+    vm_call_fn(vm, thread, vm_lookup_module(vm, BUILTIN_MODULE_NAME),
+               obj_get_field(vm_lookup_module(vm, BUILTIN_MODULE_NAME),
+                             strings_intern("str")));
+    t_shift_ip(thread, 1);
+    do {
+#ifdef DEBUG
+      ins_to_str(t_current_ins(thread), stdout);
+      printf("\n");
+      fflush(stdout);
+#endif
+      if (!execute(vm, thread)) {
+        break;
+      }
+    } while (t_get_ip(thread) <
+             tape_len(module_tape(t_get_module(thread).obj->module)));
+    Element str_rep = t_get_resval(thread);
+    if (!ISTYPE(str_rep, class_string)) {
+      ERROR("Expected str() to return a String.");
+    }
+    String *to_s = String_extract(str_rep);
+    printf("%*s\n", String_size(to_s), String_cstr(to_s));
     fflush(stdout);
   }
   parser_finalize(&p);

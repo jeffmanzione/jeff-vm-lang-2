@@ -9,6 +9,6 @@
 
 #include "arraylike.h"
 #include "../error.h"
-#include "../graph/memory.h"
+#include "../memory/memory.h"
 
 IMPL_ARRAYLIKE(Array, Element);

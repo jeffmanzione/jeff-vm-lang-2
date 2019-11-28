@@ -48,6 +48,9 @@ char *find_str(char *haystack, size_t hashtack_len, const char *needle,
                size_t needle_len);
 bool contains_char(const char str[], char c);
 
+int count_chars(const char str[], char c);
+int string_unescape(const char escaped_str[], char *buffer, size_t buffer_len);
+
 /*
  * Function which takes a void pointer and returns an uint32_t set value for
  * for it.

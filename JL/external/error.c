@@ -12,11 +12,11 @@
 #include "../codegen/tokenizer.h"
 #include "../datastructure/tuple.h"
 #include "../element.h"
-#include "../graph/memory_graph.h"
-#include "../module.h"
+#include "../memory/memory_graph.h"
+#include "../program/module.h"
+#include "../program/tape.h"
 #include "../shared.h"
-#include "../tape.h"
-#include "../vm.h"
+#include "../vm/vm.h"
 #include "external.h"
 
 Element token__(VM *vm, Thread *t, ExternalData *ed, Element *argument) {
