@@ -280,3 +280,22 @@ void optimizer_SimpleMath(OptimizeHelper *oh, const Tape *const tape, int start,
     }
   }
 }
+
+// Run Last
+void optimizer_GetSpecial(OptimizeHelper *oh, const Tape *const tape, int start,
+                          int end) {
+  int i;
+  for (i = start; i < end; i++) {
+    const InsContainer *insc = tape_get(tape, i);
+    if (GET != insc->ins.op) {
+      continue;
+    }
+    CommonKey key = CKey_lookup_key(insc->ins.str);
+    if (key == CKey_INVALID) {
+      continue;
+    }
+    Value v = {.type = INT, .int_val = key};
+    o_SetVal(oh, i, SGET, v);
+    DEBUGF("HERE");
+  }
+}

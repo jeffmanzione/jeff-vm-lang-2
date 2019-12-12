@@ -53,4 +53,6 @@ DEB_FN(Element, t_get_module, const Thread *t);
 #define t_get_module(...) CALL_FN(t_get_module__, __VA_ARGS__)
 void t_set_module(Thread *t, Element module_element, uint32_t ip);
 
+bool is_block(Element elt);
+
 #endif /* THREADS_THREAD_H_ */

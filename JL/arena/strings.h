@@ -48,6 +48,7 @@ extern char *METHOD_KEY;
 extern char *METHOD_NAME;
 extern char *MODULES;
 extern char *MODULE_FIELD;
+extern char *MODULE_KEY;
 extern char *MODULE_NAME;
 extern char *NAME_KEY;
 extern char *NEQ_FN_NAME;

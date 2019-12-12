@@ -118,7 +118,7 @@ Element maybe_create_class_with_parents(VM *vm, Element module_element,
 
   if (NULL == parents) {
     if ((class = obj_get_field(vm->root, class_name)).type == NONE) {
-      class = class_create(vm, class_name, class_object);
+      class = class_create(vm, class_name, class_object, module_element);
     }
   } else {
     Expando *parent_classes = expando(Object *, expando_len(parents));
@@ -130,9 +130,9 @@ Element maybe_create_class_with_parents(VM *vm, Element module_element,
     expando_iterate(parents, get_parent);
 
     if ((class = obj_get_field(vm->root, class_name)).type == NONE) {
-      class = class_create_list(vm, class_name, parent_classes);
+      class = class_create_list(vm, class_name, parent_classes, module_element);
     } else {
-      class_fill_list(vm, class, class_name, parent_classes);
+      class_fill_list(vm, class, class_name, parent_classes, module_element);
     }
     expando_delete(parent_classes);
   }
@@ -184,7 +184,6 @@ void vm_add_builtin(VM *vm, const char *builtin_fn) {
     map_iterate(methods, add_method);
   }
   module_iterate_classes(builtin, add_class);
-  //  map_iterate(module_classes(builtin), add_class);
 }
 
 Element vm_add_module(VM *vm, const Module *module) {
@@ -230,7 +229,6 @@ Element vm_add_module(VM *vm, const Module *module) {
     map_iterate(methods, add_method);
   }
   module_iterate_classes(module, add_class);
-  //  map_iterate(module_classes(module), add_class);
   return module_element;
 }
 void vm_merge_module(VM *vm, const char fn[]) {
@@ -350,17 +348,40 @@ void vm_delete(VM *vm) {
 
 const MemoryGraph *vm_get_graph(const VM *vm) { return vm->graph; }
 
+Element maybe_wrap_in_instance(VM *vm, Element obj, Element func,
+                               const char name[]) {
+  // Do not box methods if they are directly retrieved from a class.
+  if (!ISTYPE(func, class_method) ||
+      (ISCLASS(obj) && func.obj == obj_get_field(obj, name).obj) ||
+      ISTYPE(obj, class_methodinstance) || ISTYPE(obj, class_method) ||
+      ISTYPE(obj, class_function) || ISTYPE(obj, class_external_function)) {
+    return func;
+  }
+  // Create MethodInstance for methods since Methods do not contain any Object
+  // state.
+  return create_method_instance(vm->graph, obj, func);
+}
+
 Element vm_object_lookup(VM *vm, Element obj, const char name[]) {
   if (OBJECT != obj.type) {
     return create_none();
   }
   Element elt = obj_deep_lookup(obj.obj, name);
 
+  return maybe_wrap_in_instance(vm, obj, elt, name);
+}
+
+Element vm_object_lookup_ckey(VM *vm, Element obj, CommonKey key) {
+  if (OBJECT != obj.type) {
+    return create_none();
+  }
+  Element elt = obj_deep_lookup_ckey(obj.obj, key);
+
   // Create MethodInstance for methods since Methods do not contain any Object
   // state.
   if (ISTYPE(elt, class_method)
       // Do not box methods if they are directly retrieved from a class.
-      && !(ISCLASS(obj) && elt.obj == obj_get_field(obj, name).obj) &&
+      && !(ISCLASS(obj) && elt.obj == obj_lookup(obj.obj, key).obj) &&
       !ISTYPE(obj, class_methodinstance) && !ISTYPE(obj, class_method) &&
       !ISTYPE(obj, class_function) && !ISTYPE(obj, class_external_function)) {
     return create_method_instance(vm->graph, obj, elt);
@@ -375,23 +396,35 @@ Element vm_object_get(VM *vm, Thread *t, const char name[], bool *has_error) {
                    name);
     *has_error = true;
     return create_none();
-    //    ERROR("Cannot access field(%s) of Nil.", name);
   }
   return vm_object_lookup(vm, resval, name);
 }
 
+Element vm_object_get_ckey(VM *vm, Thread *t, CommonKey key, bool *has_error) {
+  Element resval = t_get_resval(t);
+  if (OBJECT != resval.type) {
+    vm_throw_error(vm, t, t_current_ins(t), "Cannot get field '%s' from Nil.",
+                   CKey_lookup_str(key));
+    *has_error = true;
+    return create_none();
+  }
+  return vm_object_lookup_ckey(vm, resval, key);
+}
+
 Element vm_lookup(VM *vm, Thread *t, const char name[]) {
-  //  DEBUGF("Looking for '%s'", name);
   Element block = t_current_block(t);
-  //  elt_to_str(block, stdout);
-  //  printf("\n");
   Element lookup;
   while (OBJECT == block.type &&
          NONE == (lookup = obj_get_field(block, name)).type) {
-    block = obj_lookup(block.obj, CKey_parent);
-    //    DEBUGF("+Looking for '%s'", name);
-    //    elt_to_str(block, stdout);
-    //    printf("\n");
+    // If this is an object instead of a block, look in the class.
+    if (!is_block(block)) {
+      Element class = obj_lookup(block.obj, CKey_class);
+      Element class_field = obj_get_field(class, name);
+      if (NONE != class_field.type) {
+        return maybe_wrap_in_instance(vm, block, class_field, name);
+      }
+    }
+    block = obj_lookup(block.obj, CKey_$parent);
   }
 
   if (NONE == block.type) {
@@ -443,14 +476,9 @@ void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
                                       func.obj->parent_objs, 0)))
                                 : func;
   parent = obj_get_field(function_object, PARENT_MODULE);
-
-  //  DEBUGF("module_name=%s", string_to_cstr(obj_get_field(parent, NAME_KEY)));
-  //  elt_to_str(parent, stdout);
-  //  printf("\n");
-  //  fflush(stdout);
   vm_maybe_initialize_and_execute(vm, t, parent);
 
-  Element new_block = t_new_block(t, parent, obj);
+  Element new_block = t_new_block(t, obj, obj);
   memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
 
   Element arg_names = obj_get_field(function_object, ARGS_KEY);
@@ -478,17 +506,11 @@ void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
 }
 
 void call_methodinstance(VM *vm, Thread *t, Element methodinstance) {
-  //  DEBUGF("call_methodinstance");
-  // self.method.call(self.obj)
-  //  vm_set_resval(vm, obj_get_field(methodinstance, OBJ_KEY));
-  //  call_function_internal(vm, obj_get_field(methodinstance, METHOD_KEY),
-  //      obj_get_field(class_method, CALL_KEY));
   call_function_internal(vm, t, obj_get_field(methodinstance, OBJ_KEY),
                          obj_get_field(methodinstance, METHOD_KEY));
 }
 
 void vm_call_new(VM *vm, Thread *t, Element class) {
-  ////DEBUGF("call_new");
   ASSERT(ISCLASS(class));
   Element new_obj;
   if (NONE != obj_get_field(class, IS_EXTERNAL_KEY).type) {
@@ -514,7 +536,6 @@ void vm_call_fn(VM *vm, Thread *t, Element obj, Element func) {
                    "Attempted to call something not a function of Class.");
     return;
   }
-
   if (ISTYPE(func, class_external_function) ||
       ISTYPE(func, class_external_method)) {
     call_external_fn(vm, t, obj, func);
@@ -551,7 +572,6 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
     case NOP:
       return true;
     case EXIT:
-      //    vm_set_resval(vm, vm_popstack(vm));
       fflush(stdout);
       fflush(stderr);
       return false;
@@ -559,8 +579,6 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
       memory_graph_set_field(vm->graph, t_current_block(t), ERROR_KEY,
                              create_int(1));
       catch_error(vm, t);
-      // Counter shift forward at end of instruction execution.
-      //      t_shift_ip(t, -2);
       return true;
     case PUSH:
       t_pushstack(t, (Element)t_get_resval(t));
@@ -574,7 +592,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         class = obj_lookup(elt.obj, CKey_class);
         if (inherits_from(class, class_function) ||
             ISTYPE(elt, class_methodinstance)) {
-          vm_call_fn(vm, t, vm_lookup(vm, t, SELF), elt);
+          vm_call_fn(vm, t, obj_deep_lookup_ckey(elt.obj, CKey_module), elt);
         } else if (ISTYPE(elt, class_class)) {
           vm_call_new(vm, t, elt);
         }
@@ -819,23 +837,26 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
                         operator_and(vm, t, ins, element_not(vm, lhs), rhs));
       break;
     case IS:
+      DEBUGF("Here1");
       if (!ISCLASS(rhs)) {
         vm_throw_error(vm, t, ins,
                        "Cannot perform type-check against a non-object type.");
         return true;
       }
+      DEBUGF("Here2");
       if (lhs.type != OBJECT) {
         res = element_false(vm);
         break;
       }
+      DEBUGF("Here3");
       class = obj_lookup(lhs.obj, CKey_class);
+      DEBUGF("Here4");
       if (inherits_from(class, rhs)) {
-        //      ////DEBUGF("TRUE");
         res = element_true(vm);
       } else {
-        //      ////DEBUGF("FALSE");
         res = element_false(vm);
       }
+      DEBUGF("Here5");
       break;
     default:
       DEBUGF("Weird op=%d", ins.op);
@@ -851,7 +872,6 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
   ASSERT_NOT_NULL(ins.str);
   Element block = t_current_block(t);
   Element module, resval, new_res_val, obj;
-  int32_t ip;
   bool has_error = false;
   switch (ins.op) {
     case SET:
@@ -861,9 +881,19 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       }
       memory_graph_set_var(vm->graph, block, ins.str, t_get_resval(t));
       break;
-    case MDST:
-      memory_graph_set_field(vm->graph, t_get_module(t), ins.str,
-                             t_get_resval(t));
+    case LMDL:
+      module = vm_lookup_module(vm, ins.str);
+      if (NONE == module.type) {
+        vm_throw_error(vm, t, ins,
+                       "Module '%s' does not exist. Did you include the file?",
+                       ins.str);
+        return true;
+      }
+      // TODO: Why do I need this for interpreter mode?
+      memory_graph_set_field(vm->graph, block, ins.str, module);
+
+      memory_graph_set_field(vm->graph, t_get_module(t), ins.str, module);
+      t_set_resval(t, module);
       break;
     case CNST:
       make_const_ref(block.obj, ins.id);
@@ -975,9 +1005,6 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       }
       Element target = vm_object_lookup(vm, obj, ins.str);
       if (OBJECT != target.type) {
-        elt_to_str(obj, stderr);
-        fprintf(stderr, "\n");
-        fflush(stderr);
         vm_throw_error(vm, t, ins, "Object has no such function '%s'.",
                        ins.str);
         return true;
@@ -993,29 +1020,6 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
             "Cannot execute call something not a Function or Class.");
         return true;
       }
-      break;
-    case RMDL:
-      module = vm_lookup_module(vm, ins.str);
-      if (NONE == module.type) {
-        vm_throw_error(vm, t, ins,
-                       "Module '%s' does not exist. Did you include the file?",
-                       ins.str);
-        return true;
-      }
-      t_set_resval(t, module);
-      // TODO: Why do I need this for interpreter mode?
-      memory_graph_set_field(vm->graph, block, ins.str, module);
-      break;
-    case MCLL:
-      module = t_popstack(t, &has_error);
-      if (has_error) {
-        return true;
-      }
-      ASSERT(OBJECT == module.type, MODULE == module.obj->type);
-      t_new_block(t, block, block);
-      ip = module_ref(module.obj->module, ins.str);
-      ASSERT(ip > 0);
-      t_set_module(t, module, ip - 1);
       break;
     case PRNT:
       elt_to_str(vm_lookup(vm, t, ins.str), stdout);
@@ -1095,7 +1099,7 @@ void vm_set_catch_goto(VM *vm, Thread *t, uint32_t index) {
 
 bool execute_val_param(VM *vm, Thread *t, Ins ins) {
   Element elt = val_to_elt(ins.val), popped;
-  Element tuple, array;
+  Element tuple, array, new_res_val;
   bool has_error = false;
   int i;
   switch (ins.op) {
@@ -1216,6 +1220,13 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
       uint32_t ip = t_get_ip(t);
       vm_set_catch_goto(vm, t, ip + elt.val.int_val + 1);
       break;
+    case SGET:
+      ASSERT(elt.type == VALUE, elt.val.type == INT);
+      new_res_val = vm_object_get_ckey(vm, t, elt.val.int_val, &has_error);
+      if (!has_error) {
+        t_set_resval(t, new_res_val);
+      }
+      break;
     default:
       ERROR("Instruction op was not a val_param. op=%s",
             instructions[(int)ins.op]);
@@ -1255,19 +1266,18 @@ bool execute(VM *vm, Thread *t) {
 
   Ins ins = t_current_ins(t);
 
-  //#ifdef DEBUG
-  //  mutex_await(vm->debug_mutex, INFINITE);
-  //  fflush(stderr);
-  //  fprintf(stdout, "module(%s,t=%d) ",
-  //  module_name(t_get_module(t).obj->module),
-  //          (int)t->id);
-  //  fflush(stdout);
-  //  ins_to_str(ins, stdout);
-  //  fprintf(stdout, "\n");
-  //  fflush(stdout);
-  //  fflush(stderr);
-  //  mutex_release(vm->debug_mutex);
-  //#endif
+#ifdef DEBUG
+  mutex_await(vm->debug_mutex, INFINITE);
+  fflush(stderr);
+  fprintf(stdout, "module(%s,t=%d) ", module_name(t_get_module(t).obj->module),
+          (int)t->id);
+  fflush(stdout);
+  ins_to_str(ins, stdout);
+  fprintf(stdout, "\n");
+  fflush(stdout);
+  fflush(stderr);
+  mutex_release(vm->debug_mutex);
+#endif
 
   bool status;
   switch (ins.param) {

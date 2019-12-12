@@ -129,6 +129,7 @@ Element obj_get_field_obj(Object *obj, const char field_name[]);
 Element obj_get_field(Element elt, const char field_name[]);
 Element obj_get_field_ptr(Element *elt, const char field_name[]);
 Element obj_deep_lookup(Object *obj, const char name[]);
+Element obj_deep_lookup_ckey(Object *obj, CommonKey key);
 void obj_delete_ptr(Object *obj, bool free_mem);
 
 void class_parents(Element child_class, Set *classes);

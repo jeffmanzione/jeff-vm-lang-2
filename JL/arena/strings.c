@@ -58,6 +58,7 @@ char *METHOD_KEY;
 char *METHOD_NAME;
 char *MODULES;
 char *MODULE_FIELD;
+char *MODULE_KEY;
 char *MODULE_NAME;
 char *NAME_KEY;
 char *NEQ_FN_NAME;
@@ -144,6 +145,7 @@ void strings_insert_constants() {
   METHOD_NAME = strings_intern("Method");
   MODULES = strings_intern("$modules");
   MODULE_FIELD = strings_intern("$module");
+  MODULE_KEY = strings_intern("module");
   MODULE_NAME = strings_intern("Module");
   NAME_KEY = strings_intern("name");
   NEQ_FN_NAME = strings_intern("neq");

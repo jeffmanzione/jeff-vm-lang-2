@@ -24,20 +24,22 @@
 #include "vm/vm.h"
 
 int main(int argc, const char *argv[]) {
+#ifdef DEBUG
   alloc_init();
-  //  alloc_set_verbose(true);
+#endif
   arenas_init();
   strings_init();
+  CKey_init();
 
   ArgConfig *config = argconfig_create();
   argconfig_compile(config);
   argconfig_run(config);
   ArgStore *store = commandline_parse_args(config, argc, argv);
 
+  optimize_init();
+
   Set modules;
   set_init_default(&modules);
-
-  optimize_init();
 
   void load_src(void *ptr) {
     ASSERT(NOT_NULL(ptr));
@@ -67,7 +69,7 @@ int main(int argc, const char *argv[]) {
           "evaluate.\n");
       fflush(stdout);
       interpret_from_file(stdin, "stdin", vm, interpret_statement);
-      printf("Goodbye.\n");
+      printf("Goodbye!\n");
       fflush(stdout);
     }
   }
@@ -77,16 +79,18 @@ int main(int argc, const char *argv[]) {
   argconfig_delete(config);
   vm_delete(vm);
   optimize_finalize();
+  CKey_finalize();
   strings_finalize();
   arenas_finalize();
 
-  alloc_finalize();
 #ifdef DEBUG
+  alloc_finalize();
   printf(
       "Maps: %d\nMap inserts: %d\nMap insert compares: %d\n"
       "Map lookups: %d\nMap lookup compares: %d\n",
       MAP__count, MAP__insert_count, MAP__insert_compares_count,
       MAP__lookup_count, MAP__lookup_compares_count);
+  fflush(stdout);
 #endif
   return EXIT_SUCCESS;
 }

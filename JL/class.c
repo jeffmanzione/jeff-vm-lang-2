@@ -30,7 +30,7 @@ Element class_error;
 Element class_thread;
 
 void class_fill(VM *vm, Element class, const char class_name[],
-                Element parent_class);
+                Element parent_class, Element module_or_parent);
 
 void class_init(VM *vm) {
   // Create dummy objects that are needed for VM construction first since we
@@ -49,28 +49,31 @@ void class_init(VM *vm) {
   class_error = create_class_stub(vm->graph);
   class_thread = create_class_stub(vm->graph);
 
-  class_fill(vm, class_object, OBJECT_NAME, create_none());
-  class_fill(vm, class_class, CLASS_NAME, class_object);
-  class_fill(vm, class_string, STRING_NAME, class_object);
-  class_fill(vm, class_array, ARRAY_NAME, class_object);
+  class_fill(vm, class_object, OBJECT_NAME, create_none(), vm->root);
+  class_fill(vm, class_class, CLASS_NAME, class_object, vm->root);
+  class_fill(vm, class_string, STRING_NAME, class_object, vm->root);
+  class_fill(vm, class_array, ARRAY_NAME, class_object, vm->root);
   // Time to fill them
-  class_fill(vm, class_tuple, TUPLE_NAME, class_object);
-  class_fill(vm, class_function, FUNCTION_NAME, class_object);
+  class_fill(vm, class_tuple, TUPLE_NAME, class_object, vm->root);
+  class_fill(vm, class_function, FUNCTION_NAME, class_object, vm->root);
   class_fill(vm, class_external_function, EXTERNAL_FUNCTION_NAME,
-             class_function);
+             class_function, vm->root);
   class_fill(vm, class_external_method, EXTERNAL_METHOD_NAME,
-             class_external_function);
-  class_fill(vm, class_method, METHOD_NAME, class_function);
-  class_fill(vm, class_methodinstance, METHOD_INSTANCE_NAME, class_object);
-  class_fill(vm, class_module, MODULE_NAME, class_object);
-  class_fill(vm, class_error, ERROR_NAME, class_object);
-  class_fill(vm, class_thread, strings_intern("Thread"), class_object);
+             class_external_function, vm->root);
+  class_fill(vm, class_method, METHOD_NAME, class_function, vm->root);
+  class_fill(vm, class_methodinstance, METHOD_INSTANCE_NAME, class_object,
+             vm->root);
+  class_fill(vm, class_module, MODULE_NAME, class_object, vm->root);
+  class_fill(vm, class_error, ERROR_NAME, class_object, vm->root);
+  class_fill(vm, class_thread, strings_intern("Thread"), class_object,
+             vm->root);
   merge_object_class(vm);
   merge_array_class(vm);
 }
 
 void class_fill_base(VM *vm, Element class, const char class_name[],
-                     Element parents_array) {
+                     Element parents_array, Element module_or_parent) {
+  memory_graph_set_field(vm->graph, class, PARENT, module_or_parent);
   memory_graph_set_field(vm->graph, class, PARENTS_KEY, parents_array);
   memory_graph_set_field(vm->graph, class, NAME_KEY,
                          string_create(vm, class_name));
@@ -79,17 +82,17 @@ void class_fill_base(VM *vm, Element class, const char class_name[],
 }
 
 void class_fill(VM *vm, Element class, const char class_name[],
-                Element parent_class) {
+                Element parent_class, Element module_or_parent) {
   Element parents = create_none();
   if (NONE != parent_class.type) {
     parents = create_array(vm->graph);
     memory_graph_array_enqueue(vm->graph, parents, parent_class);
   }
-  class_fill_base(vm, class, class_name, parents);
+  class_fill_base(vm, class, class_name, parents, module_or_parent);
 }
 
 void class_fill_list(VM *vm, Element class, const char class_name[],
-                     Expando *parent_classes) {
+                     Expando *parent_classes, Element module_or_parent) {
   Element parents = create_array(vm->graph);
   if (NULL == parent_classes) {
     return;
@@ -100,21 +103,22 @@ void class_fill_list(VM *vm, Element class, const char class_name[],
   }
   expando_iterate(parent_classes, add_parent_class);
 
-  class_fill_base(vm, class, class_name, parents);
+  class_fill_base(vm, class, class_name, parents, module_or_parent);
 }
 
-Element class_create(VM *vm, const char class_name[], Element parent_class) {
+Element class_create(VM *vm, const char class_name[], Element parent_class,
+                     Element module_or_parent) {
   ASSERT(OBJECT == parent_class.type);
   Element elt = create_class_stub(vm->graph);
-  class_fill(vm, elt, class_name, parent_class);
+  class_fill(vm, elt, class_name, parent_class, module_or_parent);
   return elt;
 }
 
 Element class_create_list(VM *vm, const char class_name[],
-                          Expando *parent_classes) {
+                          Expando *parent_classes, Element module_or_parent) {
   ASSERT(NULL != parent_classes);
   Element elt = create_class_stub(vm->graph);
-  class_fill_list(vm, elt, class_name, parent_classes);
+  class_fill_list(vm, elt, class_name, parent_classes, module_or_parent);
   return elt;
 }
 

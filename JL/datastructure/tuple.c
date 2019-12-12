@@ -12,8 +12,10 @@
 #include "../error.h"
 #include "../memory/memory.h"
 
+#define DEFAULT_TUPLE_SZ 8
+
 struct Tuple_ {
-  size_t size;
+  size_t size, table_size;
   Element *table;
 };
 
@@ -27,9 +29,11 @@ Tuple *tuple_create() {
 void tuple_add(Tuple *t, Element e) {
   ASSERT_NOT_NULL(t);
   if (0 == t->size) {
-    t->table = ALLOC_ARRAY(Element, 1);
-  } else {
-    t->table = REALLOC(t->table, Element, t->size + 1);
+    t->table_size = DEFAULT_TUPLE_SZ;
+    t->table = ALLOC_ARRAY2(Element, t->table_size);
+  } else if (t->size == t->table_size) {
+    t->table_size += DEFAULT_TUPLE_SZ;
+    t->table = REALLOC(t->table, Element, t->table_size);
   }
   t->table[t->size++] = e;
 }

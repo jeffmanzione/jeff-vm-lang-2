@@ -5,7 +5,7 @@ import io
 import struct
 
 class Token {
-  def new (text, line, col, fn, line_text) {
+  def new(text, line, col, fn, line_text) {
     self.text = text
     self.line = line
     self.col = col
@@ -22,7 +22,7 @@ class Token {
 }
 
 class StackLine {
-  def new (block) {
+  def new(block) {
     self.mod = block.$module
     self.caller = block.$caller
     self.ip = block.$ip
@@ -52,10 +52,6 @@ class Error {
     ; Start at 1 since 0-th block will be this loop.
     for i=1, i<$thread.$saved_blocks.len, i=i+1 {
       block = $thread.$saved_blocks[i]
-      ; Skip non-function call blocks
-      ;if block.$is_iterator_block {
-      ;  continue
-      ;}
       self.stack_lines.append(StackLine(block))
     }
   }

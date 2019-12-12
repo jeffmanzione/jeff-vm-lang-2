@@ -38,13 +38,12 @@ extern Element class_module;
 extern Element class_thread;
 
 void class_init(VM *vm);
-void class_fill_unsafe(VM *vm, Element class, const char class_name[],
-                       Element parent_class);
-Element class_create(VM *vm, const char class_name[], Element parent_class);
+Element class_create(VM *vm, const char class_name[], Element parent_class,
+                     Element module_or_class);
 Element class_create_list(VM *vm, const char class_name[],
-                          Expando *parent_classes);
+                          Expando *parent_classes, Element module_or_class);
 void class_fill_list(VM *vm, Element class, const char class_name[],
-                     Expando *parent_classes);
+                     Expando *parent_classes, Element module_or_class);
 
 bool inherits_from(Element class, Element super);
 

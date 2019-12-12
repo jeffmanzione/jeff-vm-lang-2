@@ -54,8 +54,7 @@ typedef enum {
   DUP,
   GOTO,
   PRNT,
-  RMDL,
-  MCLL,
+  LMDL,
   GET,
   GTSH,  // GET+PUSH
   FLD,
@@ -68,9 +67,9 @@ typedef enum {
   AIDX,
   ASET,
   //
-  MDST,
   CNST,
   SETC,
+  SGET,
   // NOT A REAL OP
   OP_BOUND,
 } Op;

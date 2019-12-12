@@ -170,7 +170,9 @@ def html_escape(text) {
     if c == LT[0] then result.extend(LT_ESCAPED)
     else if c == GT[0] then result.extend(GT_ESCAPED)
   }
-  result.extend(text, lts[lts.len-1] + 1)
+  if lts[lts.len-1] < text.len - 1 {
+    result.extend(text, lts[lts.len-1] + 1)
+  }
   return result
 }
 
@@ -185,14 +187,28 @@ class RequestHandler {
     self.elseHandler = handler
   }
   def handle(request) {
-    for _, (match_fn, handler) in self.handlers {
+    timer = time.Timer()
+    timer.start()
+    for i=0, i < self.handlers.len, i=i+1 {
+      (match_fn, handler) = self.handlers[i]
       if match_fn(request) {
-        return handler(request)
+        timer.mark('Match found')
+        res = handler(request)
+        timer.mark('Handled')
+        io.println(timer.elapsed_usec())
+        return res
       }
+      timer.mark('Not match')
     }
     if self.elseHandler {
-      return self.elseHandler(request)
+      timer.mark('Match found')
+      res = self.elseHandler(request)
+      timer.mark('Handled')
+      io.println(timer.elapsed_usec())
+      return res
     }
+    timer.mark('Not found')
+    io.println(timer.elapsed_usec())
     return None
   }
 }
@@ -208,7 +224,9 @@ class CachedTextRenderer {
   def new() {
     self.cache = struct.Cache()
   }
-  def get(key, src, params) {
+  def write(key, src, params, handle) {
+    timer = time.Timer()
+    timer.start()
     parts_keys = self.cache.get(key, @(src, params) {
       indices = []
       parts = []
@@ -230,24 +248,24 @@ class CachedTextRenderer {
       parts.append(src.substr(index))
       return (parts, keys)
     }, (src, params))
-
+    timer.mark('Lookup done')
     if ~parts_keys | (parts_keys is error.Error) {
-      return NOT_FOUND
+      handle.send(NOT_FOUND)
     }
     parts = parts_keys[0]
     keys = parts_keys[1]
     len = keys.len + parts.len
-    text = ''
     if len == 1 {
-      return parts[0]
+      handle.send(parts[0])
     }
     for i=0, i<len, i=i+1 {
       if i%2 == 0 {
-        text.extend(parts[i / 2])
+        handle.send(parts[i / 2])
       } else {
-        text.extend(params[keys[i / 2]])
+        handle.send(params[keys[i / 2]])
       }
     }
-    return text
+    timer.mark('Text rendered')
+    io.println(timer.elapsed_usec())
   }
 }

@@ -101,7 +101,7 @@ def range(params) {
 }
 
 class Object {
-  def to_s() concat(self.class.name, '()')
+  def to_s() $module.concat(self.class.name, '@', self.$adr)
   def hash() {
     return self.$adr
   }
@@ -114,12 +114,12 @@ class Object {
 
 class Class {
   def to_s() {
-    concat(self.name, '.class')
+    $module.concat(self.name, '.class')
   }
 }
 
 class Function {
-  def to_s() concat(self.class.name, '(',
+  def to_s() $module.concat(self.class.name, '(',
                     self.module.name, '.',
                     self.name, ')')
   def call(args) {
@@ -128,8 +128,8 @@ class Function {
 }
 
 class Method : Function {
-  def to_s() concat(self.class.name, '(', self.method_path(), ')')
-  def method_path() concat(self.module.name, '.',
+  def to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
+  def method_path() $module.concat($module.name, '.',
                            self.parent_class.name, '.',
                            self.Function.name)
   def call(obj, args) {
@@ -138,8 +138,8 @@ class Method : Function {
 }
 
 class ExternalMethod {
-  def to_s() concat(self.class.name, '(', self.method_path(), ')')
-  def method_path() concat(self.module.name, '.',
+  def to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
+  def method_path() $module.concat(self.module.name, '.',
                            self.parent_class.name, '.',
                            self.Function.name)
   def call(obj, args) {
@@ -156,13 +156,13 @@ class MethodInstance {
     self.method.call(self.obj, args)
   }
   def to_s() {
-    concat(self.class.name, '(obj=', self.obj,
+    $module.concat('MethodInstance(obj=', self.obj,
            ',method=', self.method, ')')
   }
 }
 
 class Module {
-  def to_s() concat('Module(name=', self.name, ', classes=', self.classes, ', functions=', self.functions, ')')
+  def to_s() $module.concat('Module(name=', self.name, ', classes=', self.classes, ', functions=', self.functions, ')')
 }
 
 class Tuple {
@@ -181,7 +181,7 @@ class Tuple {
       return False
     }
     for i=0, i<self.len, i=i+1 {
-      if ~eq(self[i],t[i]) return False
+      if ~$module.eq(self[i],t[i]) return False
     }
     return True
   }
@@ -198,7 +198,7 @@ class Array {
   def hash() {
     hashval = 5381
     for i=0, i < self.len, i=i+1 {
-      c = hash(self[i])
+      c = $module.hash(self[i])
       hashval = ((hashval * 33) + hashval) + c
     }
     hashval
@@ -265,7 +265,7 @@ class Array {
     if(array.len < end) return False
  
     for i=start, i<end, i=i+1 {
-      if ~eq(array[i], self[i]) {
+      if ~$module.eq(array[i], self[i]) {
         return False
       }
     }
@@ -337,14 +337,6 @@ def equals_range(a1, a1_start, a2, a2_start, length) {
 }
 
 class String {
-  def hash() {
-    hashval = 5381
-    for i=0, i < self.len, i=i+1 {
-      c = hash(self[i])
-      hashval = ((hashval * 33) + hashval) + c
-    }
-    hashval
-  }
   def append(elt) {
     self[self.len] = elt
     self
@@ -357,6 +349,9 @@ class String {
       }
       if ~end {
         end = arr.len
+      }
+      if (end < start) {
+        raise Error(concat('end must be >= start. start=', start, ' end=', end, '.'))
       }
       self.extend_range__(arr, start, end)
     } else self.extend__(arr)
@@ -383,7 +378,7 @@ class String {
     if(array.len < end) return False
  
     for i=start, i<end, i=i+1 {
-      if ~eq(array[i], self[i]) {
+      if ~$module.eq(array[i], self[i]) {
         return False
       }
     }
@@ -399,7 +394,7 @@ class String {
       return False 
     }
     for i=0, i<array.len, i=i+1 {
-      if eq(array[i], self[i]) {
+      if $module.eq(array[i], self[i]) {
         return False
       }
     }
@@ -412,7 +407,7 @@ class String {
     self_len = self.len-1
     array_len = array.len-1
     for i=0, i<=array_len, i=i+1 {
-      if ~eq(array[array_len-i], self[self_len-i]) {
+      if ~$module.eq(array[array_len-i], self[self_len-i]) {
         return False
       }
     }

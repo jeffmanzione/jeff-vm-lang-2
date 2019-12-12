@@ -82,8 +82,6 @@ bool map_insert_helper(Map *map, const void *key, const void *value,
     int table_index = pos(hval, num_probes, table_sz);
     num_probes++;
     MEntry *me = table + table_index;
-    //    DEBUGF("num_probes=%d, me->num_probes=%d", num_probes,
-    //    me->num_probes);
     // Position is vacant.
     if (0 == me->num_probes) {
       // Use the previously empty slot if we don't find our element.

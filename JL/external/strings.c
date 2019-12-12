@@ -291,6 +291,9 @@ Element string_extend_range(VM *vm, Thread *t, ExternalData *data,
   if (!is_value_type(&end, INT)) {
     return throw_error(vm, t, "Expected an ending index.");
   }
+  if (end.val.int_val < start.val.int_val) {
+    return throw_error(vm, t, "Expected end >= start.");
+  }
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   String *substr = String_extract(string_arg);
@@ -459,11 +462,12 @@ Element string_substr(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return string_create_len(vm, String_cstr(string) + start, end - start);
 }
 
-// Element string_hash(VM *vm, ExternalData *data, Element arg) {
-//  String *string = map_lookup(&data->state, STRING_NAME);
-//  ASSERT(NOT_NULL(string));
-//  return create_int((int64_t) (int32_t) String_cstr(string));
-//}
+Element string_hash(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  return create_int(
+      string_hasher_len(String_cstr(string), String_size(string)));
+}
 
 void merge_string_class(VM *vm, Element string_class) {
   merge_external_class(vm, string_class, string_constructor,
@@ -492,6 +496,5 @@ void merge_string_class(VM *vm, Element string_class) {
   //  add_external_method(vm, string_class,
   //                      strings_intern("partition_expect_sorted__"),
   //                      string_partition);
-  //  add_external_function(vm, string_class, strings_intern("hash"),
-  //  string_hash);
+  add_external_method(vm, string_class, strings_intern("hash"), string_hash);
 }

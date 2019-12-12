@@ -60,6 +60,14 @@ FileInfo *file_info_file(FILE *tmp_file) {
   return fi;
 }
 
+void file_info_close_file(FileInfo *fi) {
+  if (NULL == fi->fp) {
+    return;
+  }
+  fclose(fi->fp);
+  fi->fp = NULL;
+}
+
 void file_info_delete(FileInfo *fi) {
   ASSERT_NOT_NULL(fi);
   ASSERT_NOT_NULL(fi->lines);
@@ -69,7 +77,7 @@ void file_info_delete(FileInfo *fi) {
     line_info_delete(fi->lines[i]);
   }
   DEALLOC(fi->lines);
-  fclose(fi->fp);
+  file_info_close_file(fi);
   DEALLOC(fi);
 }
 

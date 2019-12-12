@@ -104,6 +104,7 @@ Module *load_fn_jm(const char fn[], const ArgStore *store) {
   tokenize(fi, &tokens, true);
   tape_read(tape, &tokens);
   queue_shallow_delete(&tokens);
+  file_info_close_file(fi);
 
   if (out_unoptimized) {
     make_dir_if_does_not_exist(uoout_dir);
@@ -151,6 +152,7 @@ Module *load_fn_jl(const char fn[], const ArgStore *store) {
   Tape *tape = tape_create();
 
   codegen_file(&tree, tape);
+  file_info_close_file(fi);
 
   if (out_machine) {
     make_dir_if_does_not_exist(mout_dir);

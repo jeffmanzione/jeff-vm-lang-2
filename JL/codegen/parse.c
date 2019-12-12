@@ -61,6 +61,7 @@ bool parser_finalize(Parser *parser) {
   }
   queue_deep_delete(&parser->queue, (Deleter)say_tokens);
   map_delete(parser->exp_names);
+
   return has_error;
 }
 

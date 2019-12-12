@@ -14,14 +14,16 @@
 
 #include "../datastructure/queue.h"
 
-#define CODE_DELIM      " \t"
+#define CODE_DELIM " \t"
 #define CODE_COMMENT_CH ';'
-#define DEFAULT_NUM_LINES   128
+#define DEFAULT_NUM_LINES 128
 #define MAX_LINE_LEN 1000
 #define ID_SZ 256
 
 typedef enum {
-  WORD, INTEGER, FLOATING,
+  WORD,
+  INTEGER,
+  FLOATING,
 
   // For strings.
   STR,
@@ -111,7 +113,7 @@ typedef struct {
 
 typedef struct LineInfo_ {
   char *line_text;
-  Token *tokens; // Sparse array of tokens corresponding to words
+  Token *tokens;  // Sparse array of tokens corresponding to words
   int line_num;
 } LineInfo;
 
@@ -125,12 +127,13 @@ const LineInfo *file_info_lookup(const FileInfo *fi, int line_num);
 int file_info_len(const FileInfo *fi);
 const char *file_info_name(const FileInfo *fi);
 void file_info_delete(FileInfo *fi);
+void file_info_close_file(FileInfo *fi);
 
 void tokenize(FileInfo *fi, Queue *queue, bool escape_characters);
 bool tokenize_line(int *line, FileInfo *fi, Queue *queue,
-bool escape_characters);
+                   bool escape_characters);
 void token_fill(Token *tok, TokenType type, int line, int col,
-    const char text[]);
+                const char text[]);
 Token *token_create(TokenType type, int line, int col, const char text[]);
 Token *token_copy(Token *tok);
 void token_delete(Token *tok);

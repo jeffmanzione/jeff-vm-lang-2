@@ -5,9 +5,10 @@
  *      Author: Jeff
  */
 
-#include "../memory/memory_graph.h"
+#include "memory_graph.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -19,9 +20,8 @@
 #include "../datastructure/tuple.h"
 #include "../error.h"
 #include "../ltable/ltable.h"
-#include "../memory/memory.h"
 #include "../shared.h"
-#include "../threads/thread_interface.h"
+#include "memory.h"
 
 // Large prime. May help initial startup.
 #define DEFAULT_NODE_TABLE_SZ 48337
@@ -66,15 +66,6 @@ int32_t node_comparator(const void *n1, const void *n2) {
   return ((Node *)n1)->id.int_id - ((Node *)n2)->id.int_id;
 }
 
-void ltable_fill() {
-  CKey_set(CKey_resval, RESULT_VAL);
-  CKey_set(CKey_name, NAME_KEY);
-  CKey_set(CKey_class, CLASS_KEY);
-  CKey_set(CKey_parent, PARENT);
-  CKey_set(CKey_parents, PARENTS_KEY);
-  CKey_set(CKey_parent_class, PARENT_CLASS);
-}
-
 MemoryGraph *memory_graph_create() {
   MemoryGraph *graph = ALLOC2(MemoryGraph);
 #ifdef ENABLE_MEMORY_LOCK
@@ -86,8 +77,6 @@ MemoryGraph *memory_graph_create() {
   graph->rand_seeded = false;
   graph->use_rand = false;
   graph->id_counter = 0;
-  CKey_init();
-  ltable_fill();
   return graph;
 }
 
@@ -151,7 +140,6 @@ void node_delete(MemoryGraph *graph, Node *node, bool free_mem) {
 }
 
 void memory_graph_delete(MemoryGraph *graph) {
-  CKey_finalize();
   ASSERT_NOT_NULL(graph);
 #ifdef DEBUG
   int node_count = 0;
@@ -371,7 +359,7 @@ void memory_graph_set_var(MemoryGraph *graph, const Element block,
   Element relevant_block;
   Element parent = block;
   while (NULL == container) {
-    parent = obj_lookup(parent.obj, CKey_parent);
+    parent = obj_lookup(parent.obj, CKey_$parent);
     if (NONE == parent.type) break;
     container = obj_get_field_obj_raw(parent.obj, field_name);
   }

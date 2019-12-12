@@ -58,6 +58,8 @@ Element create_obj_unsafe_base(MemoryGraph *graph) {
 void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
                                 Element class) {
   memory_graph_set_field(graph, element, CLASS_KEY, class);
+  memory_graph_set_field(graph, element, PARENT,
+                         obj_lookup(class.obj, CKey_module));
   Element parents = obj_lookup(class.obj, CKey_parents);
   // Object class
   if (NONE == parents.type) {
@@ -84,6 +86,13 @@ void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
                              element_for_obj(obj));
     }
   }
+  //  ASSERT(NONE != obj_get_field(class, METHODS_KEY).type);
+  //  Array *methods = obj_get_field(class, METHODS_KEY).obj->array;
+  //  for (i = 0; i < Array_size(methods); ++i) {
+  //    Element method = Array_get(methods, i);
+  //    memory_graph_set_field(graph, element, obj_deep_lookup(method,
+  //    NAME_KEY))
+  //  }
 }
 
 void fill_object_unsafe(MemoryGraph *graph, Element element, Element class) {
@@ -391,13 +400,63 @@ Element obj_deep_lookup(Object *obj, const char name[]) {
       }
     }
     // Check class.
-    Element class = obj_get_field_obj(obj, CLASS_KEY);
+    Element class = obj_lookup(obj, CKey_class);
     // Class Object
     if (NONE == class.type) {
       continue;
     }
     ASSERT(ISCLASS(class));
     field = obj_get_field(class, name);
+    if (NONE != field.type) {
+      to_return = field;
+      break;
+    }
+    // Mark that we already checked this object.
+    set_insert(&checked, obj);
+    int i;
+    // Look through all parent objects.
+    for (i = 0; i < expando_len(obj->parent_objs); ++i) {
+      Object *parent_obj = *((Object **)expando_get(obj->parent_objs, i));
+      // Add them to the queue if we haven't already checked them.
+      if (NULL == set_lookup(&checked, parent_obj)) {
+        Q_enqueue(&to_process, parent_obj);
+      }
+    }
+  }
+  Q_finalize(&to_process);
+  set_finalize(&checked);
+
+  return to_return;
+}
+
+Element obj_deep_lookup_ckey(Object *obj, CommonKey key) {
+  Element to_return = create_none();
+
+  Set checked;
+  set_init_default(&checked);
+  Q to_process;
+  Q_init(&to_process);
+  Q_enqueue(&to_process, obj);
+
+  while (Q_size(&to_process) > 0) {
+    Object *obj = Q_dequeue(&to_process);
+    ASSERT(NOT_NULL(obj));
+    // Check object.
+    Element field = obj_lookup(obj, key);
+    if (NONE != field.type) {
+      if (!(ISCLASS_OBJ(obj) && ISTYPE(field, class_method))) {
+        to_return = field;
+        break;
+      }
+    }
+    // Check class.
+    Element class = obj_lookup(obj, CKey_class);
+    // Class Object
+    if (NONE == class.type) {
+      continue;
+    }
+    ASSERT(ISCLASS(class));
+    field = obj_lookup(class.obj, key);
     if (NONE != field.type) {
       to_return = field;
       break;

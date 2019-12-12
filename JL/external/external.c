@@ -122,7 +122,7 @@ Element create_external_class(VM *vm, Element module, const char class_name[],
                               ExternalFunction constructor,
                               ExternalFunction deconstructor) {
   const char *name = strings_intern(class_name);
-  Element class = class_create(vm, name, class_object);
+  Element class = class_create(vm, name, class_object, module);
   merge_external_class(vm, class, constructor, deconstructor);
   memory_graph_set_field(vm->graph, module, name, class);
   memory_graph_array_enqueue(vm->graph, obj_get_field(module, CLASSES_KEY),

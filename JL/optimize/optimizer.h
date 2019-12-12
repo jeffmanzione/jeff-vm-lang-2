@@ -16,15 +16,12 @@
 #include "../program/tape.h"
 
 typedef struct {
-  enum {
-    SET_OP, REMOVE, SHIFT
-  } type;
-  union {
-    Op op;
-    struct {
-      uint32_t start, end, insert_pos;
-    };
+  enum { SET_OP, REMOVE, SHIFT, SET_VAL } type;
+  Op op;
+  struct {
+    uint32_t start, end, insert_pos;
   };
+  Value val;
 } Adjustment;
 
 typedef struct {
@@ -38,6 +35,7 @@ typedef void (*Optimizer)(OptimizeHelper *, const Tape const *, int, int);
 
 void o_Remove(OptimizeHelper *oh, int index);
 void o_SetOp(OptimizeHelper *oh, int index, Op op);
-void o_Shift(OptimizeHelper* oh, int start_index, int end_index, int new_index);
+void o_SetVal(OptimizeHelper *oh, int index, Op op, Value val);
+void o_Shift(OptimizeHelper *oh, int start_index, int end_index, int new_index);
 
 #endif /* OPTIMIZER_H_ */

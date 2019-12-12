@@ -267,6 +267,11 @@ Element t_peekstack(Thread *t, int distance) {
   return Array_get(array, Array_size(array) - 1 - distance);
 }
 
+bool is_block(Element elt) {
+  return ISTYPE(elt, class_object) &&
+         NONE != obj_lookup(elt.obj, CKey_$ip).type;
+}
+
 Element t_create_block(Thread *t, Element parent, Element new_this,
                        Element module_element, uint32_t ip) {
   Element new_block = create_obj(t->graph);
@@ -389,5 +394,5 @@ void t_set_resval(Thread *t, const Element elt) {
 }
 
 const Element t_get_resval(const Thread *t) {
-  return obj_lookup(t->self.obj, CKey_resval);
+  return obj_lookup(t->self.obj, CKey_$resval);
 }

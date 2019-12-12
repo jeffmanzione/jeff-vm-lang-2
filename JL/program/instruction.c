@@ -15,16 +15,16 @@
 #include "../shared.h"
 
 const char *instructions[] = {
-    "nop", "exit", "res",  "tget", "tlen", "set",  "push", "peek", "psrs",
-    "not", "notc", "gt",   "lt",   "eq",   "neq",  "gte",  "lte",  "and",
-    "or",  "xor",  "if",   "ifn",  "jmp",  "nblk", "bblk", "ret",  "add",
-    "sub", "mult", "div",  "mod",  "inc",  "dec",  "sinc", "call", "tupl",
-    "dup", "goto", "prnt", "rmdl", "mcll", "get",  "gtsh", "fld",  "is",
-    "adr", "rais", "ctch", "anew", "aidx", "aset", "mdst", "cnst", "setc"};
+    "nop",  "exit", "res",  "tget", "tlen", "set",  "push", "peek", "psrs",
+    "not",  "notc", "gt",   "lt",   "eq",   "neq",  "gte",  "lte",  "and",
+    "or",   "xor",  "if",   "ifn",  "jmp",  "nblk", "bblk", "ret",  "add",
+    "sub",  "mult", "div",  "mod",  "inc",  "dec",  "sinc", "call", "tupl",
+    "dup",  "goto", "prnt", "lmdl", "get",  "gtsh", "fld",  "is",   "adr",
+    "rais", "ctch", "anew", "aidx", "aset", "cnst", "setc", "sget"};
 
 Op op_type(const char word[]) {
   int i;
-  for (i = 0; i < sizeof(instructions) / sizeof(instructions[0]); i++) {
+  for (i = 0; i < sizeof(instructions) / sizeof(instructions[0]); ++i) {
     if (strlen(word) != strlen(instructions[i])) {
       continue;
     }

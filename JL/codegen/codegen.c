@@ -507,7 +507,7 @@ int codegen_import(SyntaxTree *tree, Tape *tape) {
     module_name = tree->second->first->token;
     var_name = tree->second->second->second->token;
   }
-  return tape->ins(tape, RMDL, module_name) + tape->ins(tape, MDST, var_name);
+  return tape->ins(tape, LMDL, module_name);
 }
 
 int codegen_function_params(SyntaxTree *arg_begin, SyntaxTree **function_body,

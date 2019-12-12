@@ -145,17 +145,12 @@ int interpret_statement(VM *vm, Thread *t, Element m, Tape *tape, int num_ins) {
   // Adds catch body.
   // What token to use?
   Token *token = (Token *)tape_get(tape, tape_len(tape) - 1)->token;
-  num_ins += tape->ins_int(tape, JMP, 6, token) +
+  num_ins += tape->ins_int(tape, JMP, 5, token) +
              tape->ins_no_arg(tape, PUSH, token) +
-             tape->ins_text(tape, RMDL, strings_intern("error"), token) +
-             tape->ins_text(tape, MDST, strings_intern("error"), token) +
+             tape->ins_text(tape, LMDL, strings_intern("error"), token) +
              tape->ins_no_arg(tape, RES, token) +
              tape->ins_text(tape, PUSH, strings_intern("error"), token) +
              tape->ins_text(tape, CALL, strings_intern("display_error"), token);
-  //#ifdef DEBUG
-  //  tape_write_range(tape, tape_len(tape) - num_ins, tape_len(tape), stdout);
-  //  fflush(stdout);
-  //#endif
   do {
 #ifdef DEBUG
     ins_to_str(t_current_ins(t), stdout);

@@ -87,16 +87,12 @@ void strcrepl(char *src, char from, char to) {
 
 char *find_str(char *haystack, size_t haystack_len, const char *needle,
                size_t needle_len) {
-  //  DEBUGF("haystack='%*s'(%d), needle='%*s'(%d)", haystack_len, haystack,
-  //      haystack_len, needle_len, needle, needle_len);
   int i, j;
   for (i = 0; i <= (haystack_len - needle_len); ++i) {
     for (j = 0; j < needle_len; ++j) {
-      //      DEBUGF("i=%d, j=%d", i, j);
       if (haystack[i + j] != needle[j]) {
         break;
       } else if (j == (needle_len - 1)) {
-        //        DEBUGF("found at i=%d", i);
         return haystack + i;
       }
     }
@@ -130,6 +126,16 @@ uint32_t string_hasher(const void *ptr) {
   return hval;
 }
 
+uint32_t string_hasher_len(const char *ptr, size_t len) {
+  int i;
+  uint32_t hval = FNV_1A_32_OFFSET;
+  for (i = 0; i < len; ++i) {
+    hval *= FNV_32_PRIME;
+    hval ^= (uint32_t)ptr[i];
+  }
+  return hval;
+}
+
 int32_t string_comparator(const void *ptr1, const void *ptr2) {
   if (ptr1 == ptr2) {
     return 0;
@@ -153,42 +159,6 @@ int32_t string_comparator(const void *ptr1, const void *ptr2) {
   }
   return strncmp((char *)lhs, (char *)rhs, sizeof(uint32_t));
 }
-
-// int getline(char **lineptr, size_t *n, FILE *stream) {
-//  static char line[256];
-//  char *ptr;
-//  unsigned int len;
-//
-//  if (lineptr == NULL || n == NULL) {
-//    errno = EINVAL;
-//    return -1;
-//  }
-//
-//  if (ferror(stream))
-//    return -1;
-//
-//  if (feof(stream))
-//    return -1;
-//
-//  fgets(line, 256, stream);
-//
-//  ptr = strchr(line, '\n');
-//  if (ptr)
-//    *ptr = '\0';
-//
-//  len = strlen(line);
-//
-//  if ((len + 1) < 256) {
-//    ptr = realloc(*lineptr, 256);
-//    if (ptr == NULL)
-//      return (-1);
-//    *lineptr = ptr;
-//    *n = 256;
-//  }
-//
-//  strcpy(*lineptr, line);
-//  return (len);
-//}
 
 ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
   char *bufptr = NULL;

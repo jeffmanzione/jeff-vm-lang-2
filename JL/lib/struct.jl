@@ -1,5 +1,6 @@
 module struct
 
+import builtin
 import sync
 
 class Map {
@@ -10,7 +11,7 @@ class Map {
     self.keys = []
   }
   def hash__(k) {
-    hval = hash(k)
+    hval = builtin.hash(k)
     pos = hval % self.sz
     if pos < 0 pos = -pos
     return pos
@@ -78,8 +79,8 @@ class Cache {
   }
   def get(k, factory, args, default) {
     self.mutex.acquire()
-    if k in self.map {
-      v = self.map[k]
+    v = self.map[k]
+    if v {
       self.mutex.release()
       return v
     }
