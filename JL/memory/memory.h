@@ -28,8 +28,13 @@
 #endif
 #define ALLOC(type) ALLOC_ARRAY(type, 1)
 #define ALLOC2(type) ALLOC_ARRAY2(type, 1)
+
+#ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
 
 void alloc_init();
 void alloc_set_verbose(bool);

@@ -569,9 +569,15 @@ ImplSyntax(function_definition,
            And(Type(DEF), identifier, Type(LPAREN), Opt(function_argument_list),
                TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
 
-//// field_statement
-////    field function_argument_lsit
-//ImplSyntax(field_statement, And(TypeLn(FIELD), function_argument_list));
+// function_definition
+//    method identifier ( argument_list ) statement
+ImplSyntax(method_definition,
+           And(Type(METHOD), identifier, Type(LPAREN), Opt(function_argument_list),
+               TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
+
+// field_statement
+//    field function_argument_lsit
+ImplSyntax(field_statement, And(TypeLn(FIELD), function_argument_list));
 
 // class_new_statement
 //    def new ( argument_list ) statement
@@ -585,7 +591,8 @@ ImplSyntax(class_new_statement,
 //    field_statement
 ImplSyntax(class_statement,
            Ln(Or(class_new_statement,
-//                 field_statement,
+                 field_statement,
+                 method_definition,
                  function_definition)));
 
 // class_statement_list

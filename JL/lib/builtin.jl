@@ -148,16 +148,16 @@ class ExternalMethod {
 }
 
 class MethodInstance {
-  def new(obj, method) {
+  def new(obj, meth) {
     self.obj = obj
-    self.method = method
+    self.$method = meth
   }
   def call(args) {
-    self.method.call(self.obj, args)
+    self.$method.call(self.obj, args)
   }
   def to_s() {
     $module.concat('MethodInstance(obj=', self.obj,
-           ',method=', self.method, ')')
+           ',$method=', self.$method, ')')
   }
 }
 

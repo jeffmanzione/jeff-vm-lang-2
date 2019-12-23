@@ -457,12 +457,10 @@ int codegen_function_arguments_list(SyntaxTree *tree, Tape *tape, Q *args) {
 }
 
 int codegen_class(SyntaxTree *tree, Tape *tape) {
-  // DEBUGF("codegen_class");
   int num_lines = 0;
   SyntaxTree *class_inner = tree->second;
   SyntaxTree *class_body = class_inner->second;
   Token *class_name = class_inner->first->token;
-  //  DEBUGF("CLASS: %s", class_name->text);
   if (is_leaf(class_body->first)) {
     num_lines += tape->class(tape, class_name);
   } else {
@@ -476,12 +474,10 @@ int codegen_class(SyntaxTree *tree, Tape *tape) {
       SyntaxTree *parent_class = parent_class_iter->first;
       if (is_leaf(parent_class)) {
         queue_add(&parents, parent_class->token->text);
-        //        DEBUGF("PARENT_CLASS: %s", parent_class->token->text);
       }
       parent_class_iter = parent_class_iter->second->second;
     }
     queue_add(&parents, parent_class_iter->token->text);
-    //    DEBUGF("PARENT_CLASS LAST: %s", parent_class_iter->token->text);
     num_lines += tape->class_with_parents(tape, class_name, &parents);
     queue_shallow_delete(&parents);
   }
@@ -659,6 +655,10 @@ int codegen_new(SyntaxTree *tree, Tape *tape) {
   num_lines += lines_for_func;
 
   return num_lines;
+}
+
+int codegen_field_statement(SyntaxTree *tree, Tape *tape) {
+  return 0;
 }
 
 int codegen_postfix1(SyntaxTree *tree, Tape *tape) {
@@ -1092,8 +1092,10 @@ int codegen(SyntaxTree *tree, Tape *tape) {
     num_lines += codegen_for(tree->second, tree->first->token, tape);
   } else if (prod == foreach_statement) {
     num_lines += codegen_foreach(tree->second, tree->first->token, tape);
-  } else if (prod == function_definition) {
+  } else if (prod == function_definition || prod == method_definition) {
     num_lines += codegen_function(tree, tape);
+  } else if (prod == field_statement) {
+    num_lines += codegen_field_statement(tree, tape);
   } else if (prod == class_new_statement) {
     num_lines += codegen_new(tree, tape);
   } else if (prod == anon_function) {

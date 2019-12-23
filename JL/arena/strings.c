@@ -141,7 +141,7 @@ void strings_insert_constants() {
   LENGTH_KEY = strings_intern("len");
   METHODS_KEY = strings_intern("$methods");
   METHOD_INSTANCE_NAME = strings_intern("MethodInstance");
-  METHOD_KEY = strings_intern("method");
+  METHOD_KEY = strings_intern("$method");
   METHOD_NAME = strings_intern("Method");
   MODULES = strings_intern("$modules");
   MODULE_FIELD = strings_intern("$module");

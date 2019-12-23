@@ -32,7 +32,7 @@ class StackLine {
     tos = ''
     if self.caller {
       if self.caller is MethodInstance {
-        tos.extend(self.caller.method.method_path())
+        tos.extend(self.caller.$method.method_path())
       } else if self.caller is Method {
         tos.extend(self.caller.method_path())
       } else {

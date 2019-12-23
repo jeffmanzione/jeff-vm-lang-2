@@ -16,7 +16,7 @@
 #include "../shared.h"
 
 char *keyword_to_type[] = {
-    "if",    "then",   "else",     "def",    "new", "field", "class", "while",
+    "if",    "then",   "else",     "def",    "new", "field", "method", "class", "while",
     "for",   "break",  "continue", "return", "as",  "is",    "try",   "catch",
     "raise", "import", "module",   "exit",   "in",  "notin", "const"};
 
@@ -71,7 +71,6 @@ void file_info_close_file(FileInfo *fi) {
 void file_info_delete(FileInfo *fi) {
   ASSERT_NOT_NULL(fi);
   ASSERT_NOT_NULL(fi->lines);
-  ASSERT_NOT_NULL(fi->fp);
   int i;
   for (i = 0; i < fi->num_lines; i++) {
     line_info_delete(fi->lines[i]);

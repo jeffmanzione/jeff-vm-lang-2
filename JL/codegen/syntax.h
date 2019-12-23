@@ -64,6 +64,7 @@ DefineSyntax(jump_statement);
 DefineSyntax(function_argument_list);
 DefineSyntax(function_argument_list1);
 DefineSyntax(function_definition);
+DefineSyntax(method_definition);
 DefineSyntax(field_statement);
 DefineSyntax(class_definition);
 DefineSyntax(class_statement);

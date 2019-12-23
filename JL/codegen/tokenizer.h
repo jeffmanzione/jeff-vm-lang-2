@@ -85,6 +85,7 @@ typedef enum {
   DEF,
   NEW,
   FIELD,
+  METHOD,
   CLASS,
   WHILE,
   FOR,
