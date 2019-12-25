@@ -186,7 +186,7 @@ Module *load_fn_jl(const char fn[], const ArgStore *store) {
     fclose(file);
   }
 
-  expression_tree_delete(&tree);
+  syntax_tree_delete(&tree);
   module = module_create_tape(fi, tape);
   return module;
 }

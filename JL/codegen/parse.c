@@ -106,7 +106,7 @@ SyntaxTree parse_file(FileInfo *src) {
   if (DBG) {
     DEBUGF("%d", m.matched);
     if (m.matched) {
-      expression_tree_to_str(&m, &parser, stdout);
+      syntax_tree_to_str(&m, &parser, stdout);
       fprintf(stdout, "\n");
       fflush(stdout);
     }

@@ -25,8 +25,8 @@ struct SyntaxTree_ {
   ParseExpression expression;
 };
 
-void expression_tree_delete(SyntaxTree *exp);
-void expression_tree_to_str(SyntaxTree *exp, Parser *parser, FILE *file);
+void syntax_tree_delete(SyntaxTree *exp);
+void syntax_tree_to_str(SyntaxTree *exp, Parser *parser, FILE *file);
 
 #define DefineSyntax(name) SyntaxTree name(Parser *parser)
 

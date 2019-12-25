@@ -407,7 +407,7 @@ int codegen_function_args(SyntaxTree *tree, int argument_index, Tape *tape,
            tape->ins_no_arg(tape, RES, tree->second->token);
   }
   if (prod != function_argument_list1) {
-    expression_tree_to_str(tree, NULL, stdout);
+    syntax_tree_to_str(tree, NULL, stdout);
     ERROR("Not a function_argument_list1");
   }
 
@@ -1026,7 +1026,7 @@ int codegen(SyntaxTree *tree, Tape *tape) {
     if (is_leaf(tree->first) && tree->first->token->type == LPAREN) {
       num_lines += codegen(tree->second->first, tape);
     } else {
-      expression_tree_to_str(tree, NULL, stdout);
+      syntax_tree_to_str(tree, NULL, stdout);
       ERROR("Unknown primary_expression");
     }
   } else if (prod == in_expression) {
@@ -1139,7 +1139,7 @@ int codegen(SyntaxTree *tree, Tape *tape) {
   } else if (prod == range_expression) {
     num_lines += codegen_range(tree, tape);
   } else {
-    expression_tree_to_str(tree, NULL, stdout);
+    syntax_tree_to_str(tree, NULL, stdout);
     ERROR("Unknown");
   }
   return num_lines;

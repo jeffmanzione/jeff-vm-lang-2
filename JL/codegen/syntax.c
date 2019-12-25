@@ -49,17 +49,17 @@ void exp_to_str_helper(SyntaxTree *exp, Parser *parser, FILE *file,
   fflush(file);
 }
 
-void expression_tree_to_str(SyntaxTree *exp, Parser *parser, FILE *file) {
+void syntax_tree_to_str(SyntaxTree *exp, Parser *parser, FILE *file) {
   exp_to_str_helper(exp, parser, file, 0);
 }
 
-void expression_tree_delete(SyntaxTree *exp) {
+void syntax_tree_delete(SyntaxTree *exp) {
   if (exp->first != NULL) {
-    expression_tree_delete(exp->first);
+    syntax_tree_delete(exp->first);
     DEALLOC(exp->first);
   }
   if (exp->second != NULL) {
-    expression_tree_delete(exp->second);
+    syntax_tree_delete(exp->second);
     DEALLOC(exp->second);
   }
 }
@@ -139,11 +139,11 @@ SyntaxTree match_merge(Parser *parser, SyntaxTree parent, SyntaxTree child) {
   }
 
   if (is_newline(child)) {
-    expression_tree_delete(&child);
+    syntax_tree_delete(&child);
     return parent;
   }
   if (is_newline(parent)) {
-    expression_tree_delete(&parent);
+    syntax_tree_delete(&parent);
     return child;
   }
 

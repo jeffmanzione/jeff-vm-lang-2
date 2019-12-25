@@ -36,7 +36,7 @@ int interpret_from_file_statement(Parser *p, VM *vm, Thread *th, Element m,
 
   // # actually executed. May include catch body.
   num_ins = fn(vm, th, m, t, num_ins);
-  expression_tree_delete(&st);
+  syntax_tree_delete(&st);
   return num_ins;
 }
 
