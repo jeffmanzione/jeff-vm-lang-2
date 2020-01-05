@@ -44,7 +44,7 @@ class ThreadPoolExecutor {
     for i=0, i<num_threads, i=i+1 {
       self.threads.append(Thread(self.execute_task, None))
     }
-    for _,t in self.threads {
+    for (_,t) in self.threads {
       t.start()
     }
   }
@@ -100,7 +100,7 @@ class Future {
     self.result = self.fn(self.args)
     self.listeners_mutex.acquire()
     self.has_result = True
-    for _,f in self.listeners {
+    for (_,f) in self.listeners {
       f.args = self.result
       self.ex.execute_future(f)
     }

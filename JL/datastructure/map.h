@@ -57,10 +57,12 @@ void map_delete(Map *);
 
 bool map_insert(Map *, const void *key, const void *value);
 Pair map_remove(Map *, const void *key);
+
 DEB_FN(void *, map_lookup, const Map *map, const void *key);
 #define map_lookup(...) CALL_FN(map_lookup__, __VA_ARGS__)
 
-void map_iterate(const Map *, PairAction);
+DEB_FN(void, map_iterate, const Map *, PairAction);
+#define map_iterate(...) CALL_FN(map_iterate__, __VA_ARGS__)
 
 uint32_t map_size(const Map *);
 

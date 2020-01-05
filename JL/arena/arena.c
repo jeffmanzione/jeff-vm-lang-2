@@ -49,7 +49,7 @@ void arenas_finalize() {
   ARENA_FINALIZE(Token);
 }
 
-Subarena *subarena_create(Subarena *prev, size_t sz) {
+Subarena* subarena_create(Subarena *prev, size_t sz) {
   Subarena *sa = ALLOC2(Subarena);
   sa->block_sz = sz * DEFAULT_ELTS_IN_CHUNK;
   sa->block = malloc(sa->block_sz);
@@ -66,10 +66,11 @@ void subarena_delete(Subarena *sa) {
   DEALLOC(sa);
 }
 
-void arena_init(Arena *arena, size_t sz) {
+void arena_init(Arena *arena, size_t sz, const char name[]) {
   ASSERT_NOT_NULL(arena);
-  descriptor_sz = ((int)ceil(((float)sizeof(Descriptor)) / 4)) * 4;
+  descriptor_sz = ((int) ceil(((float) sizeof(Descriptor)) / 4)) * 4;
   //  printf("descripto_sz=%d\n", descriptor_sz);fflush(stdout);
+  arena->name = name;
   arena->mutex = mutex_create(NULL);
   arena->alloc_sz = sz + descriptor_sz;
   arena->last = subarena_create(NULL, arena->alloc_sz);
@@ -87,12 +88,12 @@ void arena_finalize(Arena *arena) {
   subarena_delete(arena->last);
   mutex_close(arena->mutex);
 #ifdef DEBUG
-  DEBUGF("Arena had %d requests, %d removals.", arena->requests,
+  DEBUGF("Arena(%s) had %d requests, %d removals.", arena->name, arena->requests,
          arena->removes);
 #endif
 }
 
-void *arena_alloc(Arena *arena) {
+void* arena_alloc(Arena *arena) {
   ASSERT_NOT_NULL(arena);
   mutex_await(arena->mutex, INFINITE);
 #ifdef DEBUG
@@ -101,7 +102,7 @@ void *arena_alloc(Arena *arena) {
   // Use up space that was already freed.
   if (NULL != arena->last_freed) {
     void *free_spot = arena->last_freed;
-    arena->last_freed = ((Descriptor *)free_spot)->prev_freed;
+    arena->last_freed = ((Descriptor*) free_spot)->prev_freed;
     mutex_release(arena->mutex);
     return free_spot + descriptor_sz;
   }
@@ -125,8 +126,8 @@ void arena_dealloc(Arena *arena, void *ptr) {
 #ifdef DEBUG
   arena->removes++;
 #endif
-  Descriptor *d = (Descriptor *)(ptr - descriptor_sz);
+  Descriptor *d = (Descriptor*) (ptr - descriptor_sz);
   d->prev_freed = arena->last_freed;
-  arena->last_freed = (void *)d;
+  arena->last_freed = (void*) d;
   mutex_release(arena->mutex);
 }

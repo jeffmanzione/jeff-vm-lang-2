@@ -798,7 +798,6 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
       res = operator_mod(vm, t, ins, lhs, rhs);
       break;
     case EQ:
-      //    DEBUGF("lhs.type=%d, rhs.type=%d", lhs.type, rhs.type);
       if (lhs.type == VALUE && rhs.type == VALUE) {
         res = operator_eq(vm, t, ins, lhs, rhs);
         break;
@@ -806,7 +805,6 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
       execute_object_operation(vm, t, lhs, rhs, EQ_FN_NAME);
       return true;
     case NEQ:
-      //    DEBUGF("lhs.type=%d, rhs.type=%d", lhs.type, rhs.type);
       if (lhs.type == VALUE && rhs.type == VALUE) {
         res = operator_neq(vm, t, ins, lhs, rhs);
         break;
@@ -837,26 +835,21 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
                         operator_and(vm, t, ins, element_not(vm, lhs), rhs));
       break;
     case IS:
-      DEBUGF("Here1");
       if (!ISCLASS(rhs)) {
         vm_throw_error(vm, t, ins,
                        "Cannot perform type-check against a non-object type.");
         return true;
       }
-      DEBUGF("Here2");
       if (lhs.type != OBJECT) {
         res = element_false(vm);
         break;
       }
-      DEBUGF("Here3");
       class = obj_lookup(lhs.obj, CKey_class);
-      DEBUGF("Here4");
       if (inherits_from(class, rhs)) {
         res = element_true(vm);
       } else {
         res = element_false(vm);
       }
-      DEBUGF("Here5");
       break;
     default:
       DEBUGF("Weird op=%d", ins.op);

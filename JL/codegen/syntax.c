@@ -20,15 +20,15 @@ void print_tabs(FILE *file, int num_tabs) {
   }
 }
 
-void exp_to_str_helper(SyntaxTree *exp, Parser *parser, FILE *file,
+void syntax_to_str_helper(SyntaxTree *exp, Parser *parser, FILE *file,
                        int num_tabs) {
   print_tabs(file, num_tabs);
-  if (NULL != exp->expression && parser != NULL) {
+  if (NULL != exp->expression) {
     fprintf(file, "[%s] ",
-            (char *)map_lookup(parser->exp_names, exp->expression));
+            (char *)map_lookup(&parse_expressions, exp->expression));
   }
   if (NULL == exp->token && NULL == exp->first) {
-    fprintf(file, "E");
+    fprintf(file, "Epsilon");
     return;
   } else if (NULL != exp->token) {
     fprintf(file, "'%s'",
@@ -38,10 +38,10 @@ void exp_to_str_helper(SyntaxTree *exp, Parser *parser, FILE *file,
     return;
   }
   fprintf(file, "{\n");
-  exp_to_str_helper(exp->first, parser, file, num_tabs + 1);
+  syntax_to_str_helper(exp->first, parser, file, num_tabs + 1);
   if (NULL != exp->second) {
     fprintf(file, ",\n");
-    exp_to_str_helper(exp->second, parser, file, num_tabs + 1);
+    syntax_to_str_helper(exp->second, parser, file, num_tabs + 1);
   }
   fprintf(file, "\n");
   print_tabs(file, num_tabs);
@@ -50,7 +50,7 @@ void exp_to_str_helper(SyntaxTree *exp, Parser *parser, FILE *file,
 }
 
 void syntax_tree_to_str(SyntaxTree *exp, Parser *parser, FILE *file) {
-  exp_to_str_helper(exp, parser, file, 0);
+  syntax_to_str_helper(exp, parser, file, 0);
 }
 
 void syntax_tree_delete(SyntaxTree *exp) {
@@ -249,6 +249,7 @@ SyntaxTree match_merge(Parser *parser, SyntaxTree parent, SyntaxTree child) {
 
 DefineSyntax(tuple_expression);
 ImplSyntax(identifier, Or(Type(WORD), Type(CLASS), Type(MODULE_T)));
+ImplSyntax(new_expression, Type(NEW));
 ImplSyntax(constant, Or(Type(INTEGER), Type(FLOATING)));
 ImplSyntax(string_literal, Type(STR));
 
@@ -264,31 +265,21 @@ ImplSyntax(array_declaration,
 //
 ImplSyntax(length_expression, And(Type(PIPE), tuple_expression, Type(PIPE)));
 
-ImplSyntax(anon_function,
-           And(TypeLn(AT), TypeLn(LPAREN), Opt(function_argument_list),
-                  TypeLn(RPAREN), Opt(TypeLn(CONST_T)), Ln(statement)));
-
 // primary_expression
 //     identifier
 //     constant
 //     string_literal
 //     array_declaration
-//     anon_function
+//     anon_function_definition
 //     ( expression )
 ImplSyntax(primary_expression,
            Or(identifier,
-              TypeLn(NEW),
+              new_expression,
               constant,
               string_literal,
               array_declaration,
               length_expression,
-              anon_function,
-              And(Type(LPAREN), tuple_expression, Type(RPAREN))));
-
-ImplSyntax(primary_expression_no_constants,
-           Or(identifier,
-              string_literal,
-              array_declaration,
+              anon_function_definition,
               And(Type(LPAREN), tuple_expression, Type(RPAREN))));
 
 DefineSyntax(assignment_expression);
@@ -301,13 +292,13 @@ DefineSyntax(assignment_expression);
 //     postfix_expression . identifier
 //     postfix_expression ++
 //     postfix_expression --
-//     anon_function
+//     anon_function_definition
 ImplSyntax(
     postfix_expression1,
     Or(And(Type(LBRAC), tuple_expression, Type(RBRAC), postfix_expression1),
        And(Type(LPAREN), Type(RPAREN), postfix_expression1),
        And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1),
-       And(Type(PERIOD), postfix_expression),
+       And(Type(PERIOD), Or(identifier, new_expression), postfix_expression1),
        //       And(Type(INC), postfix_expression1),
        //       And(Type(DEC), postfix_expression1),
        Epsilon));
@@ -355,7 +346,6 @@ ImplSyntax(multiplicative_expression,
 //    additive_expression - multiplicative_expression
 ImplSyntax(additive_expression1,
            Or(And(Type(PLUS), additive_expression),
-
               And(Type(MINUS), additive_expression), Epsilon));
 ImplSyntax(additive_expression,
            And(multiplicative_expression, additive_expression1));
@@ -363,10 +353,68 @@ ImplSyntax(additive_expression,
 // in_expression
 //    additive_expression
 //    in_expression in additive_expression
-ImplSyntax(in_expression1, Or(And(Or(Type(IN), Type(NOTIN)),
-                                  additive_expression, in_expression1),
-                              Epsilon));
-ImplSyntax(in_expression, And(additive_expression, in_expression1));
+ImplSyntax(in_expression1,
+           Or(And(
+               Or(Type(IN), Type(NOTIN)),
+               additive_expression, in_expression1),
+              Epsilon));
+ImplSyntax(in_expression,
+           And(additive_expression, in_expression1));
+
+#ifdef NEW_PARSER
+// relational_expression
+//    in_expression
+//    relational_expression < in_expression
+//    relational_expression > in_expression
+//    relational_expression <= in_expression
+//    relational_expression >= in_expression
+ImplSyntax(relational_expression1,
+           Or(And(Type(LTHAN), relational_expression),
+              And(Type(GTHAN), relational_expression),
+              And(Type(LTHANEQ), relational_expression),
+              And(Type(GTHANEQ), relational_expression),
+              Epsilon));
+ImplSyntax(relational_expression,
+           And(in_expression, relational_expression1));
+
+// equality_expression
+//    relational_expression
+//    equality_expression == relational_expression
+//    equality_expression != relational_expression
+ImplSyntax(equality_expression1,
+           Or(And(Type(EQUIV), equality_expression),
+              And(Type(NEQUIV), equality_expression),
+              Epsilon));
+ImplSyntax(equality_expression,
+           And(relational_expression, equality_expression1));
+
+// and_expression
+//    equality_expression
+//    and_expression & equality_expression
+ImplSyntax(and_expression1,
+           Or(And(Type(AMPER), and_expression),
+              Epsilon));
+ImplSyntax(and_expression,
+           And(equality_expression, and_expression1));
+
+// xor_expression
+//    and_expression
+//    xor_expression ^ and_expression
+ImplSyntax(xor_expression1,
+           Or(And(Type(CARET), xor_expression),
+              Epsilon));
+ImplSyntax(xor_expression,
+           And(and_expression, xor_expression1));
+
+// or_expression
+//    xor_expression
+//    or_expression | xor_expression
+ImplSyntax(or_expression1,
+           Or(And(Type(PIPE), or_expression),
+              Epsilon));
+ImplSyntax(or_expression,
+           And(xor_expression, or_expression1));
+#else
 
 // relational_expression
 //    in_expression
@@ -397,28 +445,33 @@ ImplSyntax(equality_expression,
 //    equality_expression
 //    and_expression & equality_expression
 ImplSyntax(and_expression1,
-           Or(And(Type(AMPER), equality_expression, and_expression1), Epsilon));
+           Or(And(Type(AMPER), equality_expression, and_expression1),
+              Epsilon));
 ImplSyntax(and_expression, And(equality_expression, and_expression1));
 
 // xor_expression
 //    and_expression
 //    xor_expression ^ and_expression
 ImplSyntax(xor_expression1,
-           Or(And(Type(CARET), and_expression, xor_expression1), Epsilon));
+           Or(And(Type(CARET), and_expression, xor_expression1),
+              Epsilon));
 ImplSyntax(xor_expression, And(and_expression, xor_expression1));
 
 // or_expression
 //    xor_expression
 //    or_expression | xor_expression
 ImplSyntax(or_expression1,
-           Or(And(Type(PIPE), xor_expression, or_expression1), Epsilon));
+           Or(And(Type(PIPE), xor_expression, or_expression1),
+              Epsilon));
 ImplSyntax(or_expression, And(xor_expression, or_expression1));
 
+#endif
 // is_expression
 //    or_expression
 //    or_expression is identifier
 ImplSyntax(is_expression,
-           Or(And(or_expression, TypeLn(IS_T), or_expression), or_expression));
+           Or(And(or_expression, TypeLn(IS_T), or_expression),
+              or_expression));
 
 // conditional_expression
 //    or_expression
@@ -433,6 +486,87 @@ ImplSyntax(conditional_expression,
               And(TypeLn(IF_T), Ln(is_expression), Opt(TypeLn(THEN)),
                   conditional_expression),
               is_expression));
+
+#ifdef NEW_PARSER
+
+ImplSyntax(const_assignment_expression,
+    And(TypeLn(CONST_T), identifier));
+
+ImplSyntax(array_index_assignment,
+    And(TypeLn(LBRAC), tuple_expression, TypeLn(RBRAC)));
+
+ImplSyntax(function_call_args,
+    Or(And(TypeLn(LPAREN), TypeLn(RPAREN)),
+       And(TypeLn(LPAREN), tuple_expression, TypeLn(RPAREN))));
+
+ImplSyntax(field_extension,
+    Or(array_index_assignment,
+       function_call_args,
+       Epsilon));
+
+ImplSyntax(field_set_value,
+    And(Type(PERIOD), identifier));
+
+ImplSyntax(field_suffix,
+    Or(field_set_value,
+       array_index_assignment));
+
+DefineSyntax(field_expression1);
+
+ImplSyntax(field_next,
+    And(field_suffix, field_expression1));
+
+ImplSyntax(field_expression1,
+    Or(And(field_extension, field_next),
+       field_next,
+       Epsilon));
+
+ImplSyntax(primary_expression_no_constants,
+           Or(identifier,
+              array_declaration,
+              anon_function_definition
+//              And(Type(LPAREN), tuple_expression, Type(RPAREN))
+              ));
+
+ImplSyntax(field_expression,
+    And(primary_expression_no_constants, field_expression1));
+
+// assignment_lhs_single
+//    const x
+//    x.y.z
+ImplSyntax(assignment_lhs_single,
+    Or(const_assignment_expression,
+       field_expression));
+
+ImplSyntax(assignment_tuple_list1,
+   Or(And(And(TypeLn(COMMA), assignment_lhs), assignment_tuple_list1),
+      Epsilon));
+
+ImplSyntax(assignment_tuple_list,
+    And(assignment_lhs, assignment_tuple_list1));
+
+// assignment_tuple
+//    ( assignment_tuple_list )
+ImplSyntax(assignment_tuple,
+           And(TypeLn(LPAREN), assignment_tuple_list, TypeLn(RPAREN)));
+
+ImplSyntax(assignment_array,
+    And(TypeLn(LBRAC), assignment_tuple_list, TypeLn(RBRAC)));
+
+ImplSyntax(assignment_lhs,
+    Or(assignment_tuple,
+       assignment_array,
+       assignment_lhs_single
+        ));
+
+// assignment_expression
+//    conditional_expression
+//    assignment_tuple = assignment_expression
+//    unary_expression = assignment_expression
+ImplSyntax(assignment_expression,
+           Or(And(assignment_lhs, TypeLn(EQUALS), conditional_expression),
+              conditional_expression));
+#else
 
 // assignment_expression
 //    conditional_expression
@@ -450,6 +584,7 @@ ImplSyntax(assignment_expression,
 ImplSyntax(assignment_tuple,
            Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
               function_argument_list));
+#endif
 
 // expression
 //    assignment_expression
@@ -467,6 +602,14 @@ ImplSyntax(expression_statement, Ln(tuple_expression));
 DefineSyntax(statement);
 DefineSyntax(statement_list);
 
+#ifdef NEW_PARSER
+
+ImplSyntax(foreach_statement,
+           And(And(TypeLn(FOR),
+                 Or(And(TypeLn(LPAREN), And(assignment_lhs, TypeLn(IN), conditional_expression), TypeLn(RPAREN)),
+                     And(assignment_lhs, TypeLn(IN), conditional_expression))),
+               statement));
+#else
 ImplSyntax(foreach_statement,
            And(TypeLn(FOR),
                Or(And(TypeLn(LPAREN), Or(assignment_tuple, identifier),
@@ -474,6 +617,28 @@ ImplSyntax(foreach_statement,
                   And(Or(assignment_tuple, identifier), TypeLn(IN),
                       assignment_expression)),
                statement));
+#endif
+
+
+#ifdef NEW_PARSER
+
+ImplSyntax(
+    for_statement,
+    And(And(TypeLn(FOR),
+        Or(And(TypeLn(LPAREN),
+               And(assignment_expression, TypeLn(COMMA), conditional_expression,
+               TypeLn(COMMA), Ln(assignment_expression)),
+            TypeLn(RPAREN)),
+            And(assignment_expression, TypeLn(COMMA), conditional_expression,
+               TypeLn(COMMA), Ln(assignment_expression))
+           )),
+        statement));
+
+ImplSyntax(while_statement,
+           And(And(TypeLn(WHILE), Ln(conditional_expression)),
+               statement));
+
+#else
 
 ImplSyntax(
     for_statement,
@@ -488,6 +653,8 @@ ImplSyntax(
 
 ImplSyntax(while_statement,
            And(TypeLn(WHILE), Ln(tuple_expression), statement));
+
+#endif
 
 // iteration_statement
 //    while expression  statement
@@ -522,6 +689,23 @@ ImplSyntax(exit_statement, TypeLn(EXIT_T));
 //    raise expression
 ImplSyntax(raise_statement, And(TypeLn(RAISE), Ln(assignment_expression)));
 
+#ifdef NEW_PARSER
+
+ImplSyntax(catch_assign,
+    Or(And(TypeLn(LPAREN),
+        assignment_lhs, TypeLn(RPAREN)),
+       assignment_lhs));
+
+// try_statement
+//    try statement catch identifier statement
+//    try statement catch ( identifier ) statement
+ImplSyntax(try_statement,
+           Or(And(And(TypeLn(TRY), Ln(statement), And(TypeLn(CATCH), catch_assign)), Ln(statement)),
+              And(And(TypeLn(TRY), Ln(statement), And(TypeLn(CATCH), catch_assign)),
+                  Ln(statement))));
+
+#else
+
 // try_statement
 //    try statement catch identifier statement
 //    try statement catch ( identifier ) statement
@@ -531,13 +715,16 @@ ImplSyntax(try_statement,
               And(TypeLn(TRY), Ln(statement), TypeLn(CATCH), TypeLn(LPAREN),
                   TypeLn(WORD), TypeLn(RPAREN), Ln(statement))));
 
+#endif
+
 // jump_statement
 //    return \n
 //    return expression \n
 ImplSyntax(jump_statement,
            Or(And(Type(RETURN), TypeLn(LPAREN), tuple_expression,
                   TypeLn(RPAREN)),
-              And(Type(RETURN), tuple_expression), Type(RETURN)));
+              And(Type(RETURN), tuple_expression),
+              Type(RETURN)));
 
 // break_statement
 //    break \n
@@ -553,6 +740,107 @@ ImplSyntax(const_expression,
                   identifier),
                Opt(default_value_expression)));
 
+#ifdef NEW_PARSER
+
+ImplSyntax(function_arg_default_value,
+           And(TypeLn(EQUALS), conditional_expression));
+
+ImplSyntax(function_arg_elt_with_default,
+           And(identifier, function_arg_default_value));
+
+ImplSyntax(function_arg_elt,
+           Or(function_arg_elt_with_default,
+              identifier));
+
+ImplSyntax(const_function_argument,
+    And(TypeLn(CONST_T), function_arg_elt));
+
+ImplSyntax(function_argument,
+           Or(const_function_argument,
+              function_arg_elt));
+
+ImplSyntax(function_argument_list1,
+           Or(And(And(TypeLn(COMMA), function_argument), function_argument_list1),
+              Epsilon));
+
+ImplSyntax(function_argument_list,
+           And(function_argument, function_argument_list1));
+
+ImplSyntax(function_arguments_present,
+           And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)));
+
+ImplSyntax(function_arguments_no_args,
+           And(TypeLn(LPAREN), TypeLn(RPAREN)));
+
+ImplSyntax(function_arguments,
+           Or(function_arguments_present,
+               function_arguments_no_args));
+
+ImplSyntax(def_identifier,
+           And(Type(DEF), identifier));
+
+ImplSyntax(function_signature_nonconst,
+           And(def_identifier, function_arguments));
+
+ImplSyntax(function_signature_const,
+           And(function_signature_nonconst, TypeLn(CONST_T)));
+
+ImplSyntax(function_signature,
+           Or(function_signature_const,
+              function_signature_nonconst));
+
+ImplSyntax(function_definition,
+           And(function_signature,
+               statement));
+
+ImplSyntax(new_identifier,
+           And(Type(DEF), new_expression));
+
+ImplSyntax(new_signature_nonconst,
+           And(new_identifier, function_arguments));
+
+ImplSyntax(new_signature_const,
+           And(new_signature_nonconst, TypeLn(CONST_T)));
+
+ImplSyntax(new_signature,
+           Or(new_signature_const,
+              new_signature_nonconst));
+
+ImplSyntax(new_definition,
+           And(new_signature,
+               statement));
+
+ImplSyntax(anon_identifier,
+           TypeLn(AT));
+
+ImplSyntax(anon_signature_nonconst,
+           And(anon_identifier, function_arguments));
+
+ImplSyntax(anon_signature_const,
+           And(anon_signature_nonconst, TypeLn(CONST_T)));
+
+ImplSyntax(anon_signature,
+           Or(anon_signature_const,
+              anon_signature_nonconst));
+
+ImplSyntax(anon_function_definition,
+           And(anon_signature,
+               statement));
+
+#else
+
+// function_definition
+//    def identifier ( argument_list ) statement
+ImplSyntax(function_definition,
+           And(Type(DEF), identifier, Type(LPAREN), Opt(function_argument_list),
+               TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
+
+// new_definition
+//    def new ( argument_list ) statement
+ImplSyntax(new_definition,
+           And(Type(DEF), Type(NEW), Type(LPAREN), Opt(function_argument_list),
+               TypeLn(RPAREN), statement));
+
 // function_argument_list
 //    identifier | function_argument_list , identifier
 ImplSyntax(function_argument_list1,
@@ -563,11 +851,7 @@ ImplSyntax(function_argument_list,
                   const_expression),
                function_argument_list1));
 
-// function_definition
-//    def identifier ( argument_list ) statement
-ImplSyntax(function_definition,
-           And(Type(DEF), identifier, Type(LPAREN), Opt(function_argument_list),
-               TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
+#endif
 
 // function_definition
 //    method identifier ( argument_list ) statement
@@ -575,31 +859,27 @@ ImplSyntax(method_definition,
            And(Type(METHOD), identifier, Type(LPAREN), Opt(function_argument_list),
                TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
 
+
 // field_statement
 //    field function_argument_lsit
 ImplSyntax(field_statement, And(TypeLn(FIELD), function_argument_list));
 
-// class_new_statement
-//    def new ( argument_list ) statement
-ImplSyntax(class_new_statement,
-           And(Type(DEF), Type(NEW), Type(LPAREN), Opt(function_argument_list),
-               TypeLn(RPAREN), statement));
-
 // class_statement
-//    class_new_statement
+//    new_definition
 //    function_definition
 //    field_statement
 ImplSyntax(class_statement,
-           Ln(Or(class_new_statement,
+           Ln(Or(new_definition,
                  field_statement,
-                 method_definition,
+//                 method_definition,
                  function_definition)));
 
 // class_statement_list
 //    class_statement
 //    class_statement class_statement_list
 ImplSyntax(class_statement_list1,
-           Or(And(Ln(class_statement), class_statement_list1), Epsilon));
+           Or(And(Ln(class_statement), class_statement_list1),
+              Epsilon));
 ImplSyntax(class_statement_list,
            And(Ln(class_statement), class_statement_list1));
 
@@ -607,12 +887,34 @@ ImplSyntax(class_statement_list,
 //    identifier
 //    identifier , paret_class_list
 ImplSyntax(parent_class_list1,
-           Or(And(TypeLn(COMMA), Ln(identifier), parent_class_list1), Epsilon));
+           Or(And(And(TypeLn(COMMA), Ln(identifier)), parent_class_list1),
+              Epsilon));
 ImplSyntax(parent_class_list, And(Ln(identifier), parent_class_list1));
 
 // parent_classes
 //    : parent_class_list
-ImplSyntax(parent_classes, And(TypeLn(COLON), parent_class_list));
+ImplSyntax(parent_classes,
+           And(TypeLn(COLON), parent_class_list));
+
+
+#ifdef NEW_PARSER
+
+ImplSyntax(class_compound_statement,
+    Or(And(TypeLn(LBRCE), TypeLn(RBRCE)),
+       And(TypeLn(LBRCE), Ln(class_statement_list), TypeLn(RBRCE))));
+
+ImplSyntax(class_name_and_inheritance,
+    And(Ln(identifier), Opt(parent_classes)));
+
+// class_definition
+//    class identifier statement
+//    class identifier parent_classes statement
+ImplSyntax(class_definition,
+           And(And(Type(CLASS), class_name_and_inheritance),
+               Or(class_compound_statement,
+                  Ln(class_statement))));
+
+#else
 
 // class_definition
 //    class identifier statement
@@ -621,6 +923,8 @@ ImplSyntax(class_definition,
            And(Type(CLASS), Ln(identifier), Opt(parent_classes),
                Or(And(TypeLn(LBRCE), Ln(class_statement_list), TypeLn(RBRCE)),
                   Ln(class_statement))));
+
+#endif
 
 // import_statement
 //    import identifier

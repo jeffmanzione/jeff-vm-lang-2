@@ -554,8 +554,8 @@ int codegen_function_helper(SyntaxTree *arg_begin, const Token *token,
   return lines_for_func;
 }
 
-int codegen_anon_function(SyntaxTree *tree, Tape *tape) {
-  // DEBUGF("codegen_anon_function");
+int codegen_anon_function_definition(SyntaxTree *tree, Tape *tape) {
+  // DEBUGF("codegen_anon_function_definition");
   Tape *tmp_tape = tape_create();
   Token *token = tree->first->token;
   int lines_for_func = 0;
@@ -1021,8 +1021,8 @@ int codegen(SyntaxTree *tree, Tape *tape) {
     }
     num_lines += codegen(tree->second->first, tape) +
                  tape->ins_text(tape, GET, LENGTH_KEY, tree->first->token);
-  } else if (prod == primary_expression ||
-             prod == primary_expression_no_constants) {
+  } else if (prod == primary_expression
+      ) {
     if (is_leaf(tree->first) && tree->first->token->type == LPAREN) {
       num_lines += codegen(tree->second->first, tape);
     } else {
@@ -1096,10 +1096,10 @@ int codegen(SyntaxTree *tree, Tape *tape) {
     num_lines += codegen_function(tree, tape);
   } else if (prod == field_statement) {
     num_lines += codegen_field_statement(tree, tape);
-  } else if (prod == class_new_statement) {
+  } else if (prod == new_definition) {
     num_lines += codegen_new(tree, tape);
-  } else if (prod == anon_function) {
-    num_lines += codegen_anon_function(tree, tape);
+  } else if (prod == anon_function_definition) {
+    num_lines += codegen_anon_function_definition(tree, tape);
   } else if (prod == postfix_expression) {
     num_lines += codegen(tree->first, tape) + codegen(tree->second, tape);
   } else if (prod == postfix_expression1) {

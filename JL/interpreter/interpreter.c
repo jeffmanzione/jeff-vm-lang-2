@@ -12,7 +12,7 @@
 
 #include "../arena/strings.h"
 #include "../class.h"
-#include "../codegen/codegen.h"
+#include "../codegen/expressions/expression.h"
 #include "../codegen/parse.h"
 #include "../codegen/syntax.h"
 #include "../codegen/tokenizer.h"
@@ -31,8 +31,9 @@ static Element global_main_module;
 int interpret_from_file_statement(Parser *p, VM *vm, Thread *th, Element m,
                                   Tape *t, InterpretFn fn) {
   SyntaxTree st = file_level_statement(p);
-
-  int num_ins = codegen(&st, t);
+  ExpressionTree *etree = populate_expression(&st);
+  int num_ins = produce_instructions(etree, t);
+  delete_expression(etree);
 
   // # actually executed. May include catch body.
   num_ins = fn(vm, th, m, t, num_ins);
@@ -40,7 +41,7 @@ int interpret_from_file_statement(Parser *p, VM *vm, Thread *th, Element m,
   return num_ins;
 }
 
-int label_fn(Tape *tape, Token *token) {
+int label_fn(Tape *tape, const Token *token) {
   int result = tape_label(tape, token);
   uint32_t fn_pos = (uint32_t)map_lookup(&tape->refs, token->text);
   Q *fn_args = (Q *)map_lookup(&tape->fn_args, (void *)fn_pos);
@@ -50,7 +51,7 @@ int label_fn(Tape *tape, Token *token) {
   return result;
 }
 
-int anon_label_fn(Tape *tape, Token *token) {
+int anon_label_fn(Tape *tape, const Token *token) {
   int result = tape_anon_label(tape, token);
   char *fn_name = anon_fn_for_token(token);
   uint32_t fn_pos = (uint32_t)map_lookup(&tape->refs, fn_name);
@@ -113,11 +114,11 @@ int interpret_from_file(FILE *f, const char filename[], VM *vm,
                              strings_intern("str")));
     t_shift_ip(thread, 1);
     do {
-#ifdef DEBUG
-      ins_to_str(t_current_ins(thread), stdout);
-      printf("\n");
-      fflush(stdout);
-#endif
+//#ifdef DEBUG
+//      ins_to_str(t_current_ins(thread), stdout);
+//      printf("\n");
+//      fflush(stdout);
+//#endif
       if (!execute(vm, thread)) {
         break;
       }
@@ -132,7 +133,7 @@ int interpret_from_file(FILE *f, const char filename[], VM *vm,
     fflush(stdout);
   }
   parser_finalize(&p);
-  module_delete(module);
+//  module_delete(module);
   return num_ins;
 }
 
@@ -152,11 +153,11 @@ int interpret_statement(VM *vm, Thread *t, Element m, Tape *tape, int num_ins) {
              tape->ins_text(tape, PUSH, strings_intern("error"), token) +
              tape->ins_text(tape, CALL, strings_intern("display_error"), token);
   do {
-#ifdef DEBUG
-    ins_to_str(t_current_ins(t), stdout);
-    printf("\n");
-    fflush(stdout);
-#endif
+//#ifdef DEBUG
+//    ins_to_str(t_current_ins(t), stdout);
+//    printf("\n");
+//    fflush(stdout);
+//#endif
     if (!execute(vm, t)) {
       break;
     }

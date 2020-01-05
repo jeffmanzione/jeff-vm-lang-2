@@ -22,13 +22,14 @@
 
 #define ARENA_DECLARE(typename) Arena ARENA__##typename
 
-#define ARENA_INIT(typename) arena_init(&ARENA__##typename, sizeof(typename))
+#define ARENA_INIT(typename) arena_init(&ARENA__##typename, sizeof(typename), #typename)
 #define ARENA_FINALIZE(typename) arena_finalize(&ARENA__##typename)
 #define ARENA_ALLOC(typename) (typename *)arena_alloc(&ARENA__##typename)
 #define ARENA_DEALLOC(typename, ptr) arena_dealloc(&ARENA__##typename, ptr)
 
 typedef struct Subarena_ Subarena;
 typedef struct {
+  const char *name;
   Subarena *last;
   size_t alloc_sz;
   void *next, *end;
@@ -44,7 +45,7 @@ ARENA_DEFINE(Node);
 ARENA_DEFINE(NodeEdge);
 ARENA_DEFINE(Token);
 
-void arena_init(Arena *arena, size_t sz);
+void arena_init(Arena *arena, size_t sz, const char name[]);
 void arena_finalize(Arena *arena);
 void *arena_alloc(Arena *arena);
 void arena_dealloc(Arena *arena, void *ptr);

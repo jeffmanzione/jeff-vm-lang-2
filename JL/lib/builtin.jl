@@ -190,7 +190,7 @@ class Tuple {
 class Array {
   def copy() {
     cpy = Array()
-    for i=0, i<|self|, i=i+1 {
+    for i=0, i<self.len, i=i+1 {
       cpy.append(self[i])
     }
     cpy
@@ -415,7 +415,7 @@ class String {
   }
   def copy() {
     cpy = ''
-    for i=0, i<|self|, i=i+1 {
+    for i=0, i<self.len, i=i+1 {
       cpy.append(self[i])
     }
     cpy

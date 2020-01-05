@@ -103,6 +103,8 @@ Ins noop_instruction();
 void ins_to_str(Ins, FILE *);
 Value token_to_val(Token *);
 
+bool value_equals(const Value *v1, const Value *v2);
+
 extern const char *instructions[];
 
 #endif /* PROGRAM_INSTRUCTION_H_ */

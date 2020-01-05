@@ -15,12 +15,22 @@
 #include "../error.h"
 #include "../shared.h"
 
+Map parse_expressions;
+
+void parsers_init() {
+  map_init_default(&parse_expressions);
+}
+
+void parsers_finalize() {
+  map_finalize(&parse_expressions);
+}
+
 void parser_init(Parser *parser, FileInfo *src) {
   ASSERT_NOT_NULL(parser);
   queue_init(&parser->queue);
   parser->fi = src;
   parser->line = 1;
-  parser->exp_names = map_create_default();
+  parser->exp_names = &parse_expressions;
 }
 
 bool parser_finalize(Parser *parser) {
@@ -60,7 +70,6 @@ bool parser_finalize(Parser *parser) {
     token_delete((Token *)ptr);
   }
   queue_deep_delete(&parser->queue, (Deleter)say_tokens);
-  map_delete(parser->exp_names);
 
   return has_error;
 }

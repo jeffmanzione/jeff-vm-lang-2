@@ -25,36 +25,39 @@ typedef struct {
 
 typedef struct _Tape Tape;
 
-typedef int (*TapeInsFn)(Tape *tape, Op op, Token *token);
+typedef int (*TapeInsFn)(Tape *tape, Op op, const Token *token);
 typedef int (*TapeInsTextFn)(Tape *tape, Op op, const char text[],
-                             Token *token);
-typedef int (*TapeInsIntFn)(Tape *tape, Op op, int val, Token *token);
-typedef int (*TapeLabelFn)(Tape *tape, Token *token);
-typedef int (*TapeLabelQFn)(Tape *tape, Token *token, Queue *tokens);
-typedef int (*TapeLabelArgsFn)(Tape *tape, Token *token, Q *args);
+                             const Token *token);
+typedef int (*TapeInsIntFn)(Tape *tape, Op op, int val, const Token *token);
+typedef int (*TapeLabelFn)(Tape *tape, const Token *token);
+typedef int (*TapeLabelTextFn)(Tape *tape, const char text[]);
+typedef int (*TapeLabelQFn)(Tape *tape, const Token *token, Queue *tokens);
+typedef int (*TapeLabelArgsFn)(Tape *tape, const Token *token, Q *args);
 
-int tape_ins(Tape *tape, Op op, Token *token);
-int tape_ins_text(Tape *tape, Op op, const char text[], Token *token);
-int tape_ins_int(Tape *tape, Op op, int val, Token *token);
-int tape_ins_no_arg(Tape *tape, Op op, Token *token);
-int tape_ins_anon(Tape *tape, Op op, Token *token);
-int tape_ins_neg(Tape *tape, Op op, Token *token);
+int tape_ins(Tape *tape, Op op, const Token *token);
+int tape_ins_text(Tape *tape, Op op, const char text[], const Token *token);
+int tape_ins_int(Tape *tape, Op op, int val, const Token *token);
+int tape_ins_no_arg(Tape *tape, Op op, const Token *token);
+int tape_ins_anon(Tape *tape, Op op, const Token *token);
+int tape_ins_neg(Tape *tape, Op op, const Token *token);
 
-int tape_label(Tape *tape, Token *token);
-int tape_anon_label(Tape *tape, Token *token);
-int tape_function_with_args(Tape *tape, Token *token, Q *args);
-int tape_anon_function_with_args(Tape *tape, Token *token, Q *args);
+int tape_label(Tape *tape, const Token *token);
+int tape_label_text(Tape *tape, const char text[]);
+int tape_anon_label(Tape *tape, const Token *token);
+int tape_function_with_args(Tape *tape, const Token *token, Q *args);
+int tape_anon_function_with_args(Tape *tape, const Token *token, Q *args);
 
-int tape_module(Tape *tape, Token *token);
-int tape_class(Tape *tape, Token *token);
-int tape_class_with_parents(Tape *tape, Token *token, Queue *tokens);
-int tape_endclass(Tape *tape, Token *token);
+int tape_module(Tape *tape, const Token *token);
+int tape_class(Tape *tape, const Token *token);
+int tape_class_with_parents(Tape *tape, const Token *token, Queue *tokens);
+int tape_endclass(Tape *tape, const Token *token);
 
 typedef struct {
   TapeInsFn ins, ins_no_arg, ins_neg, ins_anon;
   TapeInsTextFn ins_text;
   TapeInsIntFn ins_int;
   TapeLabelFn label, anon_label, module, class, endclass;
+  TapeLabelTextFn label_text;
   TapeLabelQFn class_with_parents;
   TapeLabelArgsFn function_with_args, anon_function_with_args;
 } TapeFns;
@@ -72,6 +75,7 @@ struct _Tape {
   TapeInsTextFn ins_text;
   TapeInsIntFn ins_int;
   TapeLabelFn label, anon_label, module, class, endclass;
+  TapeLabelTextFn label_text;
   TapeLabelQFn class_with_parents;
   TapeLabelArgsFn function_with_args, anon_function_with_args;
 };
@@ -83,7 +87,7 @@ Tape *tape_create();
 void tape_delete(Tape *tape);
 
 int tape_insc(Tape *tape, const InsContainer *insc);
-char *anon_fn_for_token(Token *token);
+char *anon_fn_for_token(const Token *token);
 
 InsContainer *tape_get_mutable(const Tape *tape, int i);
 const InsContainer *tape_get(const Tape *tape, int i);

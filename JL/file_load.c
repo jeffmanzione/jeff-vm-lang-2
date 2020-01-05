@@ -13,11 +13,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "arena/strings.h"
-#include "codegen/codegen.h"
+#include "codegen/expressions/expression_macros.h"
 #include "codegen/parse.h"
 #include "codegen/syntax.h"
 #include "codegen/tokenizer.h"
@@ -28,7 +26,7 @@
 #include "program/tape.h"
 #include "shared.h"
 
-char *guess_file_extension(const char dir[], const char file_prefix[]) {
+char* guess_file_extension(const char dir[], const char file_prefix[]) {
   size_t fn_len = strlen(dir) + strlen(file_prefix) + 3;
   if (!ends_with(dir, "/")) {
     fn_len++;
@@ -66,7 +64,7 @@ char *guess_file_extension(const char dir[], const char file_prefix[]) {
 
 void make_dir_if_does_not_exist(const char path[]) {
   ASSERT(NOT_NULL(path));
-  struct stat st = {0};
+  struct stat st = { 0 };
   if (stat(path, &st) == -1) {
 #ifdef _WIN32
     mkdir(path);
@@ -76,7 +74,7 @@ void make_dir_if_does_not_exist(const char path[]) {
   }
 }
 
-Module *load_fn_jb(const char fn[], const ArgStore *store) {
+Module* load_fn_jb(const char fn[], const ArgStore *store) {
   char *path, *file_name, *ext;
   split_path_file(fn, &path, &file_name, &ext);
 
@@ -86,12 +84,12 @@ Module *load_fn_jb(const char fn[], const ArgStore *store) {
   return module_create_tape(NULL, tape);
 }
 
-Module *load_fn_jm(const char fn[], const ArgStore *store) {
+Module* load_fn_jm(const char fn[], const ArgStore *store) {
   bool out_binary = argstore_lookup_bool(store, ArgKey__OUT_BINARY);
   bool should_optimize = argstore_lookup_bool(store, ArgKey__OPTIMIZE);
   bool out_unoptimized = argstore_lookup_bool(store, ArgKey__OUT_UNOPTIMIZED);
-  const char *uoout_dir =
-      argstore_lookup_string(store, ArgKey__UNOPTIMIZED_OUT_DIR);
+  const char *uoout_dir = argstore_lookup_string(store,
+      ArgKey__UNOPTIMIZED_OUT_DIR);
   const char *bout_dir = argstore_lookup_string(store, ArgKey__BIN_OUT_DIR);
 
   char *path, *file_name, *ext;
@@ -114,8 +112,8 @@ Module *load_fn_jm(const char fn[], const ArgStore *store) {
   }
   if (should_optimize) {
     if (out_unoptimized) {
-      FILE *file =
-          FILE_FN(combine_path_file(uoout_dir, file_name, ".jc"), "w+");
+      FILE *file = FILE_FN(combine_path_file(uoout_dir, file_name, ".jc"),
+          "w+");
       tape_write(tape, file);
       fclose(file);
     }
@@ -133,14 +131,14 @@ Module *load_fn_jm(const char fn[], const ArgStore *store) {
   return module;
 }
 
-Module *load_fn_jl(const char fn[], const ArgStore *store) {
+Module* load_fn_jl(const char fn[], const ArgStore *store) {
   bool should_optimize = argstore_lookup_bool(store, ArgKey__OPTIMIZE);
   bool out_machine = argstore_lookup_bool(store, ArgKey__OUT_MACHINE);
   bool out_binary = argstore_lookup_bool(store, ArgKey__OUT_BINARY);
   bool out_unoptimized = argstore_lookup_bool(store, ArgKey__OUT_UNOPTIMIZED);
   const char *mout_dir = argstore_lookup_string(store, ArgKey__MACHINE_OUT_DIR);
-  const char *uoout_dir =
-      argstore_lookup_string(store, ArgKey__UNOPTIMIZED_OUT_DIR);
+  const char *uoout_dir = argstore_lookup_string(store,
+      ArgKey__UNOPTIMIZED_OUT_DIR);
   const char *bout_dir = argstore_lookup_string(store, ArgKey__BIN_OUT_DIR);
 
   char *path, *file_name, *ext;
@@ -151,7 +149,9 @@ Module *load_fn_jl(const char fn[], const ArgStore *store) {
   SyntaxTree tree = parse_file(fi);
   Tape *tape = tape_create();
 
-  codegen_file(&tree, tape);
+  ExpressionTree *etree = populate_expression(&tree);
+  produce_instructions(etree, tape);
+  delete_expression(etree);
   file_info_close_file(fi);
 
   if (out_machine) {
@@ -163,11 +163,10 @@ Module *load_fn_jl(const char fn[], const ArgStore *store) {
   if (out_binary) {
     make_dir_if_does_not_exist(bout_dir);
   }
-
   if (should_optimize) {
     if (out_unoptimized) {
-      FILE *file =
-          FILE_FN(combine_path_file(uoout_dir, file_name, ".jc"), "w+");
+      FILE *file = FILE_FN(combine_path_file(uoout_dir, file_name, ".jc"),
+          "w+");
       tape_write(tape, file);
       fclose(file);
     }
@@ -191,7 +190,7 @@ Module *load_fn_jl(const char fn[], const ArgStore *store) {
   return module;
 }
 
-Module *load_fn(const char fn[], const ArgStore *store) {
+Module* load_fn(const char fn[], const ArgStore *store) {
   if (ends_with(fn, ".jb")) {
     return load_fn_jb(fn, store);
   } else if (ends_with(fn, ".jm")) {

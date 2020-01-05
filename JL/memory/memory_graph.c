@@ -332,7 +332,7 @@ const Node *node_for(const Element *e) {
   return (e->type == OBJECT) ? e->obj->node : NULL;
 }
 
-void memory_graph_set_field(MemoryGraph *graph, const Element parent,
+DEB_FN(void, memory_graph_set_field, MemoryGraph *graph, const Element parent,
                             const char field_name[], const Element field_val) {
   ASSERT_NOT_NULL(graph);
   ASSERT(OBJECT == parent.type);

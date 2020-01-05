@@ -230,7 +230,7 @@ void map_iterate_internal(const Map *map, EntryAction action) {
   }
 }
 
-void map_iterate(const Map *map, PairAction action) {
+DEB_FN(void, map_iterate, const Map *map, PairAction action) {
   ASSERT(NOT_NULL(map));
   void pair_action(MEntry * me) { action(&me->pair); }
   map_iterate_internal(map, pair_action);

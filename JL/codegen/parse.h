@@ -21,12 +21,17 @@
 #define parser_next(...) GET_PARSER(__VA_ARGS__, WITH_TARGET, NO_TARGET)(__VA_ARGS__)
 #define parser_next_skip_ln(...) GET_PARSER(__VA_ARGS__, SKIP_WITH_TARGET, SKIP_NO_TARGET)(__VA_ARGS__)
 
+extern Map parse_expressions;
+
 typedef struct Parser_ {
   Queue queue;
   FileInfo *fi;
   int line;
   Map *exp_names;
 } Parser;
+
+void parsers_init();
+void parsers_finalize();
 
 void parser_init(Parser *parser, FileInfo *src);
 bool parser_finalize(Parser *parser);
