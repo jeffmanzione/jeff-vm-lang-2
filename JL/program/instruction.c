@@ -15,12 +15,13 @@
 #include "../error.h"
 #include "../ltable/ltable.h"
 
-const char *instructions[] = { "nop", "exit", "res", "tget", "tlen", "set",
-    "push", "peek", "psrs", "not", "notc", "gt", "lt", "eq", "neq", "gte",
-    "lte", "and", "or", "xor", "if", "ifn", "jmp", "nblk", "bblk", "ret", "add",
-    "sub", "mult", "div", "mod", "inc", "dec", "sinc", "call", "tupl", "dup",
-    "goto", "prnt", "lmdl", "get", "gtsh", "fld", "is", "adr", "rais", "ctch",
-    "anew", "aidx", "aset", "cnst", "setc", "sget" };
+const char *instructions[] = {
+    "nop", "exit", "res",  "tget", "tlen", "set",  "push", "peek", "psrs",
+    "not", "notc", "gt",   "lt",   "eq",   "neq",  "gte",  "lte",  "and",
+    "or",  "xor",  "if",   "ifn",  "jmp",  "nblk", "bblk", "ret",  "add",
+    "sub", "mult", "div",  "mod",  "inc",  "dec",  "sinc", "call", "tupl",
+    "dup", "goto", "prnt", "lmdl", "get",  "gtsh", "fld",  "fldc", "is",
+    "adr", "rais", "ctch", "anew", "aidx", "aset", "cnst", "setc", "sget"};
 
 Op op_type(const char word[]) {
   int i;
@@ -90,14 +91,13 @@ Ins instruction_str(Op op, const char *str) {
 }
 
 Ins noop_instruction() {
-  Ins ins =
-      { .op = NOP, .param = NO_PARAM, .val = { .type = INT, .int_val = 0 } };
+  Ins ins = {.op = NOP, .param = NO_PARAM, .val = {.type = INT, .int_val = 0}};
   return ins;
 }
 
 void ins_to_str(Ins ins, FILE *file) {
   //  DEBUGF("A");
-  fprintf(file, "%s", instructions[(int) ins.op]);
+  fprintf(file, "%s", instructions[(int)ins.op]);
   fflush(stdout);
   if (ins.param == VAL_PARAM) {
     fprintf(file, " ");
@@ -122,16 +122,16 @@ Value token_to_val(Token *tok) {
   ASSERT_NOT_NULL(tok);
   Value val;
   switch (tok->type) {
-  case INTEGER:
-    val.type = INT;
-    val.int_val = (int64_t) strtoll(tok->text, NULL, 10);
-    break;
-  case FLOATING:
-    val.type = FLOAT;
-    val.float_val = strtod(tok->text, NULL);
-    break;
-  default:
-    ERROR("Attempted to create a Value from '%s'.", tok->text);
+    case INTEGER:
+      val.type = INT;
+      val.int_val = (int64_t)strtoll(tok->text, NULL, 10);
+      break;
+    case FLOATING:
+      val.type = FLOAT;
+      val.float_val = strtod(tok->text, NULL);
+      break;
+    default:
+      ERROR("Attempted to create a Value from '%s'.", tok->text);
   }
   return val;
 }
@@ -149,4 +149,3 @@ bool value_equals(const Value *v1, const Value *v2) {
     return v1->char_val == v2->char_val;
   }
 }
-

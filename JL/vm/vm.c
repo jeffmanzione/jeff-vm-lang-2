@@ -913,6 +913,21 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       memory_graph_set_field(vm->graph, resval, ins.str, new_res_val);
       t_set_resval(t, new_res_val);
       break;
+    case FLDC:
+      resval = t_get_resval(t);
+      ASSERT(resval.type == OBJECT);
+      if (resval.obj->is_const) {
+        vm_throw_error(vm, t, ins, "Cannot modify const Object.");
+        return true;
+      }
+      new_res_val = t_popstack(t, &has_error);
+      if (has_error) {
+        return true;
+      }
+      memory_graph_set_field(vm->graph, resval, ins.str, new_res_val);
+      make_const_ref(resval.obj, ins.str);
+      t_set_resval(t, new_res_val);
+      break;
     case PUSH:
       t_pushstack(t, vm_lookup(vm, t, ins.str));
       break;
@@ -931,7 +946,11 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       }
       break;
     case GTSH:
-      t_pushstack(t, vm_object_get(vm, t, ins.str, &has_error));
+      new_res_val = vm_object_get(vm, t, ins.str, &has_error);
+      if (!has_error) {
+        //        t_set_resval(t, new_res_val);
+        t_pushstack(t, new_res_val);
+      }
       break;
     case INC:
       new_res_val = vm_object_get(vm, t, ins.str, &has_error);

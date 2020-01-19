@@ -12,8 +12,8 @@
 #include "../../error.h"
 #include "../../program/tape.h"
 #include "../syntax.h"
-#include "expression_macros.h"
 #include "expression.h"
+#include "expression_macros.h"
 
 Assignment populate_assignment(const SyntaxTree *stree);
 
@@ -41,11 +41,12 @@ void populate_single_postfixes(const SyntaxTree *stree, Postfix *postfix) {
   }
 }
 
-void populate_single_complex(const SyntaxTree *stree, SingleAssignment *single) {
+void populate_single_complex(const SyntaxTree *stree,
+                             SingleAssignment *single) {
   single->type = SingleAssignment_complex;
   single->suffixes = expando(Postfix, DEFAULT_EXPANDO_SIZE);
   single->prefix_exp = populate_expression(stree->first);
-  SyntaxTree *cur = (SyntaxTree*) stree->second;
+  SyntaxTree *cur = (SyntaxTree *)stree->second;
   while (true) {
     Postfix postfix;
     if (IS_SYNTAX(cur, field_expression1) || IS_SYNTAX(cur, field_next)) {
@@ -61,7 +62,7 @@ void populate_single_complex(const SyntaxTree *stree, SingleAssignment *single) 
 }
 
 SingleAssignment populate_single(const SyntaxTree *stree) {
-  SingleAssignment single = { .is_const = false, .const_token = NULL };
+  SingleAssignment single = {.is_const = false, .const_token = NULL};
   if (IS_SYNTAX(stree, identifier)) {
     single.type = SingleAssignment_var;
     single.var = stree->token;
@@ -79,18 +80,18 @@ SingleAssignment populate_single(const SyntaxTree *stree) {
 }
 
 bool is_assignment_single(const SyntaxTree *stree) {
-  return IS_SYNTAX(stree, identifier)
-      || IS_SYNTAX(stree, const_assignment_expression)
-      || IS_SYNTAX(stree, field_expression);
+  return IS_SYNTAX(stree, identifier) ||
+         IS_SYNTAX(stree, const_assignment_expression) ||
+         IS_SYNTAX(stree, field_expression);
 }
 
 MultiAssignment populate_list(const SyntaxTree *stree, TokenType open,
-    TokenType close) {
-  MultiAssignment assignment = { .subargs = expando(Assignment,
-      DEFAULT_EXPANDO_SIZE) };
+                              TokenType close) {
+  MultiAssignment assignment = {.subargs =
+                                    expando(Assignment, DEFAULT_EXPANDO_SIZE)};
   ASSERT(IS_TOKEN(stree->first, open), !IS_LEAF(stree->second),
-      IS_TOKEN(stree->second->second, close));
-  SyntaxTree *list = (SyntaxTree*) stree->second->first;
+         IS_TOKEN(stree->second->second, close));
+  SyntaxTree *list = (SyntaxTree *)stree->second->first;
 
   if (IS_LEAF(list) || !IS_SYNTAX(list->second, assignment_tuple_list1)) {
     // Single element list.
@@ -142,8 +143,9 @@ ImplPopulate(assignment_expression, const SyntaxTree *stree) {
 }
 
 void delete_postfix(Postfix *postfix) {
-  if ((postfix->type == Postfix_fncall || postfix->type == Postfix_array_index)
-      && NULL != postfix->exp) {
+  if ((postfix->type == Postfix_fncall ||
+       postfix->type == Postfix_array_index) &&
+      NULL != postfix->exp) {
     delete_expression(postfix->exp);
   }
 }
@@ -153,13 +155,13 @@ void delete_assignment(Assignment *assignment) {
     SingleAssignment *single = &assignment->single;
     if (single->type == SingleAssignment_complex) {
       delete_expression(single->prefix_exp);
-      expando_iterate(single->suffixes, (EAction) delete_postfix);
+      expando_iterate(single->suffixes, (EAction)delete_postfix);
       expando_delete(single->suffixes);
     } else {
       // Is SingleAssignment_var, so do nothing.
     }
   } else {
-    expando_iterate(assignment->multi.subargs, (EAction) delete_assignment);
+    expando_iterate(assignment->multi.subargs, (EAction)delete_assignment);
     expando_delete(assignment->multi.subargs);
   }
 }
@@ -172,17 +174,17 @@ ImplDelete(assignment_expression) {
 int produce_assignment(Assignment *assign, Tape *tape, const Token *eq_token);
 
 int produce_assignment_multi(MultiAssignment *multi, Tape *tape,
-    const Token *eq_token) {
+                             const Token *eq_token) {
   int i, num_ins = 0, len = expando_len(multi->subargs);
 
   num_ins += tape->ins_no_arg(tape, PUSH, eq_token);
   for (i = 0; i < len; ++i) {
-    Assignment *assign = (Assignment*) expando_get(multi->subargs, i);
-    num_ins += tape->ins_no_arg(tape, (i < len - i) ? PEEK : RES, eq_token)
-        + tape->ins_int(tape, PUSH, i, eq_token)
-        + tape->ins_no_arg(tape, PUSH, eq_token)
-        + tape->ins_no_arg(tape, AIDX, eq_token)
-        + produce_assignment(assign, tape, eq_token);
+    Assignment *assign = (Assignment *)expando_get(multi->subargs, i);
+    num_ins += tape->ins_no_arg(tape, (i < len - i) ? PEEK : RES, eq_token) +
+               tape->ins_no_arg(tape, PUSH, eq_token) +
+               tape->ins_int(tape, RES, i, eq_token) +
+               tape->ins_no_arg(tape, AIDX, eq_token) +
+               produce_assignment(assign, tape, eq_token);
   }
   return num_ins;
 }
@@ -199,11 +201,11 @@ int produce_assignment(Assignment *assign, Tape *tape, const Token *eq_token) {
       }
     } else {
       ASSERT(single->type == SingleAssignment_complex,
-          single->prefix_exp != NULL);
-      num_ins += tape->ins_no_arg(tape, PUSH, eq_token)
-          + produce_instructions(single->prefix_exp, tape);
+             single->prefix_exp != NULL);
+      num_ins += tape->ins_no_arg(tape, PUSH, eq_token) +
+                 produce_instructions(single->prefix_exp, tape);
       int i, len = expando_len(single->suffixes);
-      Postfix *next = (Postfix*) expando_get(single->suffixes, 0);
+      Postfix *next = (Postfix *)expando_get(single->suffixes, 0);
       for (i = 0; i < len - 1; ++i) {
         if (NULL == next) {
           break;
@@ -211,19 +213,19 @@ int produce_assignment(Assignment *assign, Tape *tape, const Token *eq_token) {
         num_ins += produce_postfix(&i, len - 1, single->suffixes, &next, tape);
       }
       // Last one should be the set part.
-      Postfix *postfix = (Postfix*) expando_get(single->suffixes, len - 1);
+      Postfix *postfix = (Postfix *)expando_get(single->suffixes, len - 1);
       if (postfix->type == Postfix_field) {
         num_ins += tape->ins(tape, FLD, postfix->id);
       } else if (postfix->type == Postfix_array_index) {
-        num_ins += tape->ins_no_arg(tape, PUSH, postfix->token)
-            + produce_instructions(postfix->exp, tape)
-            + tape->ins_no_arg(tape, ASET, postfix->token);
+        num_ins += tape->ins_no_arg(tape, PUSH, postfix->token) +
+                   produce_instructions(postfix->exp, tape) +
+                   tape->ins_no_arg(tape, ASET, postfix->token);
       } else {
         ERROR("Unknown postfix.");
       }
     }
-  } else if (assign->type == Assignment_array
-      || assign->type == Assignment_tuple) {
+  } else if (assign->type == Assignment_array ||
+             assign->type == Assignment_tuple) {
     num_ins += produce_assignment_multi(&assign->multi, tape, eq_token);
   } else {
     ERROR("Unknown multi.");
@@ -232,9 +234,9 @@ int produce_assignment(Assignment *assign, Tape *tape, const Token *eq_token) {
 }
 
 ImplProduce(assignment_expression, Tape *tape) {
-  return produce_instructions(assignment_expression->rhs, tape)
-      + produce_assignment(&assignment_expression->assignment, tape,
-          assignment_expression->eq_token);
+  return produce_instructions(assignment_expression->rhs, tape) +
+         produce_assignment(&assignment_expression->assignment, tape,
+                            assignment_expression->eq_token);
 }
 
 #endif

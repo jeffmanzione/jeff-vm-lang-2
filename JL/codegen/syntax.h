@@ -20,7 +20,7 @@ typedef SyntaxTree (*ParseExpression)(Parser *);
 struct SyntaxTree_ {
   bool matched;
   Token *token;
-  //Queue child_exps;
+  // Queue child_exps;
   SyntaxTree *first, *second;
   ParseExpression expression;
 };
@@ -37,7 +37,7 @@ DefineSyntax(array_declaration);
 DefineSyntax(length_expression);
 DefineSyntax(primary_expression);
 DefineSyntax(primary_expression_no_constants);
-//DefineExpression(argument_expression_list);
+// DefineExpression(argument_expression_list);
 DefineSyntax(postfix_expression);
 DefineSyntax(postfix_expression1);
 DefineSyntax(unary_expression);
@@ -98,11 +98,25 @@ DefineSyntax(function_signature_const);
 DefineSyntax(function_signature);
 DefineSyntax(function_arguments_present);
 DefineSyntax(function_arguments_no_args);
+
+DefineSyntax(new_arg_var);
+DefineSyntax(new_field_arg);
+DefineSyntax(new_arg_default_value);
+DefineSyntax(new_arg_elt_with_default);
+DefineSyntax(new_arg_elt);
+DefineSyntax(const_new_argument);
+DefineSyntax(new_argument);
+DefineSyntax(new_argument_list1);
+DefineSyntax(new_argument_list);
+DefineSyntax(new_arguments_present);
+DefineSyntax(new_arguments_no_args);
+DefineSyntax(new_arguments);
 DefineSyntax(new_identifier);
 DefineSyntax(new_signature_nonconst);
 DefineSyntax(new_signature_const);
 DefineSyntax(new_signature);
 DefineSyntax(new_definition);
+
 DefineSyntax(anon_identifier);
 DefineSyntax(anon_signature_nonconst);
 DefineSyntax(anon_signature_const);
@@ -148,6 +162,5 @@ DefineSyntax(for_statement);
 DefineSyntax(while_statement);
 DefineSyntax(const_expression);
 DefineSyntax(default_value_expression);
-
 
 #endif /* EXPRESSION_H_ */

@@ -21,7 +21,7 @@ void print_tabs(FILE *file, int num_tabs) {
 }
 
 void syntax_to_str_helper(SyntaxTree *exp, Parser *parser, FILE *file,
-                       int num_tabs) {
+                          int num_tabs) {
   print_tabs(file, num_tabs);
   if (NULL != exp->expression) {
     fprintf(file, "[%s] ",
@@ -793,11 +793,52 @@ ImplSyntax(function_definition,
            And(function_signature,
                statement));
 
+ImplSyntax(new_arg_var,
+           Or(new_field_arg,
+              identifier));
+
+ImplSyntax(new_field_arg,
+           And(TypeLn(FIELD), identifier));
+
+ImplSyntax(new_arg_default_value,
+           And(TypeLn(EQUALS), conditional_expression));
+
+ImplSyntax(new_arg_elt_with_default,
+           And(new_arg_var, new_arg_default_value));
+
+ImplSyntax(new_arg_elt,
+           Or(new_arg_elt_with_default,
+               new_arg_var));
+
+ImplSyntax(const_new_argument,
+    And(TypeLn(CONST_T), new_arg_elt));
+
+ImplSyntax(new_argument,
+           Or(const_new_argument,
+               new_arg_elt));
+
+ImplSyntax(new_argument_list1,
+           Or(And(And(TypeLn(COMMA), new_argument), new_argument_list1),
+              Epsilon));
+
+ImplSyntax(new_argument_list,
+           And(new_argument, new_argument_list1));
+
+ImplSyntax(new_arguments_present,
+           And(TypeLn(LPAREN), new_argument_list, TypeLn(RPAREN)));
+
+ImplSyntax(new_arguments_no_args,
+           And(TypeLn(LPAREN), TypeLn(RPAREN)));
+
+ImplSyntax(new_arguments,
+           Or(new_arguments_present,
+               new_arguments_no_args));
+
 ImplSyntax(new_identifier,
            And(Type(DEF), new_expression));
 
 ImplSyntax(new_signature_nonconst,
-           And(new_identifier, function_arguments));
+           And(new_identifier, new_arguments));
 
 ImplSyntax(new_signature_const,
            And(new_signature_nonconst, TypeLn(CONST_T)));

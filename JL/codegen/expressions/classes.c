@@ -13,8 +13,8 @@
 #include "../../datastructure/queue.h"
 #include "../../program/tape.h"
 #include "../syntax.h"
-#include "expression_macros.h"
 #include "expression.h"
+#include "expression_macros.h"
 
 void populate_class_def(ClassDef *def, const SyntaxTree *stree) {
   def->parent_classes = expando(ClassName, 2);
@@ -27,14 +27,15 @@ void populate_class_def(ClassDef *def, const SyntaxTree *stree) {
     def->name.token = class_inheritance->first->token;
     ASSERT(IS_SYNTAX(class_inheritance->second, parent_classes));
     if (IS_SYNTAX(class_inheritance->second->second, identifier)) {
-      ClassName name = { .token = class_inheritance->second->second->token };
+      ClassName name = {.token = class_inheritance->second->second->token};
       expando_append(def->parent_classes, &name);
     } else {
       ASSERT(IS_SYNTAX(class_inheritance->second->second, parent_class_list));
-      ClassName name = { .token =
-          class_inheritance->second->second->first->token };
+      ClassName name = {.token =
+                            class_inheritance->second->second->first->token};
       expando_append(def->parent_classes, &name);
-      const SyntaxTree *parent_class = class_inheritance->second->second->second;
+      const SyntaxTree *parent_class =
+          class_inheritance->second->second->second;
       while (true) {
         if (IS_SYNTAX(parent_class, parent_class_list1)) {
           if (IS_TOKEN(parent_class->first, COMMA)) {
@@ -59,16 +60,76 @@ void populate_class_def(ClassDef *def, const SyntaxTree *stree) {
   }
 }
 
+Argument populate_constructor_argument(const SyntaxTree *stree) {
+  Argument arg;
+  const SyntaxTree *argument = stree;
+  if (IS_SYNTAX(argument, const_new_argument)) {
+    arg.is_const = true;
+    arg.const_token = argument->first->token;
+    argument = argument->second;
+  } else {
+    arg.is_const = false;
+    arg.const_token = NULL;
+  }
+
+  if (IS_SYNTAX(argument, new_arg_elt_with_default)) {
+    arg.has_default = true;
+    arg.default_value = populate_expression(argument->second->second);
+    argument = argument->first;
+  } else {
+    arg.has_default = false;
+    arg.default_value = NULL;
+  }
+
+  if (IS_SYNTAX(argument, new_field_arg)) {
+    arg.arg_name = argument->second->token;
+    arg.is_field = true;
+  } else {
+    ASSERT(IS_SYNTAX(argument, identifier));
+    arg.arg_name = argument->token;
+    arg.is_field = false;
+  }
+
+  return arg;
+}
+
+Arguments set_constructor_args(const SyntaxTree *stree, const Token *token) {
+  Arguments args = {.token = token, .count_required = 0, .count_optional = 0};
+  args.args = expando(Argument, 4);
+  if (!IS_SYNTAX(stree, new_argument_list)) {
+    Argument arg = populate_constructor_argument(stree);
+    add_arg(&args, &arg);
+    return args;
+  }
+  Argument arg = populate_constructor_argument(stree->first);
+  add_arg(&args, &arg);
+  const SyntaxTree *cur = stree->second;
+  while (true) {
+    if (IS_TOKEN(cur->first, COMMA)) {
+      // Must be last arg.
+      Argument arg = populate_constructor_argument(cur->second);
+      add_arg(&args, &arg);
+      break;
+    }
+    Argument arg = populate_constructor_argument(cur->first->second);
+    add_arg(&args, &arg);
+    cur = cur->second;
+  }
+  return args;
+}
+
 Function populate_constructor(const SyntaxTree *stree) {
   return populate_function_variant(stree, new_definition, new_signature_const,
-      new_signature_nonconst, new_identifier, set_function_def);
+                                   new_signature_nonconst, new_identifier,
+                                   new_arguments_no_args, new_arguments_present,
+                                   set_function_def, set_constructor_args);
 }
 
 void populate_class_statement(Class *class, const SyntaxTree *stree) {
   if (IS_SYNTAX(stree, field_statement)) {
     ASSERT(IS_TOKEN(stree->first, FIELD), IS_LEAF(stree->second));
-    Field field = { .name = stree->second->token, .field_token =
-        stree->first->token };
+    Field field = {.name = stree->second->token,
+                   .field_token = stree->first->token};
     expando_append(class->fields, &field);
   } else if (IS_SYNTAX(stree, function_definition)) {
     Function func = populate_function(stree);
@@ -125,7 +186,7 @@ ImplDelete(class_definition) {
   expando_delete(class_definition->class.def.parent_classes);
   expando_delete(class_definition->class.fields);
   void delete_method(void *ptr) {
-    Function *func = (Function*) ptr;
+    Function *func = (Function *)ptr;
     delete_function(func);
   }
   expando_iterate(class_definition->class.methods, delete_method);
@@ -135,23 +196,28 @@ ImplDelete(class_definition) {
 int produce_constructor(Class *class, Tape *tape) {
   Function *func = &class->constructor;
   int num_ins = 0;
+
   if (class->has_constructor) {
     num_ins += tape->label(tape, func->fn_name);
-    if (func->has_args) {
-      num_ins += produce_arguments(&func->args, tape);
-    }
   } else {
     num_ins += tape->label_text(tape, CONSTRUCTOR_KEY);
   }
+
   int num_fields = expando_len(class->fields);
   if (num_fields > 0) {
+    num_ins += tape->ins_no_arg(tape, PUSH, class->def.name.token);
     int i;
     for (i = 0; i < num_fields; ++i) {
-      Field *field = (Field*) expando_get(class->fields, i);
-      num_ins += tape->ins_text(tape, PUSH, NIL_KEYWORD, field->name)
-          + tape->ins_text(tape, RES, SELF, field->name)
-          + tape->ins(tape, FLD, field->name);
+      Field *field = (Field *)expando_get(class->fields, i);
+      num_ins += tape->ins_text(tape, PUSH, NIL_KEYWORD, field->name) +
+                 tape->ins_text(tape, RES, SELF, field->name) +
+                 tape->ins(tape, FLD, field->name);
     }
+    num_ins += tape->ins_no_arg(tape, RES, class->def.name.token);
+  }
+
+  if (func->has_args) {
+    num_ins += produce_arguments(&func->args, tape);
   }
 
   if (class->has_constructor) {
@@ -177,23 +243,23 @@ ImplProduce(class_definition, Tape *tape) {
     Queue parents;
     queue_init(&parents);
     void add_parent(void *ptr) {
-      ClassName *name = (ClassName*) ptr;
+      ClassName *name = (ClassName *)ptr;
       queue_add(&parents, name->token->text);
     }
     expando_iterate(class_definition->class.def.parent_classes, add_parent);
-    num_ins += tape->class_with_parents(tape,
-        class_definition->class.def.name.token, &parents);
+    num_ins += tape->class_with_parents(
+        tape, class_definition->class.def.name.token, &parents);
     queue_shallow_delete(&parents);
   }
   // Constructor
-  if (class_definition->class.has_constructor
-      || expando_len(class_definition->class.fields) > 0) {
+  if (class_definition->class.has_constructor ||
+      expando_len(class_definition->class.fields) > 0) {
     num_ins += produce_constructor(&class_definition->class, tape);
   }
   int i, num_methods = expando_len(class_definition->class.methods);
   for (i = 0; i < num_methods; ++i) {
-    Function *func = (Function*) expando_get(class_definition->class.methods,
-        i);
+    Function *func =
+        (Function *)expando_get(class_definition->class.methods, i);
     num_ins += produce_function(func, tape);
   }
   num_ins += tape->endclass(tape, class_definition->class.def.name.token);

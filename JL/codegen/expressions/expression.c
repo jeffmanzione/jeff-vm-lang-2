@@ -24,7 +24,7 @@
 #include "loops.h"
 #include "statements.h"
 
-typedef ExpressionTree* (*Populator)(const SyntaxTree *tree);
+typedef ExpressionTree *(*Populator)(const SyntaxTree *tree);
 typedef int (*Producer)(ExpressionTree *tree, Tape *tape);
 typedef void (*EDeleter)(ExpressionTree *tree);
 
@@ -32,9 +32,9 @@ Map populators;
 Map producers;
 Map deleters;
 
-ExpressionTree* __extract_tree(Expando *expando_of_tree, int index) {
-  ExpressionTree **tree_ptr2 = (ExpressionTree**) expando_get(expando_of_tree,
-      index);
+ExpressionTree *__extract_tree(Expando *expando_of_tree, int index) {
+  ExpressionTree **tree_ptr2 =
+      (ExpressionTree **)expando_get(expando_of_tree, index);
   return *tree_ptr2;
 }
 
@@ -42,8 +42,7 @@ ImplPopulate(identifier, const SyntaxTree *stree) {
   identifier->id = stree->token;
 }
 
-ImplDelete(identifier) {
-}
+ImplDelete(identifier) {}
 
 ImplProduce(identifier, Tape *tape) {
   return tape->ins(tape, RES, identifier->id);
@@ -54,8 +53,7 @@ ImplPopulate(constant, const SyntaxTree *stree) {
   constant->value = token_to_val(stree->token);
 }
 
-ImplDelete(constant) {
-}
+ImplDelete(constant) {}
 
 ImplProduce(constant, Tape *tape) {
   return tape->ins(tape, RES, constant->token);
@@ -66,8 +64,7 @@ ImplPopulate(string_literal, const SyntaxTree *stree) {
   string_literal->str = stree->token->text;
 }
 
-ImplDelete(string_literal) {
-}
+ImplDelete(string_literal) {}
 
 ImplProduce(string_literal, Tape *tape) {
   return tape->ins(tape, RES, string_literal->token);
@@ -75,13 +72,13 @@ ImplProduce(string_literal, Tape *tape) {
 
 ImplPopulate(tuple_expression, const SyntaxTree *stree) {
   tuple_expression->token = stree->second->first->token;  // First comma.
-  tuple_expression->list = expando(ExpressionTree*, DEFAULT_EXPANDO_SIZE);
+  tuple_expression->list = expando(ExpressionTree *, DEFAULT_EXPANDO_SIZE);
   APPEND_TREE(tuple_expression->list, stree->first);
   DECLARE_IF_TYPE(tuple1, tuple_expression1, stree->second);
   // Loop through indices > 0.
   while (true) {
-    if (IS_LEAF(
-        tuple1->second) || !IS_SYNTAX(tuple1->second->second, tuple_expression1)) {
+    if (IS_LEAF(tuple1->second) ||
+        !IS_SYNTAX(tuple1->second->second, tuple_expression1)) {
       // Last element.
       APPEND_TREE(tuple_expression->list, tuple1->second);
       break;
@@ -94,28 +91,28 @@ ImplPopulate(tuple_expression, const SyntaxTree *stree) {
 
 ImplDelete(tuple_expression) {
   void delete_expression_inner(void *elt) {
-    delete_expression(*((ExpressionTree**) elt));
+    delete_expression(*((ExpressionTree **)elt));
   }
   expando_iterate(tuple_expression->list, delete_expression_inner);
   expando_delete(tuple_expression->list);
 }
 
 int tuple_expression_helper(Expression_tuple_expression *tuple_expression,
-    Tape *tape) {
+                            Tape *tape) {
   int i, num_ins = 0, tuple_len = expando_len(tuple_expression->list);
   // Start from end and go backward.
   for (i = tuple_len - 1; i >= 0; --i) {
     ExpressionTree *elt = EXTRACT_TREE(tuple_expression->list, i);
-    num_ins += produce_instructions(elt, tape)
-        + tape->ins_no_arg(tape, PUSH, tuple_expression->token);
+    num_ins += produce_instructions(elt, tape) +
+               tape->ins_no_arg(tape, PUSH, tuple_expression->token);
   }
   return num_ins;
 }
 
 ImplProduce(tuple_expression, Tape *tape) {
-  return tuple_expression_helper(tuple_expression, tape)
-      + tape->ins_int(tape, TUPL, expando_len(tuple_expression->list),
-          tuple_expression->token);
+  return tuple_expression_helper(tuple_expression, tape) +
+         tape->ins_int(tape, TUPL, expando_len(tuple_expression->list),
+                       tuple_expression->token);
 }
 
 ImplPopulate(array_declaration, const SyntaxTree *stree) {
@@ -148,7 +145,8 @@ ImplProduce(array_declaration, Tape *tape) {
     num_ins += tuple_expression_helper(
         &array_declaration->exp->tuple_expression, tape);
   } else {
-    num_ins += tape->ins_no_arg(tape, PUSH, array_declaration->token);
+    num_ins += produce_instructions(array_declaration->exp, tape) +
+               tape->ins_no_arg(tape, PUSH, array_declaration->token);
   }
   num_ins += tape->ins_int(tape, ANEW, num_members, array_declaration->token);
   return num_ins;
@@ -164,9 +162,7 @@ ImplPopulate(primary_expression, const SyntaxTree *stree) {
   ERROR("Unknown primary_expression.");
 }
 
-ImplDelete(primary_expression) {
-  delete_expression(primary_expression->exp);
-}
+ImplDelete(primary_expression) { delete_expression(primary_expression->exp); }
 
 ImplProduce(primary_expression, Tape *tape) {
   return produce_instructions(primary_expression->exp, tape);
@@ -175,21 +171,23 @@ ImplProduce(primary_expression, Tape *tape) {
 void postfix_helper(const SyntaxTree *suffix, Expando *suffixes);
 
 void postfix_period(const SyntaxTree *ext, const SyntaxTree *tail,
-    Expando *suffixes) {
-  Postfix postfix = { .type = Postfix_field, .token = ext->token, .exp = NULL };
+                    Expando *suffixes) {
+  Postfix postfix = {.type = Postfix_field, .token = ext->token, .exp = NULL};
   if (IS_SYNTAX(tail, identifier) || IS_TOKEN(tail, NEW)) {
     postfix.id = tail->token;
     expando_append(suffixes, &postfix);
     return;
-  } ASSERT(!IS_LEAF(tail));
+  }
+  ASSERT(!IS_LEAF(tail));
   postfix.id = tail->first->token;
   expando_append(suffixes, &postfix);
   postfix_helper(tail->second, suffixes);
 }
 
 void postfix_surround_helper(const SyntaxTree *suffix, Expando *suffixes,
-    PostfixType postfix_type, TokenType opener, TokenType closer) {
-  Postfix postfix = { .type = postfix_type, .token = suffix->first->token };
+                             PostfixType postfix_type, TokenType opener,
+                             TokenType closer) {
+  Postfix postfix = {.type = postfix_type, .token = suffix->first->token};
   ASSERT(!IS_LEAF(suffix), IS_TOKEN(suffix->first, opener));
   if (IS_TOKEN(suffix->second, closer)) {
     // No args.
@@ -223,18 +221,18 @@ void postfix_surround_helper(const SyntaxTree *suffix, Expando *suffixes,
 void postfix_helper(const SyntaxTree *suffix, Expando *suffixes) {
   const SyntaxTree *ext = suffix->first;
   switch (ext->token->type) {
-  case PERIOD:
-    postfix_period(ext, suffix->second, suffixes);
-    break;
-  case LPAREN:
-    postfix_surround_helper(suffix, suffixes, Postfix_fncall, LPAREN, RPAREN);
-    break;
-  case LBRAC:
-    postfix_surround_helper(suffix, suffixes, Postfix_array_index, LBRAC,
-        RBRAC);
-    break;
-  default:
-    ERROR("Unknown postfix.");
+    case PERIOD:
+      postfix_period(ext, suffix->second, suffixes);
+      break;
+    case LPAREN:
+      postfix_surround_helper(suffix, suffixes, Postfix_fncall, LPAREN, RPAREN);
+      break;
+    case LBRAC:
+      postfix_surround_helper(suffix, suffixes, Postfix_array_index, LBRAC,
+                              RBRAC);
+      break;
+    default:
+      ERROR("Unknown postfix.");
   }
 }
 
@@ -242,7 +240,7 @@ ImplPopulate(postfix_expression, const SyntaxTree *stree) {
   postfix_expression->prefix = populate_expression(stree->first);
   postfix_expression->suffixes = expando(Postfix, DEFAULT_EXPANDO_SIZE);
 
-//  int num_ins = 0;
+  //  int num_ins = 0;
   SyntaxTree *suffix = stree->second;
   postfix_helper(suffix, postfix_expression->suffixes);
 }
@@ -250,7 +248,7 @@ ImplPopulate(postfix_expression, const SyntaxTree *stree) {
 ImplDelete(postfix_expression) {
   delete_expression(postfix_expression->prefix);
   void delete_postfix(void *ptr) {
-    Postfix *postfix = (Postfix*) ptr;
+    Postfix *postfix = (Postfix *)ptr;
     if (postfix->type != Postfix_field && NULL != postfix->exp) {
       delete_expression(postfix->exp);
     }
@@ -260,11 +258,11 @@ ImplDelete(postfix_expression) {
 }
 
 int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
-    Tape *tape) {
+                    Tape *tape) {
   int num_ins = 0;
   Postfix *cur = *next;
   *next =
-      (*i + 1 == num_postfix) ? NULL : (Postfix*) expando_get(suffixes, *i + 1);
+      (*i + 1 == num_postfix) ? NULL : (Postfix *)expando_get(suffixes, *i + 1);
   if (cur->type == Postfix_fncall) {
     num_ins += tape->ins_no_arg(tape, PUSH, cur->token);
     if (cur->exp != NULL) {
@@ -272,23 +270,22 @@ int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
     }
     num_ins += tape->ins_no_arg(tape, CALL, cur->token);
   } else if (cur->type == Postfix_array_index) {
-    num_ins += tape->ins_no_arg(tape, PUSH, cur->token)
-        + produce_instructions(cur->exp, tape)
-        + tape->ins_no_arg(tape, AIDX, cur->token);
+    num_ins += tape->ins_no_arg(tape, PUSH, cur->token) +
+               produce_instructions(cur->exp, tape) +
+               tape->ins_no_arg(tape, AIDX, cur->token);
   } else if (cur->type == Postfix_field) {
     // Function calls on fields must be handled with CALL X.
     if (NULL != *next && (*next)->type == Postfix_fncall) {
       num_ins +=
-          tape->ins_no_arg(tape, PUSH, cur->token)
-              + ((*next)->exp != NULL ?
-                  produce_instructions((*next)->exp, tape) : 0)
-              + tape_ins(tape, CALL, cur->id);
+          tape->ins_no_arg(tape, PUSH, cur->token) +
+          ((*next)->exp != NULL ? produce_instructions((*next)->exp, tape)
+                                : 0) +
+          tape_ins(tape, CALL, cur->id);
       // Advance past the function call since we have already handled it.
       ++(*i);
-      *next =
-          (*i + 1 == num_postfix) ?
-          NULL :
-                                    (Postfix*) expando_get(suffixes, *i + 1);
+      *next = (*i + 1 == num_postfix)
+                  ? NULL
+                  : (Postfix *)expando_get(suffixes, *i + 1);
     } else {
       num_ins += tape->ins(tape, GET, cur->id);
     }
@@ -301,13 +298,13 @@ int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
 ImplProduce(postfix_expression, Tape *tape) {
   int i, num_ins = 0, num_postfix = expando_len(postfix_expression->suffixes);
   num_ins += produce_instructions(postfix_expression->prefix, tape);
-  Postfix *next = (Postfix*) expando_get(postfix_expression->suffixes, 0);
+  Postfix *next = (Postfix *)expando_get(postfix_expression->suffixes, 0);
   for (i = 0; i < num_postfix; ++i) {
     if (NULL == next) {
       break;
     }
     num_ins += produce_postfix(&i, num_postfix, postfix_expression->suffixes,
-        &next, tape);
+                               &next, tape);
   }
   return num_ins;
 }
@@ -317,14 +314,13 @@ ImplPopulate(range_expression, const SyntaxTree *stree) {
   ASSERT(IS_TOKEN(stree->second->first, COLON));
   range_expression->token = stree->second->first->token;
   SyntaxTree *after_first_colon = stree->second->second;
-  if (!IS_LEAF(
-      after_first_colon) && !IS_LEAF(
-          after_first_colon->second) && IS_TOKEN(after_first_colon->second->first, COLON)) {
+  if (!IS_LEAF(after_first_colon) && !IS_LEAF(after_first_colon->second) &&
+      IS_TOKEN(after_first_colon->second->first, COLON)) {
     // Has inc.
     range_expression->num_args = 3;
     range_expression->inc = populate_expression(after_first_colon->first);
-    range_expression->end = populate_expression(
-        after_first_colon->second->second);
+    range_expression->end =
+        populate_expression(after_first_colon->second->second);
     return;
   }
   range_expression->num_args = 2;
@@ -343,33 +339,33 @@ ImplDelete(range_expression) {
 ImplProduce(range_expression, Tape *tape) {
   int num_ins = 0;
   num_ins += tape->ins_text(tape, PUSH, strings_intern("range"),
-      range_expression->token);
+                            range_expression->token);
   if (NULL != range_expression->inc) {
-    num_ins += produce_instructions(range_expression->inc, tape)
-        + tape->ins_no_arg(tape, PUSH, range_expression->token);
+    num_ins += produce_instructions(range_expression->inc, tape) +
+               tape->ins_no_arg(tape, PUSH, range_expression->token);
   }
-  num_ins += produce_instructions(range_expression->end, tape)
-      + tape->ins_no_arg(tape, PUSH, range_expression->token)
-      + produce_instructions(range_expression->start, tape)
-      + tape->ins_no_arg(tape, PUSH, range_expression->token)
-      + tape->ins_int(tape, TUPL, range_expression->num_args,
-          range_expression->token)
-      + tape->ins_no_arg(tape, CALL, range_expression->token);
+  num_ins += produce_instructions(range_expression->end, tape) +
+             tape->ins_no_arg(tape, PUSH, range_expression->token) +
+             produce_instructions(range_expression->start, tape) +
+             tape->ins_no_arg(tape, PUSH, range_expression->token) +
+             tape->ins_int(tape, TUPL, range_expression->num_args,
+                           range_expression->token) +
+             tape->ins_no_arg(tape, CALL, range_expression->token);
   return num_ins;
 }
 
 UnaryType unary_token_to_type(const Token *token) {
   switch (token->type) {
-  case TILDE:
-    return Unary_not;
-  case EXCLAIM:
-    return Unary_notc;
-  case MINUS:
-    return Unary_negate;
-  case CONST_T:
-    return Unary_const;
-  default:
-    ERROR("Unknown unary: %s", token->text);
+    case TILDE:
+      return Unary_not;
+    case EXCLAIM:
+      return Unary_notc;
+    case MINUS:
+      return Unary_negate;
+    case CONST_T:
+      return Unary_const;
+    default:
+      ERROR("Unknown unary: %s", token->text);
   }
   return Unary_unknown;
 }
@@ -381,164 +377,164 @@ ImplPopulate(unary_expression, const SyntaxTree *stree) {
   unary_expression->exp = populate_expression(stree->second);
 }
 
-ImplDelete(unary_expression) {
-  delete_expression(unary_expression->exp);
-}
+ImplDelete(unary_expression) { delete_expression(unary_expression->exp); }
 
 ImplProduce(unary_expression, Tape *tape) {
   int num_ins = 0;
-  if (unary_expression->type == Unary_negate
-      && constant == unary_expression->exp->type) {
+  if (unary_expression->type == Unary_negate &&
+      constant == unary_expression->exp->type) {
     return tape->ins_neg(tape, RES, unary_expression->exp->constant.token);
   }
   num_ins += produce_instructions(unary_expression->exp, tape);
   switch (unary_expression->type) {
-  case Unary_not:
-    num_ins += tape->ins_no_arg(tape, NOT, unary_expression->token);
-    break;
-  case Unary_notc:
-    num_ins += tape->ins_no_arg(tape, NOTC, unary_expression->token);
-    break;
-  case Unary_negate:
-    num_ins += tape->ins_no_arg(tape, PUSH, unary_expression->token)
-        + tape->ins_int(tape, PUSH, -1, unary_expression->token)
-        + tape->ins_no_arg(tape, MULT, unary_expression->token);
-    break;
-  case Unary_const:
-    num_ins += tape->ins_no_arg(tape, CNST, unary_expression->token);
-    break;
-  default:
-    ERROR("Unknown unary: %s", unary_expression->token);
+    case Unary_not:
+      num_ins += tape->ins_no_arg(tape, NOT, unary_expression->token);
+      break;
+    case Unary_notc:
+      num_ins += tape->ins_no_arg(tape, NOTC, unary_expression->token);
+      break;
+    case Unary_negate:
+      num_ins += tape->ins_no_arg(tape, PUSH, unary_expression->token) +
+                 tape->ins_int(tape, PUSH, -1, unary_expression->token) +
+                 tape->ins_no_arg(tape, MULT, unary_expression->token);
+      break;
+    case Unary_const:
+      num_ins += tape->ins_no_arg(tape, CNST, unary_expression->token);
+      break;
+    default:
+      ERROR("Unknown unary: %s", unary_expression->token);
   }
   return num_ins;
 }
 
 BiType relational_type_for_token(const Token *token) {
   switch (token->type) {
-  case STAR:
-    return Mult_mult;
-  case FSLASH:
-    return Mult_div;
-  case PERCENT:
-    return Mult_mod;
-  case PLUS:
-    return Add_add;
-  case MINUS:
-    return Add_sub;
-  case LTHAN:
-    return Rel_lt;
-  case GTHAN:
-    return Rel_gt;
-  case LTHANEQ:
-    return Rel_lte;
-  case GTHANEQ:
-    return Rel_gte;
-  case EQUIV:
-    return Rel_eq;
-  case NEQUIV:
-    return Rel_neq;
-  case AMPER:
-    return And_and;
-  case CARET:
-    return And_xor;
-  case PIPE:
-    return And_or;
-  default:
-    ERROR("Unknown type: %s", token->text);
+    case STAR:
+      return Mult_mult;
+    case FSLASH:
+      return Mult_div;
+    case PERCENT:
+      return Mult_mod;
+    case PLUS:
+      return Add_add;
+    case MINUS:
+      return Add_sub;
+    case LTHAN:
+      return Rel_lt;
+    case GTHAN:
+      return Rel_gt;
+    case LTHANEQ:
+      return Rel_lte;
+    case GTHANEQ:
+      return Rel_gte;
+    case EQUIV:
+      return Rel_eq;
+    case NEQUIV:
+      return Rel_neq;
+    case AMPER:
+      return And_and;
+    case CARET:
+      return And_xor;
+    case PIPE:
+      return And_or;
+    default:
+      ERROR("Unknown type: %s", token->text);
   }
   return BiType_unknown;
 }
 
 Op bi_to_ins(BiType type) {
   switch (type) {
-  case Mult_mult:
-    return MULT;
-  case Mult_div:
-    return DIV;
-  case Mult_mod:
-    return MOD;
-  case Add_add:
-    return ADD;
-  case Add_sub:
-    return SUB;
-  case Rel_lt:
-    return LT;
-  case Rel_gt:
-    return GT;
-  case Rel_lte:
-    return LTE;
-  case Rel_gte:
-    return GTE;
-  case Rel_eq:
-    return EQ;
-  case Rel_neq:
-    return NEQ;
-  case And_and:
-    return AND;
-  case And_xor:
-    return XOR;
-  case And_or:
-    return OR;
-  default:
-    ERROR("Unknown type: %s", type);
+    case Mult_mult:
+      return MULT;
+    case Mult_div:
+      return DIV;
+    case Mult_mod:
+      return MOD;
+    case Add_add:
+      return ADD;
+    case Add_sub:
+      return SUB;
+    case Rel_lt:
+      return LT;
+    case Rel_gt:
+      return GT;
+    case Rel_lte:
+      return LTE;
+    case Rel_gte:
+      return GTE;
+    case Rel_eq:
+      return EQ;
+    case Rel_neq:
+      return NEQ;
+    case And_and:
+      return AND;
+    case And_xor:
+      return XOR;
+    case And_or:
+      return OR;
+    default:
+      ERROR("Unknown type: %s", type);
   }
   return NOP;
 }
 
-#define BiExpressionPopulate(expr, stree) { \
-  expr->exp = populate_expression(stree->first); \
-  Expando *suffixes = expando(BiSuffix, DEFAULT_EXPANDO_SIZE); \
-  SyntaxTree *cur_suffix = stree->second; \
-  while (true) { \
-    EXPECT_TYPE(cur_suffix, expr##1); \
-    BiSuffix suffix = { .token = cur_suffix->first->token, .type = \
-        relational_type_for_token(cur_suffix->first->token) }; \
-    SyntaxTree *second_exp = cur_suffix->second; \
-    if (second_exp->expression == stree->expression) { \
-      suffix.exp = populate_expression(second_exp->first); \
-      expando_append(suffixes, &suffix); \
-      cur_suffix = second_exp->second; \
-    } else { \
-      suffix.exp = populate_expression(second_exp); \
-      expando_append(suffixes, &suffix); \
-      break; \
-    } \
-  } \
-  expr->suffixes = suffixes; \
-}
+#define BiExpressionPopulate(expr, stree)                               \
+  {                                                                     \
+    expr->exp = populate_expression(stree->first);                      \
+    Expando *suffixes = expando(BiSuffix, DEFAULT_EXPANDO_SIZE);        \
+    SyntaxTree *cur_suffix = stree->second;                             \
+    while (true) {                                                      \
+      EXPECT_TYPE(cur_suffix, expr##1);                                 \
+      BiSuffix suffix = {                                               \
+          .token = cur_suffix->first->token,                            \
+          .type = relational_type_for_token(cur_suffix->first->token)}; \
+      SyntaxTree *second_exp = cur_suffix->second;                      \
+      if (second_exp->expression == stree->expression) {                \
+        suffix.exp = populate_expression(second_exp->first);            \
+        expando_append(suffixes, &suffix);                              \
+        cur_suffix = second_exp->second;                                \
+      } else {                                                          \
+        suffix.exp = populate_expression(second_exp);                   \
+        expando_append(suffixes, &suffix);                              \
+        break;                                                          \
+      }                                                                 \
+    }                                                                   \
+    expr->suffixes = suffixes;                                          \
+  }
 
-#define BiExpressionDelete(expr) { \
-  delete_expression(expr->exp); \
-  void delete_expression_inner(void *ptr) { \
-    BiSuffix *suffix = (BiSuffix*) ptr; \
-    delete_expression(suffix->exp); \
-  } \
-  expando_iterate(expr->suffixes, delete_expression_inner); \
-  expando_delete(expr->suffixes); \
-}
+#define BiExpressionDelete(expr)                              \
+  {                                                           \
+    delete_expression(expr->exp);                             \
+    void delete_expression_inner(void *ptr) {                 \
+      BiSuffix *suffix = (BiSuffix *)ptr;                     \
+      delete_expression(suffix->exp);                         \
+    }                                                         \
+    expando_iterate(expr->suffixes, delete_expression_inner); \
+    expando_delete(expr->suffixes);                           \
+  }
 
-#define BiExpressionProduce(expr, tape) { \
-  int num_ins = 0; \
-  num_ins += produce_instructions(expr->exp, tape); \
-  void iterate_mult(void *ptr) { \
-    BiSuffix *suffix = (BiSuffix*) ptr; \
-    num_ins += tape->ins_no_arg(tape, PUSH, suffix->token) \
-        + produce_instructions(suffix->exp, tape) \
-        + tape->ins_no_arg(tape, PUSH, suffix->token) \
-        + tape->ins_no_arg(tape, bi_to_ins(suffix->type), \
-            suffix->token); \
-  } \
-  expando_iterate(expr->suffixes, iterate_mult); \
-  return num_ins; \
-}
+#define BiExpressionProduce(expr, tape)                                   \
+  {                                                                       \
+    int num_ins = 0;                                                      \
+    num_ins += produce_instructions(expr->exp, tape);                     \
+    void iterate_mult(void *ptr) {                                        \
+      BiSuffix *suffix = (BiSuffix *)ptr;                                 \
+      num_ins +=                                                          \
+          tape->ins_no_arg(tape, PUSH, suffix->token) +                   \
+          produce_instructions(suffix->exp, tape) +                       \
+          tape->ins_no_arg(tape, PUSH, suffix->token) +                   \
+          tape->ins_no_arg(tape, bi_to_ins(suffix->type), suffix->token); \
+    }                                                                     \
+    expando_iterate(expr->suffixes, iterate_mult);                        \
+    return num_ins;                                                       \
+  }
 
-#define ImplBiExpression(expr) \
+#define ImplBiExpression(expr)                \
   ImplPopulate(expr, const SyntaxTree *stree) \
-    BiExpressionPopulate(expr, stree); \
-  ImplDelete(expr) \
-    BiExpressionDelete(expr); \
-  ImplProduce(expr, Tape *tape) \
-    BiExpressionProduce(expr, tape)
+      BiExpressionPopulate(expr, stree);      \
+  ImplDelete(expr) BiExpressionDelete(expr);  \
+  ImplProduce(expr, Tape *tape) BiExpressionProduce(expr, tape)
 
 ImplBiExpression(multiplicative_expression);
 ImplBiExpression(additive_expression);
@@ -561,12 +557,13 @@ ImplDelete(in_expression) {
 }
 
 ImplProduce(in_expression, Tape *tape) {
-  return produce_instructions(in_expression->collection, tape)
-      + tape->ins_no_arg(tape, PUSH, in_expression->token)
-      + produce_instructions(in_expression->element, tape)
-      + tape->ins_text(tape, CALL, IN_FN_NAME, in_expression->token)
-      + (in_expression->is_not ?
-          tape->ins_no_arg(tape, NOT, in_expression->token) : 0);
+  return produce_instructions(in_expression->collection, tape) +
+         tape->ins_no_arg(tape, PUSH, in_expression->token) +
+         produce_instructions(in_expression->element, tape) +
+         tape->ins_text(tape, CALL, IN_FN_NAME, in_expression->token) +
+         (in_expression->is_not
+              ? tape->ins_no_arg(tape, NOT, in_expression->token)
+              : 0);
 }
 
 ImplPopulate(is_expression, const SyntaxTree *stree) {
@@ -581,27 +578,28 @@ ImplDelete(is_expression) {
 }
 
 ImplProduce(is_expression, Tape *tape) {
-  return produce_instructions(is_expression->exp, tape)
-      + tape->ins_no_arg(tape, PUSH, is_expression->token)
-      + produce_instructions(is_expression->type, tape)
-      + tape->ins_no_arg(tape, PUSH, is_expression->token)
-      + tape->ins_no_arg(tape, IS, is_expression->token);
+  return produce_instructions(is_expression->exp, tape) +
+         tape->ins_no_arg(tape, PUSH, is_expression->token) +
+         produce_instructions(is_expression->type, tape) +
+         tape->ins_no_arg(tape, PUSH, is_expression->token) +
+         tape->ins_no_arg(tape, IS, is_expression->token);
 }
 
 void populate_if_else(IfElse *if_else, const SyntaxTree *stree) {
   if_else->conditions = expando(Conditional, DEFAULT_EXPANDO_SIZE);
   if_else->else_exp = NULL;
   ASSERT(stree->first->token->type == IF_T);
-  SyntaxTree *if_tree = (SyntaxTree*) stree, *else_body = NULL;
+  SyntaxTree *if_tree = (SyntaxTree *)stree, *else_body = NULL;
   while (true) {
-    Conditional cond = { .condition = populate_expression(
-        if_tree->second->first), .if_token = if_tree->first->token };
-    SyntaxTree *if_body =
-    IS_TOKEN(if_tree->second->second->first, THEN) ?
-        if_tree->second->second->second : if_tree->second->second;
+    Conditional cond = {
+        .condition = populate_expression(if_tree->second->first),
+        .if_token = if_tree->first->token};
+    SyntaxTree *if_body = IS_TOKEN(if_tree->second->second->first, THEN)
+                              ? if_tree->second->second->second
+                              : if_tree->second->second;
     // Handles else statements.
-    if (!IS_LEAF(
-        if_body) && !IS_LEAF(if_body->second) && IS_TOKEN(if_body->second->first, ELSE)) {
+    if (!IS_LEAF(if_body) && !IS_LEAF(if_body->second) &&
+        IS_TOKEN(if_body->second->first, ELSE)) {
       else_body = if_body->second->second;
       if_body = if_body->first;
     } else {
@@ -627,7 +625,7 @@ ImplPopulate(conditional_expression, const SyntaxTree *stree) {
 
 void delete_if_else(IfElse *if_else) {
   void delete_conditional(void *ptr) {
-    Conditional *cond = (Conditional*) ptr;
+    Conditional *cond = (Conditional *)ptr;
     delete_expression(cond->condition);
     delete_expression(cond->body);
   }
@@ -644,12 +642,12 @@ ImplDelete(conditional_expression) {
 
 int produce_if_else(IfElse *if_else, Tape *tape) {
   int i, num_ins = 0, num_conds = expando_len(if_else->conditions),
-      num_cond_ins = 0, num_body_ins = 0;
+         num_cond_ins = 0, num_body_ins = 0;
 
-  Expando *conds = expando(Tape*, DEFAULT_EXPANDO_SIZE);
-  Expando *bodies = expando(Tape*, DEFAULT_EXPANDO_SIZE);
+  Expando *conds = expando(Tape *, DEFAULT_EXPANDO_SIZE);
+  Expando *bodies = expando(Tape *, DEFAULT_EXPANDO_SIZE);
   for (i = 0; i < num_conds; ++i) {
-    Conditional *cond = (Conditional*) expando_get(if_else->conditions, i);
+    Conditional *cond = (Conditional *)expando_get(if_else->conditions, i);
     Tape *condition = tape_create();
     Tape *body = tape_create();
     num_cond_ins += produce_instructions(cond->condition, condition);
@@ -673,29 +671,30 @@ int produce_if_else(IfElse *if_else, Tape *tape) {
   int num_body_jump = num_body_ins;
   // Iterate and write all conditions forward.
   for (i = 0; i < expando_len(if_else->conditions); ++i) {
-    Conditional *cond = (Conditional*) expando_get(if_else->conditions, i);
-    Tape *condition = *((Tape**) expando_get(conds, i));
-    Tape *body = *((Tape**) expando_get(bodies, i));
+    Conditional *cond = (Conditional *)expando_get(if_else->conditions, i);
+    Tape *condition = *((Tape **)expando_get(conds, i));
+    Tape *body = *((Tape **)expando_get(bodies, i));
 
     num_cond_ins -= tape_len(condition);
     num_body_jump -= tape_len(body);
 
     tape_append(tape, condition);
     if (i == num_conds - 1) {
-      tape->ins_int(tape, IFN,
+      tape->ins_int(
+          tape, IFN,
           num_body_ins + num_conds + (NULL == if_else->else_exp ? -1 : 0),
           cond->if_token);
     } else {
       tape->ins_int(tape, IF,
-          num_cond_ins + num_body_jump + 2 * (num_conds - i - 1),
-          cond->if_token);
+                    num_cond_ins + num_body_jump + 2 * (num_conds - i - 1),
+                    cond->if_token);
     }
     tape_delete(condition);
   }
   // Iterate and write all bodies backward.
   for (i = num_conds - 1; i >= 0; --i) {
-    Conditional *cond = (Conditional*) expando_get(if_else->conditions, i);
-    Tape *body = *((Tape**) expando_get(bodies, i));
+    Conditional *cond = (Conditional *)expando_get(if_else->conditions, i);
+    Tape *body = *((Tape **)expando_get(bodies, i));
     num_body_ins -= tape_len(body);
     tape_append(tape, body);
     if (i > 0 || NULL != if_else->else_exp) {
@@ -723,9 +722,10 @@ void set_anon_function_def(const SyntaxTree *fn_identifier, Function *func) {
 }
 
 Function populate_anon_function(const SyntaxTree *stree) {
-  return populate_function_variant(stree, anon_function_definition,
-      anon_signature_const, anon_signature_nonconst, anon_identifier,
-      set_anon_function_def);
+  return populate_function_variant(
+      stree, anon_function_definition, anon_signature_const,
+      anon_signature_nonconst, anon_identifier, function_arguments_no_args,
+      function_arguments_present, set_anon_function_def, set_function_args);
 }
 
 ImplPopulate(anon_function_definition, const SyntaxTree *stree) {
@@ -748,12 +748,12 @@ int produce_anon_function(Function *func, Tape *tape) {
   }
   func_ins += tmp->ins_no_arg(tmp, RET, func->def_token);
 
-  num_ins += tape->ins_int(tape, JMP, func_ins, func->def_token)
-      + tape->anon_label(tape, func->def_token);
+  num_ins += tape->ins_int(tape, JMP, func_ins, func->def_token) +
+             tape->anon_label(tape, func->def_token);
   tape_append(tape, tmp);
   tape_delete(tmp);
-  num_ins += func_ins + tape->ins_text(tape, RES, SELF, func->def_token)
-      + tape->ins_anon(tape, GET, func->def_token);
+  num_ins += func_ins + tape->ins_text(tape, RES, SELF, func->def_token) +
+             tape->ins_anon(tape, GET, func->def_token);
 
   return num_ins;
 }
@@ -815,17 +815,17 @@ void expression_finalize() {
   map_finalize(&deleters);
 }
 
-ExpressionTree* populate_expression(const SyntaxTree *tree) {
-  Populator populate = (Populator) map_lookup(&populators, tree->expression);
+ExpressionTree *populate_expression(const SyntaxTree *tree) {
+  Populator populate = (Populator)map_lookup(&populators, tree->expression);
   if (NULL == populate) {
     ERROR("Populator not found: %s",
-        map_lookup(&parse_expressions, tree->expression));
+          map_lookup(&parse_expressions, tree->expression));
   }
   return populate(tree);
 }
 
 int produce_instructions(ExpressionTree *tree, Tape *tape) {
-  Producer produce = (Producer) map_lookup(&producers, tree->type);
+  Producer produce = (Producer)map_lookup(&producers, tree->type);
   if (NULL == produce) {
     ERROR("Producer not found.");
   }
@@ -833,11 +833,11 @@ int produce_instructions(ExpressionTree *tree, Tape *tape) {
 }
 
 void delete_expression(ExpressionTree *tree) {
-  EDeleter delete = (EDeleter) map_lookup(&deleters, tree->type);
+  EDeleter delete = (EDeleter)map_lookup(&deleters, tree->type);
   if (NULL == delete) {
     ERROR("Deleter not found: %s", map_lookup(&parse_expressions, tree->type));
   }
-  delete(tree);
+  delete (tree);
   DEALLOC(tree);
 }
 

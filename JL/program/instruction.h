@@ -58,6 +58,7 @@ typedef enum {
   GET,
   GTSH,  // GET+PUSH
   FLD,
+  FLDC,
   IS,
   ADR,
   RAIS,

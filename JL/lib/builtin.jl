@@ -361,44 +361,14 @@ class String {
     self.find__(substr, index)
   }
   def find_all(substr, index=0) {
-    ; Remove after the bug is fixed.
-    if ~index {
-      index = 0
-    }
     self.find_all__(substr, index)
   }
   def __in__(substr) {
     self.find(substr) != None
   }
-  
-  def equals_range(array, start, end) {
-    if (start < 0) return False
-    if (end > array.len) return False
-    if((array.len - start) > self.len) return False
-    if(array.len < end) return False
  
-    for i=start, i<end, i=i+1 {
-      if ~$module.eq(array[i], self[i]) {
-        return False
-      }
-    }
-    True
-  }
-  def eq(o) {
-    if ~o return False
-    if o.len != self.len return False
-    self.equals_range(o, 0, self.len)
-  }
   def starts_with(array) {
-    if array.len > self.len {
-      return False 
-    }
-    for i=0, i<array.len, i=i+1 {
-      if $module.eq(array[i], self[i]) {
-        return False
-      }
-    }
-    True
+    return equals_range(array, 0, array.len)
   }
   def ends_with(array) {
     if array.len > self.len {
@@ -412,13 +382,6 @@ class String {
       }
     }
     True
-  }
-  def copy() {
-    cpy = ''
-    for i=0, i<self.len, i=i+1 {
-      cpy.append(self[i])
-    }
-    cpy
   }
   def join(array) {
     if array.len == 0 {
@@ -437,23 +400,8 @@ class String {
     IndexIterator(self)
   }
   def substr(start, end=self.len) {
-    string = ''
-    ; Remove once this bug is fixed
-    if ~end {
-      end = self.len
-    }
     return self.substr__(start, end)
   }
-}
-
-; Immutable String
-class Immutable {
-  def new(mo) {
-    self.mo = mo
-  }
-  def __index__(i) self.mo[i]
-  def __in__(o) o in self.mo
-  def to_s() self.mo.to_s()
 }
 
 class Iterator {

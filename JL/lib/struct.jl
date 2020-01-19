@@ -18,12 +18,12 @@ class Map {
   }
   def __set__(const k, const v) {
     pos = self.hash__(k)
-    if ~self.table[pos] {
+    entries = self.table[pos]
+    if ~entries {
       self.table[pos] = [(k,v)]
       self.keys.append(k)
       return None
     }
-    entries = self.table[pos]
     for i=0, i<entries.len, i=i+1 {
       if k == entries[i][0] {
         old_v = entries[i][1]
@@ -37,10 +37,10 @@ class Map {
   }
   def __index__(const k) {
     pos = self.hash__(k)
-    if ~self.table[pos] {
+    entries = self.table[pos]
+    if ~entries {
       return None
     }
-    entries = self.table[pos]
     for i=0, i<entries.len, i=i+1 {
       if eq(k, entries[i][0]) {
         return entries[i][1]
@@ -77,7 +77,7 @@ class Cache {
     self.map = Map(255)
     self.mutex = sync.Mutex()
   }
-  def get(k, factory, args, default) {
+  def get(k, factory, args, default=None) {
     self.mutex.acquire()
     v = self.map[k]
     if v {

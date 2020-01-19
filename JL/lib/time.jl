@@ -9,9 +9,9 @@ class Timer {
     self.reset()
     self.start_usec = now_usec()
   }
-  def mark(name) {
+  def mark(mark_name) {
     elapsed = now_usec() - self.start_usec
-    self.timestamps.append((name, elapsed))
+    self.timestamps.append((mark_name, elapsed))
     return elapsed
   }
   def elapsed_usec() {

@@ -469,6 +469,70 @@ Element string_hash(VM *vm, Thread *t, ExternalData *data, Element *arg) {
       string_hasher_len(String_cstr(string), String_size(string)));
 }
 
+Element string_copy(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  return string_create_len(vm, String_cstr(string), String_size(string));
+}
+
+Element string_eq(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  String *string = map_lookup(&data->state, STRING_NAME);
+  ASSERT(NOT_NULL(string));
+  if (!ISTYPE(*arg, class_string)) {
+    return create_int(0);
+  }
+  String *other = String_extract(*arg);
+  ASSERT(NOT_NULL(other));
+
+  size_t string_len = String_size(string);
+  if (string_len != String_size(other)) {
+    return create_int(0);
+  }
+
+  int cmp = strncmp(String_cstr(string), String_cstr(other), string_len);
+  return create_int(cmp);
+}
+
+Element string_equals_range(VM *vm, Thread *t, ExternalData *data,
+                            Element *arg) {
+  String *string = String_extract(data->object);
+  size_t string_len = String_size(string);
+  if (!is_object_type(arg, TUPLE)) {
+    return throw_error(vm, t, "Expected more than one arg.");
+  }
+  Tuple *args = arg->obj->tuple;
+  if (tuple_size(args) != 3) {
+    return throw_error(vm, t, "Expected 3 arguments.");
+  }
+
+  Element other = tuple_get(args, 0);
+  if (!ISTYPE(other, class_string)) {
+    return throw_error(vm, t, "other is not a String.");
+  }
+  String *other_str = String_extract(other);
+  size_t other_len = String_size(other_str);
+
+  Element index_start = tuple_get(args, 1);
+  if (!is_value_type(&index_start, INT)) {
+    return throw_error(vm, t, "Expected start to be Int.");
+  }
+
+  Element index_end = tuple_get(args, 2);
+  if (!is_value_type(&index_end, INT)) {
+    return throw_error(vm, t, "Expected end to be an Int.");
+  }
+
+  if (index_start.val.int_val < 0 || index_end.val.int_val > other_len ||
+      other_len - index_start.val.int_val > string_len ||
+      other_len < index_end.val.int_val) {
+    return create_int(0);
+  }
+  int cmp = strncmp(String_cstr(string) + index_start.val.int_val,
+                    String_cstr(other_str) + index_start.val.int_val,
+                    index_end.val.int_val - index_start.val.int_val);
+  return create_int(cmp);
+}
+
 void merge_string_class(VM *vm, Element string_class) {
   merge_external_class(vm, string_class, string_constructor,
                        string_deconstructor);
@@ -493,6 +557,10 @@ void merge_string_class(VM *vm, Element string_class) {
                       string_rshrink);
   add_external_method(vm, string_class, strings_intern("clear"), string_clear);
   add_external_method(vm, string_class, strings_intern("split"), string_split);
+  add_external_method(vm, string_class, strings_intern("copy"), string_copy);
+  add_external_method(vm, string_class, strings_intern("eq"), string_eq);
+  add_external_method(vm, string_class, strings_intern("equals_range"),
+                      string_equals_range);
   //  add_external_method(vm, string_class,
   //                      strings_intern("partition_expect_sorted__"),
   //                      string_partition);
