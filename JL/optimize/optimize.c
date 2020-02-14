@@ -42,6 +42,7 @@ void optimize_init() {
   register_optimizer("PushRes2", optimizer_PushRes2);
   register_optimizer("SimpleMath", optimizer_SimpleMath);
   register_optimizer("GetPush", optimizer_GetPush);
+  register_optimizer("Nil", optimizer_Nil);
   register_optimizer("GetSpecial", optimizer_GetSpecial);
 }
 
@@ -143,6 +144,8 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
       c_new.ins.op = a->op;
       c_new.ins.param = VAL_PARAM;
       c_new.ins.val = a->val;
+    } else if (REPLACE == a->type) {
+      c_new.ins = a->ins;
     }
     tape_insc(new_tape, &c_new);
   }

@@ -268,7 +268,8 @@ int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
     if (cur->exp != NULL) {
       num_ins += produce_instructions(cur->exp, tape);
     }
-    num_ins += tape->ins_no_arg(tape, CALL, cur->token);
+    num_ins +=
+        tape->ins_no_arg(tape, (NULL == cur->exp) ? CLLN : CALL, cur->token);
   } else if (cur->type == Postfix_array_index) {
     num_ins += tape->ins_no_arg(tape, PUSH, cur->token) +
                produce_instructions(cur->exp, tape) +
@@ -280,7 +281,7 @@ int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
           tape->ins_no_arg(tape, PUSH, cur->token) +
           ((*next)->exp != NULL ? produce_instructions((*next)->exp, tape)
                                 : 0) +
-          tape_ins(tape, CALL, cur->id);
+          tape_ins(tape, (NULL == (*next)->exp) ? CLLN : CALL, cur->id);
       // Advance past the function call since we have already handled it.
       ++(*i);
       *next = (*i + 1 == num_postfix)

@@ -46,19 +46,19 @@ def log10(x) {
 def sqrt(x) pow(x, 0.5) 
 
 class Rect {
-  def new(top, left, width, height) {
+  new(top, left, width, height) {
     self.top = top
     self.left = left
     self.width = width
     self.height = height
   }
-  def area() { self.width * self.height }
-  def contains(other) {
+  method area() { self.width * self.height }
+  method contains(other) {
     if ~(other is Rect) {
       False
     } else self.left <= other & self.top <= other.top & self.width >= other.width & self.height >= other.width
   }
-  def to_s() {
+  method to_s() {
     rect = ''
     for i=0, i<self.top, i=i+1
       rect.append('\n')

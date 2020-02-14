@@ -307,6 +307,8 @@ VM *vm_create(ArgStore *store) {
                          (vm->modules = create_obj(vm->graph)));
   memory_graph_set_field(vm->graph, vm->root, NAME_KEY,
                          string_create(vm, MODULES));
+  memory_graph_set_field(vm->graph, vm->root, EMPTY_TUPLE_KEY,
+                         (vm->empty_tuple = create_tuple(vm->graph)));
 
   const char *builtin_dir = argstore_lookup_string(store, ArgKey__BUILTIN_DIR);
   const Arg *builtin_files = argstore_get(store, ArgKey__BUILTIN_FILES);
@@ -583,6 +585,8 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
     case PUSH:
       t_pushstack(t, (Element)t_get_resval(t));
       return true;
+    case CLLN:
+      t_set_resval(t, vm->empty_tuple);  // @suppress("No break at end of case")
     case CALL:
       elt = t_popstack(t, &has_error);
       if (has_error) {
@@ -692,6 +696,12 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         return true;
       }
       t_set_resval(t, elt);
+      return true;
+    case RNIL:
+      t_set_resval(t, create_none());
+      return true;
+    case PNIL:
+      t_pushstack(t, create_none());
       return true;
     case PEEK:
       t_set_resval(t, t_peekstack(t, 0));
@@ -874,6 +884,9 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       }
       memory_graph_set_var(vm->graph, block, ins.str, t_get_resval(t));
       break;
+    case LET:
+      memory_graph_set_field(vm->graph, block, ins.str, t_get_resval(t));
+      break;
     case LMDL:
       module = vm_lookup_module(vm, ins.str);
       if (NONE == module.type) {
@@ -896,6 +909,10 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
         vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
         return true;
       }
+      memory_graph_set_field(vm->graph, block, ins.str, t_get_resval(t));
+      make_const_ref(block.obj, ins.id);
+      break;
+    case LETC:
       memory_graph_set_field(vm->graph, block, ins.str, t_get_resval(t));
       make_const_ref(block.obj, ins.id);
       break;
@@ -974,7 +991,7 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
           new_res_val.val.char_val++;
           break;
       }
-      memory_graph_set_field(vm->graph, block, ins.str, new_res_val);
+      memory_graph_set_var(vm->graph, block, ins.str, new_res_val);
       t_set_resval(t, new_res_val);
       break;
     case DEC:
@@ -1002,6 +1019,8 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       memory_graph_set_field(vm->graph, block, ins.str, new_res_val);
       t_set_resval(t, new_res_val);
       break;
+    case CLLN:
+      t_set_resval(t, vm->empty_tuple);  // @suppress("No break at end of case")
     case CALL:
       obj = t_popstack(t, &has_error);
       if (has_error) {

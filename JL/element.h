@@ -19,8 +19,6 @@
 #include "datastructure/set.h"
 #include "ltable/ltable.h"
 
-#define ENABLE_MEMORY_LOCK
-
 #define VALUE_OF(val)  \
   (((val).type == INT) \
        ? val.int_val   \

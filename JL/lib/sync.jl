@@ -6,61 +6,61 @@ self.INIFINITE = 2147483647
 self.LOCK_ACQUIRED = 0
 
 class AtomicInt {
-  def new(orig) {
-    self.i = orig
-    self.mutex = Mutex()
+  field mutex
+  new(field i) {
+    mutex = Mutex()
   }
-  def set(v) {
-    self.mutex.acquire()
-    self.i = v
-    self.mutex.release()
+  method set(v) {
+    mutex.acquire()
+    i = v
+    mutex.release()
   }
-  def get() {
-    self.mutex.acquire()
-    cpy = self.i
-    self.mutex.release()
+  method get() {
+    mutex.acquire()
+    cpy = i
+    mutex.release()
     return cpy
   }
-  def inc(a) {
-    self.mutex.acquire()
-    self.i = self.i + a
-    self.mutex.release()
+  method inc(a) {
+    mutex.acquire()
+    i = i + a
+    mutex.release()
   }
-  def to_s() {
-    self.mutex.acquire()
-    tos = str(self.i)
-    self.mutex.release()
+  method to_s() {
+    mutex.acquire()
+    tos = str(i)
+    mutex.release()
     return tos
   }
 }
 
 class ThreadPoolExecutor {  
-  def new(num_threads) {
-    self.num_threads = num_threads
-    self.mutex = Mutex()
-    self.task_lock = Semaphore(0, num_threads)
-    self.threads = []
-    self.tasks = []
+  field mutex, task_lock, threads, tasks
+  new(field num_threads) {
+    mutex = Mutex()
+    task_lock = Semaphore(0, num_threads)
+    threads = []
+    tasks = []
     for i=0, i<num_threads, i=i+1 {
-      self.threads.append(Thread(self.execute_task, None))
+      threads.append(Thread(execute_task, None))
     }
-    for (_,t) in self.threads {
+    for (_,t) in threads {
       t.start()
     }
   }
   
-  def execute_task() {
+  method execute_task() {
     task = None
     while True {
-      self.task_lock.lock(INFINITE)
+      task_lock.lock(INFINITE)
 
-      self.mutex.acquire()
-      if self.tasks.len > 0 {
-        task = self.tasks.pop(1)[0]
+      mutex.acquire()
+      if tasks.len > 0 {
+        task = tasks.pop(1)[0]
       } else {
-        self.task_lock.unlock()
+        task_lock.unlock()
       }
-      self.mutex.release()
+      mutex.release()
 
       if task != None {
         task.exec()
@@ -69,70 +69,69 @@ class ThreadPoolExecutor {
     }
   }
   
-  def execute_future(f) {
-    self.mutex.acquire()
-    self.tasks.append(f)
-    self.mutex.release()
+  method execute_future(f) {
+    mutex.acquire()
+    tasks.append(f)
+    mutex.release()
     
-    self.task_lock.unlock()
+    task_lock.unlock()
     return f
   }
   
-  def execute(fn, args=None) {
+  method execute(fn, args=None) {
     f = Future(fn, args, self)
-    return self.execute_future(f)
+    return execute_future(f)
   }
 }
 
 class Future {
-  def new(fn, args, ex) {
-    self.fn = fn
-    self.args = args
-    self.ex = ex
-    self.listeners = []
-    self.listeners_mutex = Mutex()
-    self.result = None
-    self.has_result = False
-    self.read_mutex = Semaphore(0, 1)
+  field listeners, listeners_mutex, result, has_result, read_mutex
+        
+  new(field fn, field args, field ex) {
+    listeners=[]
+    listeners_mutex = Mutex()
+    result = None
+    has_result = False
+    read_mutex = Semaphore(0, 1)
   }
   
-  def exec() {
-    self.result = self.fn(self.args)
-    self.listeners_mutex.acquire()
-    self.has_result = True
-    for (_,f) in self.listeners {
-      f.args = self.result
-      self.ex.execute_future(f)
+  method exec() {
+    result = fn(args)
+    listeners_mutex.acquire()
+    has_result = True
+    for (_,f) in listeners {
+      f.args = result
+      ex.execute_future(f)
     }
-    self.listeners_mutex.release()
-    self.read_mutex.unlock()
+    listeners_mutex.release()
+    read_mutex.unlock()
   }
   
-  def get() {
+  method get() {
     while True {
-      self.read_mutex.lock(INFINITE)
-      if ~self.has_result {
-        self.read_mutex.unlock()
+      read_mutex.lock(INFINITE)
+      if ~has_result {
+        read_mutex.unlock()
         continue
       }
-      self.read_mutex.unlock()
-      return self.result
+      read_mutex.unlock()
+      return result
     }
   }
  
-  def thenDo(fn) {
-    f = Future(fn, None, self.ex)
-    self.listeners_mutex.acquire()
-    if self.has_result {
+  method thenDo(fn) {
+    f = Future(fn, None, ex)
+    listeners_mutex.acquire()
+    if has_result {
       ex.execute_future(f)
     } else {
-      self.listeners.append(f)
+      listeners.append(f)
     }
-    self.listeners_mutex.release()
+    listeners_mutex.release()
     return f
   }
   
-  def wait() {
-    self.get()
+  method wait() {
+    get()
   }
 }

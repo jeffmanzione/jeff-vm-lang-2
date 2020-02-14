@@ -24,7 +24,7 @@ typedef struct Module_ Module;
 struct VM_ {
   ArgStore *store;
   MemoryGraph *graph;
-  Element root, modules;
+  Element root, modules, empty_tuple;
   ThreadHandle debug_mutex, module_init_mutex;
 };
 

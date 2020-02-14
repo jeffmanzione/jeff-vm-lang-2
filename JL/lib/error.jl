@@ -5,14 +5,14 @@ import io
 import struct
 
 class Token {
-  def new(text, line, col, fn, line_text) {
+  new(text, line, col, fn, line_text) {
     self.text = text
     self.line = line
     self.col = col
     self.fn = fn
     self.line_text = line_text
   }
-  def to_s() {
+  method to_s() {
     concat('Token("', self.text, '":',
            self.line, ',',
            self.col, ',',
@@ -22,13 +22,13 @@ class Token {
 }
 
 class StackLine {
-  def new(block) {
+  new(block) {
     self.mod = block.$module
     self.caller = block.$caller
     self.ip = block.$ip
     self.token = Token(builtin.token__(self.mod, self.ip))    
   }
-  def to_s() {
+  method to_s() {
     tos = ''
     if self.caller {
       if self.caller is MethodInstance {
@@ -46,7 +46,7 @@ class StackLine {
 }
 
 class Error {
-  def new(msg) {
+  new(msg) {
     self.msg = if (msg is String) then msg else if (~msg) 'None' else concat(msg)
     self.stack_lines = []
     ; Start at 1 since 0-th block will be this loop.
@@ -55,7 +55,7 @@ class Error {
       self.stack_lines.append(StackLine(block))
     }
   }
-  def to_s() {
+  method to_s() {
     head = self.stack_lines[0]
     tok = head.token
     tos = concat('Error in ', tok.fn,

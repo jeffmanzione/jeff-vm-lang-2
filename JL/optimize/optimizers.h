@@ -44,4 +44,7 @@ void optimizer_SimpleMath(OptimizeHelper *oh, const Tape *const tape, int start,
                           int end);
 void optimizer_GetSpecial(OptimizeHelper *oh, const Tape *const tape, int start,
                           int end);
+
+void optimizer_Nil(OptimizeHelper *oh, const Tape *const tape, int start,
+                   int end);
 #endif /* OPTIMIZERS_H_ */

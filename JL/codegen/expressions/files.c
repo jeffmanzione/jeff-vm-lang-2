@@ -46,24 +46,21 @@ ImplProduce(import_statement, Tape *tape) {
 }
 
 Argument populate_argument(const SyntaxTree *stree) {
-  Argument arg;
+  Argument arg = {.is_const = false,
+                  .const_token = NULL,
+                  .is_field = false,
+                  .has_default = false,
+                  .default_value = NULL};
   const SyntaxTree *argument = stree;
   if (IS_SYNTAX(argument, const_function_argument)) {
     arg.is_const = true;
     arg.const_token = argument->first->token;
     argument = argument->second;
-  } else {
-    arg.is_const = false;
-    arg.const_token = NULL;
   }
-
   if (IS_SYNTAX(argument, function_arg_elt_with_default)) {
     arg.has_default = true;
     arg.default_value = populate_expression(argument->second->second);
     argument = argument->first;
-  } else {
-    arg.has_default = false;
-    arg.default_value = NULL;
   }
 
   ASSERT(IS_SYNTAX(argument, identifier));
@@ -188,7 +185,7 @@ int produce_argument(Argument *arg, Tape *tape) {
            tape->ins_text(tape, RES, SELF, arg->arg_name) +
            tape->ins(tape, arg->is_const ? FLDC : FLD, arg->arg_name);
   }
-  return tape->ins(tape, arg->is_const ? SETC : SET, arg->arg_name);
+  return tape->ins(tape, arg->is_const ? LETC : LET, arg->arg_name);
 }
 
 int produce_all_arguments(Arguments *args, Tape *tape) {
@@ -212,6 +209,7 @@ int produce_all_arguments(Arguments *args, Tape *tape) {
       tape_delete(tmp);
     } else {
       if (i == num_args - 1) {
+        // Pop for last arg.
         num_ins += tape->ins_no_arg(tape, RES, args->token);
       } else {
         num_ins += tape->ins_no_arg(tape, PEEK, arg->arg_name);
@@ -233,39 +231,40 @@ int produce_arguments(Arguments *args, Tape *tape) {
   num_ins += tape->ins_no_arg(tape, PUSH, args->token);
 
   // Handle case where only 1 arg is passed and the rest are optional.
-  if (args->count_required == 1) {
-    Argument *first = (Argument *)expando_get(args->args, 0);
-    num_ins += tape->ins_no_arg(tape, TLEN, first->arg_name) +
-               +tape->ins_no_arg(tape, PUSH, first->arg_name) +
-               tape->ins_int(tape, PUSH, -1, first->arg_name) +
-               tape->ins_no_arg(tape, EQ, first->arg_name);
+  Argument *first = (Argument *)expando_get(args->args, 0);
+  num_ins += tape->ins_no_arg(tape, TLEN, first->arg_name) +
+             +tape->ins_no_arg(tape, PUSH, first->arg_name) +
+             tape->ins_int(tape, PUSH, -1, first->arg_name) +
+             tape->ins_no_arg(tape, EQ, first->arg_name);
 
-    Tape *defaults = tape_create();
-    int defaults_ins = 0;
-    defaults_ins += defaults->ins_no_arg(defaults, RES, first->arg_name) +
-                    produce_argument(first, defaults);
-    for (i = 1; i < num_args; ++i) {
-      Argument *arg = (Argument *)expando_get(args->args, i);
-      defaults_ins += produce_instructions(arg->default_value, defaults) +
-                      produce_argument(arg, defaults);
+  Tape *defaults = tape_create();
+  int defaults_ins = 0;
+  defaults_ins += defaults->ins_no_arg(defaults, RES, first->arg_name) +
+                  produce_argument(first, defaults);
+  for (i = 1; i < num_args; ++i) {
+    Argument *arg = (Argument *)expando_get(args->args, i);
+    if (arg->has_default) {
+      defaults_ins += produce_instructions(arg->default_value, defaults);
+    } else {
+      defaults_ins +=
+          defaults->ins_text(defaults, RES, NIL_KEYWORD, arg->arg_name);
     }
-
-    Tape *non_defaults = tape_create();
-    int nondefaults_ins = 0;
-    nondefaults_ins += produce_all_arguments(args, non_defaults);
-
-    defaults_ins +=
-        defaults->ins_int(defaults, JMP, nondefaults_ins, first->arg_name);
-
-    num_ins += tape->ins_int(tape, IFN, defaults_ins, first->arg_name);
-    tape_append(tape, defaults);
-    tape_append(tape, non_defaults);
-    tape_delete(defaults);
-    tape_delete(non_defaults);
-    num_ins += defaults_ins + nondefaults_ins;
-  } else {
-    num_ins += produce_all_arguments(args, tape);
+    defaults_ins += produce_argument(arg, defaults);
   }
+
+  Tape *non_defaults = tape_create();
+  int nondefaults_ins = 0;
+  nondefaults_ins += produce_all_arguments(args, non_defaults);
+
+  defaults_ins +=
+      defaults->ins_int(defaults, JMP, nondefaults_ins, first->arg_name);
+
+  num_ins += tape->ins_int(tape, IFN, defaults_ins, first->arg_name);
+  tape_append(tape, defaults);
+  tape_append(tape, non_defaults);
+  tape_delete(defaults);
+  tape_delete(non_defaults);
+  num_ins += defaults_ins + nondefaults_ins;
   return num_ins;
 }
 

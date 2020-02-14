@@ -1,7 +1,8 @@
 module io
 
 class FileInternal {
-  def new(fn, rw, a, binary) {
+  field file
+  new(fn, rw, a, binary) {
     mode = rw.copy()
     if binary {
       mode.append('b')
@@ -9,43 +10,45 @@ class FileInternal {
     if a {
       mode.append('+')
     }
-    self.file = File__(fn, mode)
-    if ~self.file.success {
+    file = File__(fn, mode)
+    if ~file.success {
       raise Error(concat('Failed to open file. FileInternal(',
                       fn, ',', rw, ',', a, ',', binary,')'))
     }
   }
-  def rewind() self.file.rewind__()
-  def gets(n) self.file.gets__(n)
-  def getline() self.file.getline__()
-  def getlines() self.file.getall__()
-  def puts(s) self.file.puts__(s)
-  def close() self.file.close__()
+  method rewind() file.rewind__()
+  method gets(n) file.gets__(n)
+  method getline() file.getline__()
+  method getlines() file.getall__()
+  method puts(s) file.puts__(s)
+  method close() file.close__()
 }
 
 class FileReader {
-  def new(fn, binary=False) {
-    self.fi = FileInternal(fn, 'r', False, binary)
+  field fi
+  new(fn, binary=False) {
+    fi = FileInternal(fn, 'r', False, binary)
   }
-  def rewind() self.fi.rewind()
-  def gets(n) self.fi.gets(n)
-  def getline() self.fi.getline()
-  def getlines() self.fi.getlines()
-  def getall() self.fi.getall()
-  def close() self.fi.close()
+  method rewind() fi.rewind()
+  method gets(n) fi.gets(n)
+  method getline() fi.getline()
+  method getlines() fi.getlines()
+  method getall() fi.getall()
+  method close() fi.close()
 }
 
 class FileWriter {
-  def new(fn, append=False, binary=False) {
-    self.fi = FileInternal(fn, 'w', append, binary)
+  field fi
+  new(fn, append=False, binary=False) {
+    fi = FileInternal(fn, 'w', append, binary)
   }
-  def rewind() self.fi.rewind()
-  def write(s) self.fi.puts(s)
-  def writeln(s) {
-    self.fi.puts(s)
-    self.fi.puts('\n')
+  method rewind() fi.rewind()
+  method write(s) fi.puts(s)
+  method writeln(s) {
+    fi.puts(s)
+    fi.puts('\n')
   }
-  def close() self.fi.close()
+  method close() fi.close()
 }
 
 self.IN = FileReader('__STDIN__')

@@ -118,22 +118,71 @@ Arguments set_constructor_args(const SyntaxTree *stree, const Token *token) {
   return args;
 }
 
+void set_method_def(const SyntaxTree *fn_identifier, Function *func) {
+  ASSERT(IS_SYNTAX(fn_identifier, method_identifier));
+  func->def_token = fn_identifier->first->token;
+  func->fn_name = fn_identifier->second->token;
+}
+
+Function populate_method(const SyntaxTree *stree) {
+  return populate_function_variant(
+      stree, method_definition, method_signature_const,
+      method_signature_nonconst, method_identifier, function_arguments_no_args,
+      function_arguments_present, set_method_def, set_function_args);
+}
+
+void set_new_def(const SyntaxTree *fn_identifier, Function *func) {
+  ASSERT(IS_SYNTAX(fn_identifier, new_expression));
+  func->def_token = fn_identifier->token;
+  func->fn_name = fn_identifier->token;
+}
+
 Function populate_constructor(const SyntaxTree *stree) {
   return populate_function_variant(stree, new_definition, new_signature_const,
-                                   new_signature_nonconst, new_identifier,
+                                   new_signature_nonconst, new_expression,
                                    new_arguments_no_args, new_arguments_present,
-                                   set_function_def, set_constructor_args);
+                                   set_new_def, set_constructor_args);
+}
+
+Field populate_field_statement(const Token *field_token,
+                               const SyntaxTree *stree) {
+  Field field = {.name = stree->token, .field_token = field_token};
+  return field;
+}
+
+void populate_field_statements(const SyntaxTree *stree, Class *class) {
+  ASSERT(IS_TOKEN(stree->first, FIELD));
+  const Token *field_token = stree->first->token;
+
+  if (!IS_SYNTAX(stree->second, identifier_list)) {
+    ASSERT(IS_SYNTAX(stree->second, identifier));
+    Field field = populate_field_statement(field_token, stree->second);
+    expando_append(class->fields, &field);
+    return;
+  }
+  Field field = populate_field_statement(field_token, stree->second->first);
+  expando_append(class->fields, &field);
+
+  const SyntaxTree *statement = stree->second->second;
+  while (true) {
+    if (IS_TOKEN(statement->first, COMMA)) {
+      Field field = populate_field_statement(field_token, statement->second);
+      expando_append(class->fields, &field);
+      break;
+    }
+    Field field =
+        populate_field_statement(field_token, statement->first->second);
+    expando_append(class->fields, &field);
+    statement = statement->second;
+  }
 }
 
 void populate_class_statement(Class *class, const SyntaxTree *stree) {
   if (IS_SYNTAX(stree, field_statement)) {
-    ASSERT(IS_TOKEN(stree->first, FIELD), IS_LEAF(stree->second));
-    Field field = {.name = stree->second->token,
-                   .field_token = stree->first->token};
-    expando_append(class->fields, &field);
-  } else if (IS_SYNTAX(stree, function_definition)) {
-    Function func = populate_function(stree);
-    expando_append(class->methods, &func);
+    populate_field_statements(stree, class);
+  } else if (IS_SYNTAX(stree, method_definition)) {
+    Function method = populate_method(stree);
+    expando_append(class->methods, &method);
   } else if (IS_SYNTAX(stree, new_definition)) {
     class->constructor = populate_constructor(stree);
     class->has_constructor = true;

@@ -490,7 +490,7 @@ Element string_eq(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   }
 
   int cmp = strncmp(String_cstr(string), String_cstr(other), string_len);
-  return create_int(cmp);
+  return create_int(cmp == 0);
 }
 
 Element string_equals_range(VM *vm, Thread *t, ExternalData *data,

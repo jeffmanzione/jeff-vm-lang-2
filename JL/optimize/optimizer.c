@@ -25,6 +25,11 @@ void o_Remove(OptimizeHelper *oh, int index) {
   add_adjustment(oh, &a, index);
 }
 
+void o_Replace(OptimizeHelper *oh, int index, Ins ins) {
+  Adjustment a = {.type = REPLACE, .ins = ins};
+  add_adjustment(oh, &a, index);
+}
+
 void o_SetOp(OptimizeHelper *oh, int index, Op op) {
   Adjustment a = {.type = SET_OP, .op = op};
   add_adjustment(oh, &a, index);

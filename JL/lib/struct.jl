@@ -1,27 +1,27 @@
 module struct
 
 import builtin
+import io
 import sync
 
 class Map {
-  def new(sz) {
-    self.sz = sz
+  new(field sz) {
     self.table = []
-    self.table[self.sz] = None
+    self.table[sz] = None
     self.keys = []
   }
-  def hash__(k) {
+  method hash__(k) {
     hval = builtin.hash(k)
-    pos = hval % self.sz
+    pos = hval % sz
     if pos < 0 pos = -pos
     return pos
   }
-  def __set__(const k, const v) {
-    pos = self.hash__(k)
-    entries = self.table[pos]
+  method __set__(const k, const v) {
+    pos = hash__(k)
+    entries = table[pos]
     if ~entries {
-      self.table[pos] = [(k,v)]
-      self.keys.append(k)
+      table[pos] = [(k,v)]
+      keys.append(k)
       return None
     }
     for i=0, i<entries.len, i=i+1 {
@@ -32,12 +32,12 @@ class Map {
       }
     }
     entries.append((k,v))
-    self.keys.append(k)
+    keys.append(k)
     return None
   }
-  def __index__(const k) {
-    pos = self.hash__(k)
-    entries = self.table[pos]
+  method __index__(const k) {
+    pos = hash__(k)
+    entries = table[pos]
     if ~entries {
       return None
     }
@@ -48,40 +48,43 @@ class Map {
     }
     return None
   }
-  def __in__(const k) {
-    self.__index__(k) != None
+  method __in__(const k) {
+    __index__(k) != None
   }
   
-  def iter() const {
-    KVIterator(self.keys.iter(), self)
+  method iter() const {
+    KVIterator(keys.iter(), self)
   }
 }
 
 class Set {
-  def new(sz) {
-    self.map = Map(sz)
+  field map
+  new(sz) {
+    map = Map(sz)
   }
-  def insert(k) {
-    self.map[k] = k
+  method insert(k) {
+    map[k] = k
   }
-  def __in__(k) {
-    self.map[k]
+  method __in__(k) {
+    map[k]
   }
-  def iter() {
-    self.keys.iter()
+  method iter() {
+    map.keys.iter()
   }
 }
 
 class Cache {
-  def new() {
-    self.map = Map(255)
-    self.mutex = sync.Mutex()
+  field map, mutex
+  new() {
+    map = Map(255)
+    mutex = sync.Mutex()
   }
-  def get(k, factory, args, default=None) {
-    self.mutex.acquire()
-    v = self.map[k]
+  method get(k, factory, args, default=None) {
+    mutex.acquire()
+    v = map[k]
     if v {
-      self.mutex.release()
+      io.println('Hit')
+      mutex.release()
       return v
     }
     try {
@@ -89,8 +92,8 @@ class Cache {
     } catch e {
       v = default
     }
-    self.map[k] = v
-    self.mutex.release()
+    map[k] = v
+    mutex.release()
     return v
   }
 }

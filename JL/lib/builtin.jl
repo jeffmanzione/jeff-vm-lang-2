@@ -59,27 +59,23 @@ def neq(o1, o2) {
 }
 
 class Range {
-  def new(start, inc, end) {
-    self.start = start
-    self.inc = inc
-    self.end = end
-  }
-  def __in__(n) {
+  new(field start, field inc, field end) {}
+  method __in__(n) {
     (n <= self.end) & (n >= self.start) & (n % self.inc == self.start % self.inc)
   }
-  def __index__(i) {
+  method __index__(i) {
     if (i < 0) raise Error(cat('Range index out of bounds. was ', i))
     val = self.start + i * self.inc
     if (val > self.end) raise Error(cat('Range index out of bounds. was ', i))
     val
   }
-  def iter() {
+  method iter() {
     IndexIterator(self, 0, (self.end - self.start) / self.inc)
   }
-  def to_s() {
+  method to_s() {
     ':'.join(str(self.start), str(self.inc), str(self.end))
   }
-  def list() {
+  method list() {
     result = []
     for i=self.start, i<self.end, i=i+self.inc {
       result.append(i)
@@ -101,86 +97,88 @@ def range(params) {
 }
 
 class Object {
-  def to_s() $module.concat(self.class.name, '@', self.$adr)
-  def hash() {
-    return self.$adr
+  method to_s() $module.concat(self.class.name, '@', self.$adr)
+  method hash() {
+    return $adr
   }
-  def cmp(other) {
-    self.$adr - other.$adr
+  method cmp(other) {
+    $adr - other.$adr
   }
-  def eq(other) self.cmp(other) == 0
-  def neq(other) ~self.eq(other)
+  method eq(other) $adr == other.$adr
+  method neq(other) ~eq(other)
 }
 
 class Class {
-  def to_s() {
-    $module.concat(self.name, '.class')
+  method to_s() {
+    $module.concat(name, '.class')
   }
 }
 
 class Function {
-  def to_s() $module.concat(self.class.name, '(',
+  method to_s() $module.concat(self.class.name, '(',
                     self.module.name, '.',
-                    self.name, ')')
-  def call(args) {
-    self.module.$lookup(self.name)(args)
+                    name, ')')
+  method call(args) {
+    self.module.$lookup(name)(args)
   }
 }
 
 class Method : Function {
-  def to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
-  def method_path() $module.concat($module.name, '.',
+  method to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
+  method method_path() $module.concat($module.name, '.',
                            self.parent_class.name, '.',
                            self.Function.name)
-  def call(obj, args) {
+  method call(obj, args) {
     obj.$lookup(self.Function.name)(args)
   }
 }
 
 class ExternalMethod {
-  def to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
-  def method_path() $module.concat(self.module.name, '.',
+  method to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
+  method method_path() $module.concat(self.module.name, '.',
                            self.parent_class.name, '.',
                            self.Function.name)
-  def call(obj, args) {
+  method call(obj, args) {
     obj.$lookup(self.Function.name)(args)
   }
 }
 
 class MethodInstance {
-  def new(obj, meth) {
+  new(obj, meth) {
     self.obj = obj
     self.$method = meth
   }
-  def call(args) {
+  method call(args) {
     self.$method.call(self.obj, args)
   }
-  def to_s() {
+  method to_s() {
     $module.concat('MethodInstance(obj=', self.obj,
            ',$method=', self.$method, ')')
   }
 }
 
 class Module {
-  def to_s() $module.concat('Module(name=', self.name, ', classes=', self.classes, ', functions=', self.functions, ')')
+  field name, classes, functions
+  method to_s() $module.concat('Module(name=', name, ', classes=', classes, ', functions=', functions, ')')
 }
 
 class Tuple {
-  def to_s() {
+  field len
+  method to_s() {
     strng = '('
-    if self.len > 0 {
+    if len > 0 {
       strng.extend(str(self[0]))
     }
-    for i=1, i<self.len, i=i+1 {
+    for i=1, i<len, i=i+1 {
       strng.extend(',').extend(str(self[i]))
     }
     strng.extend(')')
   }
-  def eq(t) {
-    if t.len != self.len {
+  method eq(t) {
+    if t.len != len {
       return False
     }
-    for i=0, i<self.len, i=i+1 {
+    for i=0, i<len, i=i+1 {
       if ~$module.eq(self[i],t[i]) return False
     }
     return True
@@ -188,54 +186,55 @@ class Tuple {
 }
 
 class Array {
-  def copy() {
+  field len
+  method copy() {
     cpy = Array()
-    for i=0, i<self.len, i=i+1 {
+    for i=0, i<len, i=i+1 {
       cpy.append(self[i])
     }
     cpy
   }
-  def hash() {
+  method hash() {
     hashval = 5381
-    for i=0, i < self.len, i=i+1 {
+    for i=0, i < len, i=i+1 {
       c = $module.hash(self[i])
       hashval = ((hashval * 33) + hashval) + c
     }
     hashval
   }
-  def append(elt) {
-    self[self.len] = elt
+  method append(elt) {
+    self[len] = elt
     return self
   }
-  def extend(arr) {
+  method extend(arr) {
     if ~(arr is Array) raise Error('Cannot extend something not an array.')
     if (0 == arr.len) return self
-    self_len = self.len
+    self_len = len
     self[self_len+arr.len-1] = None
     for i=0, i<arr.len, i=i+1 {
       self[self_len+i] = arr[i]
     }
     return self
   }
-  def elt_to_str(elt) {
+  method elt_to_str(elt) {
     if elt is String {
       return '\''.extend(elt).extend('\'')
     }
     return str(elt)
   }
-  def to_s() {
-    '['.extend(','.join(self.map(self.elt_to_str))).extend(']')
+  method to_s() {
+    '['.extend(','.join(map(elt_to_str))).extend(']')
   }
-  def map(f) {
+  method map(f) {
     arr = []
-    for i=self.len-1, i>=0, i=i-1 {
+    for i=len-1, i>=0, i=i-1 {
       arr[i] = f(self[i])
     }
     arr
   }
-  def flatten() {
+  method flatten() {
     arr = []
-    for i=0, i<self.len, i=i+1 {
+    for i=0, i<len, i=i+1 {
       if self[i] is Array {
         child = self[i]
         for j=0, j<child.len, j=j+1
@@ -244,8 +243,8 @@ class Array {
     }
     arr
   }
-  def collect(f, s=None) {
-    if self.len == 0 {
+  method collect(f, s=None) {
+    if len == 0 {
       if s is Function {
         return s()
       } else {
@@ -253,12 +252,12 @@ class Array {
       }
     }
     a = self[0]
-    for i=1, i<self.len, i=i+1 {
+    for i=1, i<len, i=i+1 {
       a = f(a, self[i])
     }
     a
   }
-  def equals_range(array, start, end) {
+  method equals_range(array, start, end) {
     if (start < 0) return False
     if (end > array.len) return False
     if((array.len - start) > self.len) return False
@@ -271,17 +270,19 @@ class Array {
     }
     True
   }
-  def eq(o) {
+  method eq(o) {
     if !0 return False
-    if o.len != self.len return False
-    self.equals_range(o, 0, self.len)
+    if o.len != len return False
+    equals_range(o, 0, len)
   }
-  def partition(c, l, h) {
+  method partition(c, l, h) {
     x = self[h]
     i = l - 1
     for j=l, j<h, j=j+1 {
       if c(self[j], x) < 0 {
         i = i+1
+        ; TODO: Fix external methods since they cannot be
+        ; called witout self. for some reason.
         self.swap(i,j)
       }
     }
@@ -289,20 +290,20 @@ class Array {
     self.swap(i,h)
     i-1
   }
-  def introsort(maxdepth, c, l, h) {
+  method introsort(maxdepth, c, l, h) {
     if l < h {
       ; If recursed too many times, switch to insertion sort.
       if maxdepth <= 0 {
-        self.inssort(c,l,h)
+        inssort(c,l,h)
       } else { ; Otherwise quicksort.
-        p = self.partition(c, l, h)
-        self.introsort(maxdepth-1, c, l, p)
-        self.introsort(maxdepth-1, c, p+1, h)
+        p = partition(c, l, h)
+        introsort(maxdepth-1, c, l, p)
+        introsort(maxdepth-1, c, p+1, h)
       }
     }
     self
   }
-  def inssort(c, l=0, h=self.len-1) {
+  method inssort(c, l=0, h=len-1) {
     i = l + 1
     while i < h {
       x = self[i]
@@ -319,10 +320,10 @@ class Array {
     }
     self
   }
-  def sort() {
-    self.introsort(math.log(self.len) * 2, cmp, 0, self.len-1)
+  method sort() {
+    self.introsort(math.log(len) * 2, cmp, 0, len-1)
   }
-  def iter() {
+  method iter() {
     IndexIterator(self)
   }
 }
@@ -337,11 +338,11 @@ def equals_range(a1, a1_start, a2, a2_start, length) {
 }
 
 class String {
-  def append(elt) {
+  method append(elt) {
     self[self.len] = elt
     self
   }
-  def extend(arr, start=None, end=None) {
+  method extend(arr, start=None, end=None) {
     if ~(arr is String) raise Error('Cannot extend something not a String.')
     if start {
       if (start < 0) | (start > arr.len) {
@@ -357,24 +358,24 @@ class String {
     } else self.extend__(arr)
     self
   }
-  def find(substr, index=0) {
+  method find(substr, index=0) {
     self.find__(substr, index)
   }
-  def find_all(substr, index=0) {
+  method find_all(substr, index=0) {
     self.find_all__(substr, index)
   }
-  def __in__(substr) {
-    self.find(substr) != None
+  method __in__(substr) {
+    find(substr) != None
   }
  
-  def starts_with(array) {
+  method starts_with(array) {
     return equals_range(array, 0, array.len)
   }
-  def ends_with(array) {
-    if array.len > self.len {
+  method ends_with(array) {
+    if array.len > len {
       return False 
     }
-    self_len = self.len-1
+    self_len = len-1
     array_len = array.len-1
     for i=0, i<=array_len, i=i+1 {
       if ~$module.eq(array[array_len-i], self[self_len-i]) {
@@ -383,7 +384,7 @@ class String {
     }
     True
   }
-  def join(array) {
+  method join(array) {
     if array.len == 0 {
       return ''
     }
@@ -393,61 +394,57 @@ class String {
     }
     a
   }
-  def to_s() {
+  method to_s() {
     self
   }
-  def iter() {
+  method iter() {
     IndexIterator(self)
   }
-  def substr(start, end=self.len) {
+  method substr(start, end=len) {
     return self.substr__(start, end)
   }
 }
 
 class Iterator {
-  def new(has_next, next) {
-    self.has_next = has_next
-    self.next = next    
-  }
+  new(field has_next, field next) {}
 }
 
 class IndexIterator : Iterator {
-  def new(args) {
+  field indexable, start, end, i, index
+  new(args) {
     if (args is Array) | (args is String) {
-      self.indexable = args
-      self.start = 0
-      self.end = args.len
+      indexable = args
+      start = 0
+      end = args.len
     } else if args is Tuple {
-      self.indexable = args[0]
-      self.start = args[1]
-      self.end = args[2]
+      indexable = args[0]
+      start = args[1]
+      end = args[2]
     } else {
       raise Error(concat('Strange input: ', args))
     }
-    self.i = -1
-    self.index = self.start - 1
-    self.Iterator.new(self.has_next_internal,
-                      self.next_internal2)
+    i = -1
+    index = start - 1
+    self.Iterator.new(has_next_internal,
+                      next_internal2)
   }
-  def has_next_internal() {
-    self.index < (self.end - 1)
+  method has_next_internal() {
+    index < (end - 1)
   }
-  def next_internal2() {
-    self.i = self.i + 1
-    self.index = self.index + 1
-    (self.i, self.indexable[self.index])
+  method next_internal2() {
+    i = i + 1
+    index = index + 1
+    (i, indexable[index])
   }
 }
 
 class KVIterator : Iterator {
-  def new(key_iter, container) {
-    self.key_iter = key_iter
-    self.container = container
-    self.Iterator.new(self.key_iter.has_next,
-                      self.next_internal2)
+  new(field key_iter, field container) {
+    self.Iterator.new(key_iter.has_next,
+                      next_internal2)
   }
-  def next_internal2() {
-    k = self.key_iter.next()[1]
-    (k, self.container[k])
+  method next_internal2() {
+    k = key_iter.next()[1]
+    (k, container[k])
   }
 }

@@ -35,6 +35,7 @@ char *CLASS_NAME;
 char *CONSTRUCTOR_KEY;
 char *CURRENT_BLOCK;
 char *DECONSTRUCTOR_KEY;
+char *EMPTY_TUPLE_KEY;
 char *EQ_FN_NAME;
 char *ERROR_KEY;
 char *ERROR_NAME;
@@ -121,6 +122,7 @@ void strings_insert_constants() {
   CLASS_NAME = strings_intern("Class");
   CONSTRUCTOR_KEY = strings_intern("new");
   CURRENT_BLOCK = strings_intern("$block");
+  EMPTY_TUPLE_KEY = strings_intern("$empty_tuple");
   DECONSTRUCTOR_KEY = strings_intern("$deconstructor");
   EQ_FN_NAME = strings_intern("eq");
   ERROR_KEY = strings_intern("$has_error");

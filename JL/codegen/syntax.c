@@ -793,6 +793,23 @@ ImplSyntax(function_definition,
            And(function_signature,
                statement));
 
+ImplSyntax(method_identifier,
+           And(Type(METHOD), identifier));
+
+ImplSyntax(method_signature_nonconst,
+           And(method_identifier, function_arguments));
+
+ImplSyntax(method_signature_const,
+           And(method_signature_nonconst, TypeLn(CONST_T)));
+
+ImplSyntax(method_signature,
+           Or(method_signature_const,
+               method_signature_nonconst));
+
+ImplSyntax(method_definition,
+           And(method_signature,
+               statement));
+
 ImplSyntax(new_arg_var,
            Or(new_field_arg,
               identifier));
@@ -834,8 +851,7 @@ ImplSyntax(new_arguments,
            Or(new_arguments_present,
                new_arguments_no_args));
 
-ImplSyntax(new_identifier,
-           And(Type(DEF), new_expression));
+ImplSyntax(new_identifier, new_expression);
 
 ImplSyntax(new_signature_nonconst,
            And(new_identifier, new_arguments));
@@ -892,18 +908,24 @@ ImplSyntax(function_argument_list,
                   const_expression),
                function_argument_list1));
 
-#endif
-
 // function_definition
 //    method identifier ( argument_list ) statement
 ImplSyntax(method_definition,
            And(Type(METHOD), identifier, Type(LPAREN), Opt(function_argument_list),
                TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
 
+#endif
+
+ImplSyntax(identifier_list1,
+    Or(And(And(TypeLn(COMMA), identifier), identifier_list1),
+       Epsilon));
+
+ImplSyntax(identifier_list,
+    And(identifier, identifier_list1));
 
 // field_statement
 //    field function_argument_lsit
-ImplSyntax(field_statement, And(TypeLn(FIELD), function_argument_list));
+ImplSyntax(field_statement, And(TypeLn(FIELD), identifier_list));
 
 // class_statement
 //    new_definition
@@ -912,8 +934,7 @@ ImplSyntax(field_statement, And(TypeLn(FIELD), function_argument_list));
 ImplSyntax(class_statement,
            Ln(Or(new_definition,
                  field_statement,
-//                 method_definition,
-                 function_definition)));
+                 method_definition)));
 
 // class_statement_list
 //    class_statement

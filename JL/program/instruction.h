@@ -21,6 +21,7 @@ typedef enum {
   TGET,
   TLEN,
   SET,
+  LET,
   PUSH,
   PEEK,
   PSRS,  // PUSH+RES
@@ -50,6 +51,7 @@ typedef enum {
   DEC,
   SINC,
   CALL,
+  CLLN,
   TUPL,
   DUP,
   GOTO,
@@ -57,6 +59,8 @@ typedef enum {
   LMDL,
   GET,
   GTSH,  // GET+PUSH
+  RNIL,  // RES Nil
+  PNIL,  // PUSH Nil
   FLD,
   FLDC,
   IS,
@@ -70,6 +74,7 @@ typedef enum {
   //
   CNST,
   SETC,
+  LETC,
   SGET,
   // NOT A REAL OP
   OP_BOUND,

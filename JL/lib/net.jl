@@ -50,19 +50,17 @@ def cleanup() {
 }
 
 class Header {
-  def new(protocol, version, status_code, status, content_type, charset) {
-    self.protocol = protocol
-    self.version = version
-    self.status_code = status_code
-    self.status = status
-    self.content_type = content_type
-    self.charset = charset
-  }
-  def to_s() {
-    concat(self.protocol, '/', self.version, ' ',
-           self.status_code, ' ', self.status,
-           '\r\nContent-Type: ', self.content_type,
-           '; charset=', self.charset, '\r\n\r\n')
+  new(field protocol,
+      field version,
+      field status_code,
+      field status,
+      field content_type,
+      field charset) {}
+  method to_s() {
+    concat(protocol, '/', version, ' ',
+           status_code, ' ', status,
+           '\r\nContent-Type: ', content_type,
+           '; charset=', charset, '\r\n\r\n')
   }
 }
 
@@ -86,25 +84,23 @@ def parse_header(header_text) {
 
 
 class HttpRequest {
-    def new(type, path, params, protocol, version, map) {
-      self.type = type
-      self.path = path
-      self.params = params
-      self.protocol = protocol
-      self.version = version
-      self.map = map
-    }
-    def to_s() {
-      ret = concat(self.type, WHITE_SPACE, self.path)
-      if self.params & (self.params.keys.len > 0) {
+    new(field type,
+        field path,
+        field params,
+        field protocol,
+        field version,
+        field map) {}
+    method to_s() {
+      ret = concat(type, WHITE_SPACE, path)
+      if params & (params.keys.len > 0) {
         ret.extend(QUESTION)
         param_arr = []
-        for (k, v) in self.params {
+        for (k, v) in params {
           param_arr.append(concat(k, EQUALS, v))
         }
         ret.extend(AMPER.join(param_arr))
       }
-      ret.extend(concat(WHITE_SPACE, self.protocol, F_SLASH, self.version))
+      ret.extend(concat(WHITE_SPACE, protocol, F_SLASH, version))
       return ret
     }
 }
@@ -177,20 +173,21 @@ def html_escape(text) {
 }
 
 class RequestHandler {
-  def new() {
-    self.handlers = []
+  field handlers, elseHandler
+  new() {
+    handlers = []
   }
-  def register(match_fn, handler) {
-    self.handlers.append((match_fn, handler))
+  method register(match_fn, handler) {
+    handlers.append((match_fn, handler))
   }
-  def register_else(handler) {
-    self.elseHandler = handler
+  method register_else(handler) {
+    elseHandler = handler
   }
-  def handle(request) {
+  method handle(request) {
     timer = time.Timer()
     timer.start()
-    for i=0, i < self.handlers.len, i=i+1 {
-      (match_fn, handler) = self.handlers[i]
+    for i=0, i < handlers.len, i=i+1 {
+      (match_fn, handler) = handlers[i]
       if match_fn(request) {
         timer.mark('Match found')
         res = handler(request)
@@ -200,9 +197,9 @@ class RequestHandler {
       }
       timer.mark('Not match')
     }
-    if self.elseHandler {
+    if elseHandler {
       timer.mark('Match found')
-      res = self.elseHandler(request)
+      res = elseHandler(request)
       timer.mark('Handled')
       io.println(timer.elapsed_usec())
       return res
@@ -221,20 +218,19 @@ def read_entire_file(path) {
 }
 
 class CachedTextRenderer {
-  def new() {
-    self.cache = struct.Cache()
+  field cache
+  new() {
+    cache = struct.Cache()
   }
-  def write(key, src, params, handle) {
-    timer = time.Timer()
-    timer.start()
-    parts_keys = self.cache.get(key, @(src, params) {
+  method write(key, src, params, handle) {
+    parts_keys = cache.get(key, @(src, params) {
       indices = []
       parts = []
       keys = []
-      for i=0, i< params.keys.len, i=i+1 {
+      for i=0, i < params.keys.len, i=i+1 {
         k_inds = src.find_all(params.keys[i])
         k_inds_len = k_inds.len
-        for j=0, i < k_inds_len, j=j+1 {
+        for j=0, j < k_inds_len, j=j+1 {
           indices.append((params.keys[i], k_inds[j]))
         }
       }
@@ -248,24 +244,21 @@ class CachedTextRenderer {
       parts.append(src.substr(index))
       return (parts, keys)
     }, (src, params))
-    timer.mark('Lookup done')
     if ~parts_keys | (parts_keys is error.Error) {
       handle.send(NOT_FOUND)
-    }
-    parts = parts_keys[0]
-    keys = parts_keys[1]
-    len = keys.len + parts.len
-    if len == 1 {
-      handle.send(parts[0])
-    }
-    for i=0, i<len, i=i+1 {
-      if i%2 == 0 {
-        handle.send(parts[i / 2])
-      } else {
-        handle.send(params[keys[i / 2]])
+    } else {
+      (parts, keys) = parts_keys
+      len = keys.len + parts.len
+      if len == 1 {
+        handle.send(parts[0])
+      }
+      for i=0, i<len, i=i+1 {
+        if i%2 == 0 {
+          handle.send(parts[i / 2])
+        } else {
+          handle.send(params[keys[i / 2]])
+        }
       }
     }
-    timer.mark('Text rendered')
-    io.println(timer.elapsed_usec())
   }
 }

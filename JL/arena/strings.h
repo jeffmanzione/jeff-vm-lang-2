@@ -25,6 +25,7 @@ extern char *CLASS_NAME;
 extern char *CONSTRUCTOR_KEY;
 extern char *CURRENT_BLOCK;
 extern char *DECONSTRUCTOR_KEY;
+extern char *EMPTY_TUPLE_KEY;
 extern char *EQ_FN_NAME;
 extern char *ERROR_KEY;
 extern char *ERROR_NAME;
