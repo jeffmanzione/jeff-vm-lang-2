@@ -333,7 +333,7 @@ const Node *node_for(const Element *e) {
 }
 
 DEB_FN(void, memory_graph_set_field, MemoryGraph *graph, const Element parent,
-                            const char field_name[], const Element field_val) {
+       const char field_name[], const Element field_val) {
   ASSERT_NOT_NULL(graph);
   ASSERT(OBJECT == parent.type);
   ASSERT_NOT_NULL(parent.obj);
@@ -348,6 +348,10 @@ DEB_FN(void, memory_graph_set_field, MemoryGraph *graph, const Element parent,
   }
   obj_set_field(parent, field_name, field_val);
 }
+
+void memory_graph_set_field_const(MemoryGraph *memory_graph,
+                                  const Element parent, const char field_name[],
+                                  const Element field_val) {}
 
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
                           const char field_name[], const Element field_val) {

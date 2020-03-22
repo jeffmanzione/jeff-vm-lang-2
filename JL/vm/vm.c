@@ -140,6 +140,10 @@ Element maybe_create_class_with_parents(VM *vm, Element module_element,
 }
 
 void vm_add_builtin(VM *vm, const char *builtin_fn) {
+  if (NONE != obj_get_field(vm->modules, BUILTIN_MODULE_NAME).type) {
+    // This will happen when compiling the builtin module.
+    return;
+  }
   Module *builtin = load_fn(builtin_fn, vm->store);
   ASSERT(NOT_NULL(vm), NOT_NULL(builtin));
   Element builtin_element = create_module(vm, builtin);
@@ -151,8 +155,6 @@ void vm_add_builtin(VM *vm, const char *builtin_fn) {
   Element classes;
   memory_graph_set_field(vm->graph, builtin_element, CLASSES_KEY,
                          classes = create_array(vm->graph));
-  maybe_merge_existing_source(vm, builtin_element, builtin_fn);
-
   void add_ref(Pair * pair) {
     Element function =
         create_function(vm, builtin_element, (uint32_t)pair->value, pair->key,
@@ -184,11 +186,13 @@ void vm_add_builtin(VM *vm, const char *builtin_fn) {
     map_iterate(methods, add_method);
   }
   module_iterate_classes(builtin, add_class);
+  maybe_merge_existing_source(vm, builtin_element, builtin_fn);
 }
 
 Element vm_add_module(VM *vm, const Module *module) {
   ASSERT(NOT_NULL(vm), NOT_NULL(module));
   ASSERT(NONE == obj_get_field(vm->modules, module_name(module)).type);
+
   Element module_element = create_module(vm, module);
   memory_graph_set_field(vm->graph, vm->modules, module_name(module),
                          module_element);
@@ -206,6 +210,7 @@ Element vm_add_module(VM *vm, const Module *module) {
                         (Q *)map_lookup(module_fn_args(module), pair->value)));
   }
   map_iterate(module_refs(module), add_ref);
+
   void add_class(const char class_name[], const Map *methods) {
     Element class =
         maybe_create_class_with_parents(vm, module_element, class_name);
@@ -451,12 +456,10 @@ void call_external_fn(VM *vm, Thread *t, Element obj, Element external_func) {
         "Cannot call ExternalFunction on something not ExternalFunction.");
     return;
   }
-
   Element module = vm_object_lookup(vm, external_func, PARENT_MODULE);
   if (NONE != module.type) {
     vm_maybe_initialize_and_execute(vm, t, module);
   }
-
   ASSERT(NOT_NULL(external_func.obj->external_fn));
   Element resval = t_get_resval(t);
   ExternalData *ed = (obj.obj->is_external) ? obj.obj->external_data : NULL;
@@ -905,10 +908,10 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       make_const_ref(block.obj, ins.id);
       break;
     case SETC:
-      if (is_const_ref(block.obj, ins.str)) {
-        vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
-        return true;
-      }
+      //      if (is_const_ref(block.obj, ins.str)) {
+      //        vm_throw_error(vm, t, ins, "Cannot reassign const reference.");
+      //        return true;
+      //      }
       memory_graph_set_field(vm->graph, block, ins.str, t_get_resval(t));
       make_const_ref(block.obj, ins.id);
       break;
@@ -1132,6 +1135,7 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
   Element elt = val_to_elt(ins.val), popped;
   Element tuple, array, new_res_val;
   bool has_error = false;
+  int tuple_len;
   int i;
   switch (ins.op) {
     case ADD:
@@ -1211,6 +1215,46 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
         break;
       }
       execute_tget(vm, t, ins, tuple, elt.val.int_val);
+      break;
+    case TLTE:
+      if (tuple.type != OBJECT || tuple.obj->type != TUPLE) {
+        vm_throw_error(
+            vm, t, ins,
+            "Attempted to compare tuple len on something not a tuple.");
+        return true;
+        break;
+      }
+      if (elt.type != VALUE || elt.val.type != INT) {
+        vm_throw_error(
+            vm, t, ins,
+            "Attempted to compare tuple len with something not an int.");
+        return true;
+      }
+      tuple = t_get_resval(t);
+      tuple_len = tuple_size(tuple.obj->tuple);
+      t_set_resval(
+          t, (tuple_len <= elt.val.int_val) ? create_int(1) : create_none());
+
+      break;
+    case TEQ:
+      if (tuple.type != OBJECT || tuple.obj->type != TUPLE) {
+        vm_throw_error(
+            vm, t, ins,
+            "Attempted to compare tuple len on something not a tuple.");
+        return true;
+        break;
+      }
+      if (elt.type != VALUE || elt.val.type != INT) {
+        vm_throw_error(
+            vm, t, ins,
+            "Attempted to compare tuple len with something not an int.");
+        return true;
+      }
+      tuple = t_get_resval(t);
+      int tuple_len = tuple_size(tuple.obj->tuple);
+      t_set_resval(
+          t, (tuple_len == elt.val.int_val) ? create_int(1) : create_none());
+
       break;
     case JMP:
       ASSERT(elt.type == VALUE, elt.val.type == INT);

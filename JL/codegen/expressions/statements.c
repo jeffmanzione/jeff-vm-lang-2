@@ -12,19 +12,19 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include "../tokenizer.h"
 #include "../../arena/strings.h"
 #include "../../error.h"
 #include "../../program/tape.h"
 #include "../syntax.h"
+#include "../tokenizer.h"
 #include "assignment.h"
-#include "expression_macros.h"
 #include "expression.h"
+#include "expression_macros.h"
 
 ImplPopulate(compound_statement, const SyntaxTree *stree) {
   ASSERT(IS_TOKEN(stree->first, LBRCE));
-  compound_statement->expressions = expando(ExpressionTree*,
-      DEFAULT_EXPANDO_SIZE);
+  compound_statement->expressions =
+      expando(ExpressionTree *, DEFAULT_EXPANDO_SIZE);
   if (IS_TOKEN(stree->second, RBRCE)) {
     return;
   }
@@ -53,7 +53,7 @@ ImplPopulate(compound_statement, const SyntaxTree *stree) {
 
 ImplDelete(compound_statement) {
   void delete_statement(void *ptr) {
-    ExpressionTree *tree = *((ExpressionTree**) ptr);
+    ExpressionTree *tree = *((ExpressionTree **)ptr);
     delete_expression(tree);
   }
   expando_iterate(compound_statement->expressions, delete_statement);
@@ -66,7 +66,7 @@ ImplProduce(compound_statement, Tape *tape) {
     return 0;
   }
   void produce_statements(void *ptr) {
-    ExpressionTree *tree = *((ExpressionTree**) ptr);
+    ExpressionTree *tree = *((ExpressionTree **)ptr);
     num_ins += produce_instructions(tree, tape);
   }
   expando_iterate(compound_statement->expressions, produce_statements);
@@ -75,17 +75,17 @@ ImplProduce(compound_statement, Tape *tape) {
 
 ImplPopulate(try_statement, const SyntaxTree *stree) {
   ASSERT(!IS_LEAF(stree), !IS_LEAF(stree->first),
-      IS_TOKEN(stree->first->first, TRY));
+         IS_TOKEN(stree->first->first, TRY));
   try_statement->try_body = populate_expression(stree->first->second->first);
 
   ASSERT(!IS_LEAF(stree->first->second->second),
-      IS_TOKEN(stree->first->second->second->first, CATCH));
+         IS_TOKEN(stree->first->second->second->first, CATCH));
   try_statement->catch_token = stree->first->second->second->first->token;
   // May be surrounded in parenthesis.
   const SyntaxTree *catch_assign_exp =
-  IS_SYNTAX(stree->first->second->second->second, catch_assign) ?
-      stree->first->second->second->second->second->first :
-      stree->first->second->second->second;
+      IS_SYNTAX(stree->first->second->second->second, catch_assign)
+          ? stree->first->second->second->second->second->first
+          : stree->first->second->second->second;
   try_statement->error_assignment_lhs = populate_assignment(catch_assign_exp);
   try_statement->catch_body = populate_expression(stree->second);
 }
@@ -101,27 +101,28 @@ ImplProduce(try_statement, Tape *tape) {
   Tape *try_body_tape = tape_create();
   int try_ins = produce_instructions(try_statement->try_body, try_body_tape);
   Tape *catch_body_tape = tape_create();
-  int catch_ins = produce_instructions(try_statement->catch_body,
-      catch_body_tape);
+  int catch_ins =
+      produce_instructions(try_statement->catch_body, catch_body_tape);
 
   int goto_pos = try_ins - 1;
 
-  num_ins += tape->ins_int(tape, CTCH, goto_pos, try_statement->catch_token)
-      + try_ins;
+  num_ins +=
+      tape->ins_int(tape, CTCH, goto_pos, try_statement->catch_token) + try_ins;
   tape_append(tape, try_body_tape);
 
   Tape *error_assign_tape = tape_create();
-  int num_assign = produce_assignment(&try_statement->error_assignment_lhs,
-      error_assign_tape, try_statement->catch_token);
+  int num_assign =
+      produce_assignment(&try_statement->error_assignment_lhs,
+                         error_assign_tape, try_statement->catch_token);
 
   num_ins += tape->ins_int(tape, JMP, catch_ins + num_assign,
-      try_statement->catch_token);
+                           try_statement->catch_token);
   // Expect error to be in resval
   num_ins += num_assign + catch_ins;
   tape_append(tape, error_assign_tape);
   tape_append(tape, catch_body_tape);
-  num_ins += tape->ins_text(tape, RES, NIL_KEYWORD, try_statement->catch_token)
-      + tape->ins_text(tape, SET, "$try_goto", try_statement->catch_token);
+  num_ins += tape->ins_no_arg(tape, RNIL, try_statement->catch_token) +
+             tape->ins_text(tape, SET, "$try_goto", try_statement->catch_token);
 
   tape_delete(try_body_tape);
   tape_delete(error_assign_tape);
@@ -135,13 +136,11 @@ ImplPopulate(raise_statement, const SyntaxTree *stree) {
   raise_statement->exp = populate_expression(stree->second);
 }
 
-ImplDelete(raise_statement) {
-  delete_expression(raise_statement->exp);
-}
+ImplDelete(raise_statement) { delete_expression(raise_statement->exp); }
 
 ImplProduce(raise_statement, Tape *tape) {
-  return produce_instructions(raise_statement->exp, tape)
-      + tape->ins_no_arg(tape, RAIS, raise_statement->raise_token);
+  return produce_instructions(raise_statement->exp, tape) +
+         tape->ins_no_arg(tape, RAIS, raise_statement->raise_token);
 }
 
 ImplPopulate(selection_statement, const SyntaxTree *stree) {
@@ -164,8 +163,8 @@ ImplPopulate(jump_statement, const SyntaxTree *stree) {
   }
   ASSERT(IS_TOKEN(stree->first, RETURN));
   jump_statement->return_token = stree->first->token;
-  if (!IS_LEAF(
-      stree->second) && IS_TOKEN(stree->second->first, LPAREN) && !IS_SYNTAX(stree->second, primary_expression)) {
+  if (!IS_LEAF(stree->second) && IS_TOKEN(stree->second->first, LPAREN) &&
+      !IS_SYNTAX(stree->second, primary_expression)) {
     jump_statement->exp = populate_expression(stree->second->second->first);
   } else {
     jump_statement->exp = populate_expression(stree->second);
@@ -200,9 +199,7 @@ ImplPopulate(break_statement, const SyntaxTree *stree) {
   }
 }
 
-ImplDelete(break_statement) {
-
-}
+ImplDelete(break_statement) {}
 
 ImplProduce(break_statement, Tape *tape) {
   if (break_statement->type == Break_break) {

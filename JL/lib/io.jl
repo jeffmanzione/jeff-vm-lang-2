@@ -1,5 +1,9 @@
 module io
 
+self.IN = FileReader('__STDIN__')
+self.OUT = FileWriter('__STDOUT__', True)
+self.ERROR = FileWriter('__STDERR__', True)
+
 class FileInternal {
   field file
   new(fn, rw, a, binary) {
@@ -50,10 +54,6 @@ class FileWriter {
   }
   method close() fi.close()
 }
-
-self.IN = FileReader('__STDIN__')
-self.OUT = FileWriter('__STDOUT__', True)
-self.ERROR = FileWriter('__STDERR__', True)
 
 def fprint(f, a) {
   f.write(str(a))

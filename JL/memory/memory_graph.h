@@ -46,9 +46,14 @@ Element memory_graph_create_root_element(MemoryGraph *graph);
 // Creates a new object.
 Element memory_graph_new_node(MemoryGraph *graph);
 // Creates an edge from one node to another node
-DEB_FN(void, memory_graph_set_field, MemoryGraph *memory_graph, const Element parent,
-                            const char field_name[], const Element field_val);
-#define memory_graph_set_field(...) CALL_FN(memory_graph_set_field__, __VA_ARGS__)
+DEB_FN(void, memory_graph_set_field, MemoryGraph *memory_graph,
+       const Element parent, const char field_name[], const Element field_val);
+#define memory_graph_set_field(...) \
+  CALL_FN(memory_graph_set_field__, __VA_ARGS__)
+
+void memory_graph_set_field_const(MemoryGraph *memory_graph,
+                                  const Element parent, const char field_name[],
+                                  const Element field_val);
 
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
                           const char field_name[], const Element field_val);

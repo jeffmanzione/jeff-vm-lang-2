@@ -273,13 +273,13 @@ ImplSyntax(length_expression, And(Type(PIPE), tuple_expression, Type(PIPE)));
 //     anon_function_definition
 //     ( expression )
 ImplSyntax(primary_expression,
-           Or(identifier,
+           Or(anon_function_definition,
+              identifier,
               new_expression,
               constant,
               string_literal,
               array_declaration,
               length_expression,
-              anon_function_definition,
               And(Type(LPAREN), tuple_expression, Type(RPAREN))));
 
 DefineSyntax(assignment_expression);
@@ -867,11 +867,8 @@ ImplSyntax(new_definition,
            And(new_signature,
                statement));
 
-ImplSyntax(anon_identifier,
-           TypeLn(AT));
-
 ImplSyntax(anon_signature_nonconst,
-           And(anon_identifier, function_arguments));
+           function_arguments);
 
 ImplSyntax(anon_signature_const,
            And(anon_signature_nonconst, TypeLn(CONST_T)));
@@ -880,9 +877,19 @@ ImplSyntax(anon_signature,
            Or(anon_signature_const,
               anon_signature_nonconst));
 
+
+ImplSyntax(anon_function_lambda_lhs,
+           Or(anon_signature,
+              identifier));
+
+ImplSyntax(anon_function_lambda_rhs,
+           And(TypeLn(RARROW), assignment_expression));
+
 ImplSyntax(anon_function_definition,
-           And(anon_signature,
-               statement));
+           Or(And(anon_function_lambda_lhs,
+                  anon_function_lambda_rhs),
+              And(anon_signature,
+                  compound_statement)));
 
 #else
 

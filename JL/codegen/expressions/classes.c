@@ -61,35 +61,29 @@ void populate_class_def(ClassDef *def, const SyntaxTree *stree) {
 }
 
 Argument populate_constructor_argument(const SyntaxTree *stree) {
-  Argument arg;
+  Argument arg = {.is_const = false,
+                  .const_token = NULL,
+                  .is_field = false,
+                  .has_default = false,
+                  .default_value = NULL};
   const SyntaxTree *argument = stree;
   if (IS_SYNTAX(argument, const_new_argument)) {
     arg.is_const = true;
     arg.const_token = argument->first->token;
     argument = argument->second;
-  } else {
-    arg.is_const = false;
-    arg.const_token = NULL;
   }
-
   if (IS_SYNTAX(argument, new_arg_elt_with_default)) {
     arg.has_default = true;
     arg.default_value = populate_expression(argument->second->second);
     argument = argument->first;
-  } else {
-    arg.has_default = false;
-    arg.default_value = NULL;
   }
-
   if (IS_SYNTAX(argument, new_field_arg)) {
     arg.arg_name = argument->second->token;
     arg.is_field = true;
   } else {
     ASSERT(IS_SYNTAX(argument, identifier));
     arg.arg_name = argument->token;
-    arg.is_field = false;
   }
-
   return arg;
 }
 
@@ -258,7 +252,7 @@ int produce_constructor(Class *class, Tape *tape) {
     int i;
     for (i = 0; i < num_fields; ++i) {
       Field *field = (Field *)expando_get(class->fields, i);
-      num_ins += tape->ins_text(tape, PUSH, NIL_KEYWORD, field->name) +
+      num_ins += tape->ins_no_arg(tape, PNIL, field->name) +
                  tape->ins_text(tape, RES, SELF, field->name) +
                  tape->ins(tape, FLD, field->name);
     }

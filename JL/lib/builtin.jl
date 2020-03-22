@@ -61,23 +61,23 @@ def neq(o1, o2) {
 class Range {
   new(field start, field inc, field end) {}
   method __in__(n) {
-    (n <= self.end) & (n >= self.start) & (n % self.inc == self.start % self.inc)
+    (n <= end) & (n >= start) & (n % inc == start % inc)
   }
   method __index__(i) {
     if (i < 0) raise Error(cat('Range index out of bounds. was ', i))
-    val = self.start + i * self.inc
-    if (val > self.end) raise Error(cat('Range index out of bounds. was ', i))
+    val = start + i * inc
+    if (val > end) raise Error(cat('Range index out of bounds. was ', i))
     val
   }
   method iter() {
-    IndexIterator(self, 0, (self.end - self.start) / self.inc)
+    IndexIterator(self, 0, (end - start) / inc)
   }
   method to_s() {
-    ':'.join(str(self.start), str(self.inc), str(self.end))
+    ':'.join(str(start), str(inc), str(end))
   }
   method list() {
     result = []
-    for i=self.start, i<self.end, i=i+self.inc {
+    for i=start, i<end, i=i+inc {
       result.append(i)
     }
     result
@@ -97,7 +97,7 @@ def range(params) {
 }
 
 class Object {
-  method to_s() $module.concat(self.class.name, '@', self.$adr)
+  method to_s() $module.concat(self.class.name, '', self.$adr)
   method hash() {
     return $adr
   }
@@ -339,7 +339,7 @@ def equals_range(a1, a1_start, a2, a2_start, length) {
 
 class String {
   method append(elt) {
-    self[self.len] = elt
+    self[len] = elt
     self
   }
   method extend(arr, start=None, end=None) {
@@ -367,22 +367,8 @@ class String {
   method __in__(substr) {
     find(substr) != None
   }
- 
   method starts_with(array) {
     return equals_range(array, 0, array.len)
-  }
-  method ends_with(array) {
-    if array.len > len {
-      return False 
-    }
-    self_len = len-1
-    array_len = array.len-1
-    for i=0, i<=array_len, i=i+1 {
-      if ~$module.eq(array[array_len-i], self[self_len-i]) {
-        return False
-      }
-    }
-    True
   }
   method join(array) {
     if array.len == 0 {
@@ -417,9 +403,7 @@ class IndexIterator : Iterator {
       start = 0
       end = args.len
     } else if args is Tuple {
-      indexable = args[0]
-      start = args[1]
-      end = args[2]
+      (indexable, start, end) = args
     } else {
       raise Error(concat('Strange input: ', args))
     }

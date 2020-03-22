@@ -48,7 +48,6 @@ class ThreadPoolExecutor {
       t.start()
     }
   }
-  
   method execute_task() {
     task = None
     while True {
@@ -68,7 +67,6 @@ class ThreadPoolExecutor {
       }
     }
   }
-  
   method execute_future(f) {
     mutex.acquire()
     tasks.append(f)
@@ -77,7 +75,6 @@ class ThreadPoolExecutor {
     task_lock.unlock()
     return f
   }
-  
   method execute(fn, args=None) {
     f = Future(fn, args, self)
     return execute_future(f)
@@ -86,15 +83,13 @@ class ThreadPoolExecutor {
 
 class Future {
   field listeners, listeners_mutex, result, has_result, read_mutex
-        
   new(field fn, field args, field ex) {
-    listeners=[]
+    listeners = []
     listeners_mutex = Mutex()
     result = None
     has_result = False
     read_mutex = Semaphore(0, 1)
   }
-  
   method exec() {
     result = fn(args)
     listeners_mutex.acquire()
@@ -106,7 +101,6 @@ class Future {
     listeners_mutex.release()
     read_mutex.unlock()
   }
-  
   method get() {
     while True {
       read_mutex.lock(INFINITE)
@@ -118,11 +112,11 @@ class Future {
       return result
     }
   }
- 
   method thenDo(fn) {
     f = Future(fn, None, ex)
     listeners_mutex.acquire()
     if has_result {
+      f.args = result
       ex.execute_future(f)
     } else {
       listeners.append(f)
@@ -130,7 +124,6 @@ class Future {
     listeners_mutex.release()
     return f
   }
-  
   method wait() {
     get()
   }

@@ -1,14 +1,14 @@
 module struct
 
 import builtin
-import io
 import sync
 
 class Map {
-  new(field sz) {
-    self.table = []
-    self.table[sz] = None
-    self.keys = []
+  field table, keys
+  new(field sz=31) {
+    table = []
+    table[sz] = None
+    keys = []
   }
   method hash__(k) {
     hval = builtin.hash(k)
@@ -42,7 +42,7 @@ class Map {
       return None
     }
     for i=0, i<entries.len, i=i+1 {
-      if eq(k, entries[i][0]) {
+      if k == entries[i][0] {
         return entries[i][1]
       }
     }
@@ -83,7 +83,6 @@ class Cache {
     mutex.acquire()
     v = map[k]
     if v {
-      io.println('Hit')
       mutex.release()
       return v
     }

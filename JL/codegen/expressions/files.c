@@ -223,11 +223,23 @@ int produce_all_arguments(Arguments *args, Tape *tape) {
 
 int produce_arguments(Arguments *args, Tape *tape) {
   int num_args = expando_len(args->args);
+  int i, num_ins = 0;
   if (num_args == 1) {
     Argument *arg = (Argument *)expando_get(args->args, 0);
-    return produce_argument(arg, tape);
+    if (arg->has_default) {
+      Tape *defaults = tape_create();
+      int num_default_ins = produce_instructions(arg->default_value, defaults);
+      num_ins += num_default_ins +
+                 tape->ins_int(tape, IF, num_default_ins, arg->arg_name);
+      tape_append(tape, defaults);
+      num_ins += tape->ins_int(tape, JMP, 1, arg->arg_name) +
+                 tape->ins_int(tape, TGET, 0, arg->arg_name);
+
+      tape_delete(defaults);
+    }
+    num_ins += produce_argument(arg, tape);
+    return num_ins;
   }
-  int i, num_ins = 0;
   num_ins += tape->ins_no_arg(tape, PUSH, args->token);
 
   // Handle case where only 1 arg is passed and the rest are optional.
@@ -246,8 +258,7 @@ int produce_arguments(Arguments *args, Tape *tape) {
     if (arg->has_default) {
       defaults_ins += produce_instructions(arg->default_value, defaults);
     } else {
-      defaults_ins +=
-          defaults->ins_text(defaults, RES, NIL_KEYWORD, arg->arg_name);
+      defaults_ins += defaults->ins_no_arg(defaults, RNIL, arg->arg_name);
     }
     defaults_ins += produce_argument(arg, defaults);
   }

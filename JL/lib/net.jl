@@ -109,7 +109,7 @@ def parse_params(path) {
   query_parts = path.split(QUESTION)
   path = query_parts[0]
   params = struct.Map(31)
-  for (_,i) in range(1, query_parts.len) {
+  for (_, i) in range(1, query_parts.len) {
     part = query_parts[i]
     param_parts = part.split(AMPER)
     for (_, param) in param_parts {
@@ -137,11 +137,11 @@ def parse_request(req) {
     (path, params) = parse_params(path)
     protocol = req_head[2].split(F_SLASH)
     
-    ;map = struct.Map(51)
-    ;for i=1, i<parts.len, i=i+1 {
-    ;  kv = parts[i].split(COLON)
-    ;  map[kv[0].trim()] = kv[1].trim()
-    ;}
+    map = struct.Map(51)
+    for i=1, i<parts.len, i=i+1 {
+      kv = parts[i].split(COLON)
+      map[kv[0].trim()] = kv[1].trim()
+    }
     return HttpRequest(type, path, params, protocol[0], protocol[1], None)
   } catch e {
     io.fprintln(io.ERROR, e)
@@ -184,28 +184,17 @@ class RequestHandler {
     elseHandler = handler
   }
   method handle(request) {
-    timer = time.Timer()
-    timer.start()
     for i=0, i < handlers.len, i=i+1 {
       (match_fn, handler) = handlers[i]
       if match_fn(request) {
-        timer.mark('Match found')
         res = handler(request)
-        timer.mark('Handled')
-        io.println(timer.elapsed_usec())
         return res
       }
-      timer.mark('Not match')
     }
     if elseHandler {
-      timer.mark('Match found')
       res = elseHandler(request)
-      timer.mark('Handled')
-      io.println(timer.elapsed_usec())
       return res
     }
-    timer.mark('Not found')
-    io.println(timer.elapsed_usec())
     return None
   }
 }
@@ -223,7 +212,7 @@ class CachedTextRenderer {
     cache = struct.Cache()
   }
   method write(key, src, params, handle) {
-    parts_keys = cache.get(key, @(src, params) {
+    parts_keys = cache.get(key, (src, params) {
       indices = []
       parts = []
       keys = []
@@ -234,7 +223,7 @@ class CachedTextRenderer {
           indices.append((params.keys[i], k_inds[j]))
         }
       }
-      indices.sort(@(t1, t2) cmp(t1[1], t2[1]))
+      indices.sort((t1, t2) { cmp(t1[1], t2[1]) })
       index = 0
       for (_, (key, i)) in indices {
         parts.append(src.substr(index, i))

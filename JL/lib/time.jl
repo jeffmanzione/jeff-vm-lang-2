@@ -1,8 +1,7 @@
 module time
 
 class Timer {
-  field start_usec
-  field timestamps
+  field start_usec, timestamps
   method reset() {
     start_usec = 0
     timestamps = []

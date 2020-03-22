@@ -152,7 +152,7 @@ void strings_insert_constants() {
   NAME_KEY = strings_intern("name");
   NEQ_FN_NAME = strings_intern("neq");
   NEXT_FN_NAME = strings_intern("next");
-  NIL_KEYWORD = strings_intern("Nil");
+  NIL_KEYWORD = strings_intern("None");
   OBJECT_NAME = strings_intern("Object");
   OBJ_KEY = strings_intern("obj");
   OLD_RESVALS = strings_intern("$old_resvals");

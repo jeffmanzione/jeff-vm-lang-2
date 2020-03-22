@@ -45,7 +45,12 @@ ImplPopulate(identifier, const SyntaxTree *stree) {
 ImplDelete(identifier) {}
 
 ImplProduce(identifier, Tape *tape) {
-  return tape->ins(tape, RES, identifier->id);
+  return (identifier->id->text == TRUE_KEYWORD)
+             ? tape->ins_int(tape, RES, 1, identifier->id)
+             : (identifier->id->text == FALSE_KEYWORD ||
+                identifier->id->text == NIL_KEYWORD)
+                   ? tape->ins_no_arg(tape, RNIL, identifier->id)
+                   : tape->ins(tape, RES, identifier->id);
 }
 
 ImplPopulate(constant, const SyntaxTree *stree) {
@@ -172,7 +177,8 @@ void postfix_helper(const SyntaxTree *suffix, Expando *suffixes);
 
 void postfix_period(const SyntaxTree *ext, const SyntaxTree *tail,
                     Expando *suffixes) {
-  Postfix postfix = {.type = Postfix_field, .token = ext->token, .exp = NULL};
+  Postfix postfix = {
+      .type = Postfix_field, .token = ext->token, .id = NULL, .exp = NULL};
   if (IS_SYNTAX(tail, identifier) || IS_TOKEN(tail, NEW)) {
     postfix.id = tail->token;
     expando_append(suffixes, &postfix);
@@ -187,7 +193,10 @@ void postfix_period(const SyntaxTree *ext, const SyntaxTree *tail,
 void postfix_surround_helper(const SyntaxTree *suffix, Expando *suffixes,
                              PostfixType postfix_type, TokenType opener,
                              TokenType closer) {
-  Postfix postfix = {.type = postfix_type, .token = suffix->first->token};
+  Postfix postfix = {.type = postfix_type,
+                     .token = suffix->first->token,
+                     .id = NULL,
+                     .exp = NULL};
   ASSERT(!IS_LEAF(suffix), IS_TOKEN(suffix->first, opener));
   if (IS_TOKEN(suffix->second, closer)) {
     // No args.
@@ -537,13 +546,84 @@ Op bi_to_ins(BiType type) {
   ImplDelete(expr) BiExpressionDelete(expr);  \
   ImplProduce(expr, Tape *tape) BiExpressionProduce(expr, tape)
 
+#define ImplBiExpressionNoProduce(expr)       \
+  ImplPopulate(expr, const SyntaxTree *stree) \
+      BiExpressionPopulate(expr, stree);      \
+  ImplDelete(expr) BiExpressionDelete(expr);
+
 ImplBiExpression(multiplicative_expression);
 ImplBiExpression(additive_expression);
 ImplBiExpression(relational_expression);
 ImplBiExpression(equality_expression);
-ImplBiExpression(and_expression);
+ImplBiExpressionNoProduce(and_expression);
 ImplBiExpression(xor_expression);
-ImplBiExpression(or_expression);
+ImplBiExpressionNoProduce(or_expression);
+
+// a
+// ifn b + 1 + c + 1 + d
+// b
+// ifn c + 1 + d
+// c
+// ifn d
+// d
+ImplProduce(and_expression, Tape *tape) {
+  Expando *and_bodies = expando(Tape *, DEFAULT_EXPANDO_SIZE);
+  int num_suffixes = expando_len(and_expression->suffixes);
+  int num_ins = produce_instructions(and_expression->exp, tape);
+  int i, and_suffix_ins = 0;
+  for (i = 0; i < num_suffixes; ++i) {
+    BiSuffix *suffix = (BiSuffix *)expando_get(and_expression->suffixes, i);
+    Tape *and_tape = tape_create();
+    and_suffix_ins += produce_instructions(suffix->exp, and_tape);
+    expando_append(and_bodies, &and_tape);
+  }
+
+  for (i = 0; i < num_suffixes; ++i) {
+    BiSuffix *suffix = (BiSuffix *)expando_get(and_expression->suffixes, i);
+    Tape *and_tape = *((Tape **)expando_get(and_bodies, i));
+    num_ins += tape->ins_int(tape, IFN, and_suffix_ins + num_suffixes - i - 1,
+                             suffix->token);
+    and_suffix_ins -= tape_len(and_tape);
+    num_ins += tape_len(and_tape);
+    tape_append(tape, and_tape);
+    tape_delete(and_tape);
+  }
+  expando_delete(and_bodies);
+  return num_ins;
+}
+
+// a
+// if b + 1 + c + 1 + d
+// b
+// if c + 1 + d
+// c
+// if d
+// d
+ImplProduce(or_expression, Tape *tape) {
+  Expando *or_bodies = expando(Tape *, DEFAULT_EXPANDO_SIZE);
+  int num_suffixes = expando_len(or_expression->suffixes);
+  int num_ins = produce_instructions(or_expression->exp, tape);
+  int i, or_suffix_ins = 0;
+  for (i = 0; i < num_suffixes; ++i) {
+    BiSuffix *suffix = (BiSuffix *)expando_get(or_expression->suffixes, i);
+    Tape *or_tape = tape_create();
+    or_suffix_ins += produce_instructions(suffix->exp, or_tape);
+    expando_append(or_bodies, &or_tape);
+  }
+
+  for (i = 0; i < num_suffixes; ++i) {
+    BiSuffix *suffix = (BiSuffix *)expando_get(or_expression->suffixes, i);
+    Tape *or_tape = *((Tape **)expando_get(or_bodies, i));
+    num_ins += tape->ins_int(tape, IF, or_suffix_ins + num_suffixes - i - 1,
+                             suffix->token);
+    or_suffix_ins -= tape_len(or_tape);
+    num_ins += tape_len(or_tape);
+    tape_append(tape, or_tape);
+    tape_delete(or_tape);
+  }
+  expando_delete(or_bodies);
+  return num_ins;
+}
 
 ImplPopulate(in_expression, const SyntaxTree *stree) {
   in_expression->element = populate_expression(stree->first);
@@ -722,11 +802,51 @@ void set_anon_function_def(const SyntaxTree *fn_identifier, Function *func) {
   func->fn_name = NULL;
 }
 
+// Function populate_anon_function(const SyntaxTree *stree) {
+//  return populate_function_variant(
+//      stree, anon_function_definition, anon_signature_const,
+//      anon_signature_nonconst, anon_identifier, function_arguments_no_args,
+//      function_arguments_present, set_anon_function_def, set_function_args);
+//}
+
 Function populate_anon_function(const SyntaxTree *stree) {
-  return populate_function_variant(
-      stree, anon_function_definition, anon_signature_const,
-      anon_signature_nonconst, anon_identifier, function_arguments_no_args,
-      function_arguments_present, set_anon_function_def, set_function_args);
+  Function func;
+  ASSERT(IS_SYNTAX(stree, anon_function_definition));
+
+  const SyntaxTree *func_arg_tuple;
+  if (IS_SYNTAX(stree->first, anon_signature_const)) {
+    func_arg_tuple = stree->first->first;
+    func.is_const = true;
+    func.const_token = stree->first->second->token;
+    func.def_token = func_arg_tuple->first->token;
+  } else if (IS_SYNTAX(stree->first, identifier)) {
+    func_arg_tuple = stree->first;
+    func.is_const = false;
+    func.const_token = NULL;
+    func.def_token = func_arg_tuple->token;
+  } else {
+    func_arg_tuple = stree->first;
+    func.is_const = false;
+    func.const_token = NULL;
+    func.def_token = func_arg_tuple->first->token;
+  }
+  func.fn_name = NULL;
+  func.has_args = !IS_SYNTAX(func_arg_tuple, function_arguments_no_args);
+  if (func.has_args) {
+    ASSERT(IS_SYNTAX(func_arg_tuple, function_arguments_present) ||
+           IS_SYNTAX(func_arg_tuple, identifier));
+    const SyntaxTree *func_args = IS_SYNTAX(stree->first, identifier)
+                                      ? func_arg_tuple
+                                      : func_arg_tuple->second->first;
+    func.args =
+        set_function_args(func_args, IS_SYNTAX(stree->first, identifier)
+                                         ? func_arg_tuple->token
+                                         : func_arg_tuple->first->token);
+  }
+  func.body = populate_expression(
+      IS_SYNTAX(stree->second, anon_function_lambda_rhs) ? stree->second->second
+                                                         : stree->second);
+  return func;
 }
 
 ImplPopulate(anon_function_definition, const SyntaxTree *stree) {

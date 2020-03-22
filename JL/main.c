@@ -80,85 +80,20 @@ int main(int argc, const char *argv[]) {
   Set modules;
   set_init_default(&modules);
 
-//#ifdef NEW_PARSER
-//  test_expression("a = b");
-//  test_expression("const a = b");
-//  test_expression("a[b] = c");
-//  test_expression("a(b)[c] = d");
-//  test_expression("(a, b) = c");
-//  test_expression("(a.b, c) = d");
-//  test_expression("(a().b, c) = d");
-//  test_expression("(a(b).c, d) = e");
-//  test_expression("(a[b].c, d) = e");
-//  test_expression("(a[b], c) = d");
-//  test_expression("(a(b)[c], d) = e");
-//  test_expression("(a(b)[c], const d) = e");
-//  test_expression("(a.b.c, const d) = e");
-//  test_expression("a.b()[c] = d");
-//  test_expression("a.b()[c].d = e");
-//  test_expression("a().b.c[d] = e");
-//  test_expression("a().b.c[d].e = f");
-//  test_expression("(a, b, c, d) = e");
-//  test_expression("((a, b), (c, d)) = e");
-//  test_expression("[a, b] = c");
-//  test_expression("[(a, b), c] = d");
-//  test_expression("([a, b], c) = d");
-//  test_expression("[a] = b");
-//  test_expression("(a) = b");
-//  test_expression("([a], b) = b");
-//  test_expression("for a in b x");
-//  test_expression("for (a in b) x");
-//  test_expression("for (a=0, a < 10, a=a+1) x");
-//  test_expression("for a=0, a < 10, a=a+1 x");
-//  test_expression("while x y");
-//  test_expression("while (x) y");
-//  test_expression("{a\nb}");
-//  test_expression("{a\nb\nc}");
-//  test_expression("{a\nb\nc\nd}");
-//  test_expression("try a catch b b.c");
-//  test_expression("try { a } catch (const b) { b.c }");
-//  test_expression("raise e()");
-//  test_expression("if a { b } else if c { d } else { e }");
-//  test_expression("if a { b }");
-//  test_expression("if a { b } else if c { d }");
-//  test_expression("if a { b } else if c { d } else if e { f } else if g { h } else { i }");
-//  test_expression("return");
-//  test_expression("return a");
-//  test_expression("return (a, b, c)");
-//  test_expression("break");
-//  test_expression("continue");
-//  test_expression("module a");
-//  test_expression("import a");
-//  test_expression("def a() b");
-//  test_expression("def a(b) c");
-//  test_expression("def a(b) { c }");
-//  test_expression("def a(b, c) { d }");
-//  test_expression("def a(b, c, d) { e }");
-//  test_expression("def a(b, const c, d = e, const f = g ) { h }");
-//  test_expression("def a(b) const { c }");
-//  test_expression("def a(b, c) const { d }");
-//  test_expression("class A {\n  field b\n}");
-//  test_expression("class A : B {\n  def b(c) {\n    d\n  }\n}");
-//  test_expression("class A : B, C {\n  field d\n  def b(c) {\n    d\n  }\n}");
-//  test_expression("class A : B, C, D {\n  field a\n  field b\n  def c(d) {\n    e\n  }\n  def f(g) {\n    h\n  }\n}");
-//  test_expression("class A : B, C, D {\n  field a\n  field b\n  def c(d) {\n    e\n  }\n  def f(g) {\n    h\n  }\n  def new() {\n    x\n  }\n}");
-//#else
-
   void load_src(void *ptr) {
     ASSERT(NOT_NULL(ptr));
-    Module *module = load_fn((char*) ptr, store);
+    Module *module = load_fn((char *)ptr, store);
     set_insert(&modules, module);
   }
   set_iterate(argstore_sources(store), load_src);
 
-  VM *vm = vm_create(store);
-
-  if (argstore_lookup_bool(store, ArgKey__EXECUTE)
-      || argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
+  if (argstore_lookup_bool(store, ArgKey__EXECUTE) ||
+      argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
+    VM *vm = vm_create(store);
     Element main_element = create_none();
     void load_module(void *ptr) {
       ASSERT(NOT_NULL(ptr));
-      Element module = vm_add_module(vm, (Module*) ptr);
+      Element module = vm_add_module(vm, (Module *)ptr);
       if (NONE == main_element.type) {
         main_element = module;
       }
@@ -171,23 +106,26 @@ int main(int argc, const char *argv[]) {
       vm_start_execution(vm, main_element);
     }
     if (argstore_lookup_bool(store, ArgKey__INTERPRETER)) {
-      printf("Starting Interpreter.\nWrite code below. Press enter to "
+      printf(
+          "Starting Interpreter.\nWrite code below. Press enter to "
           "evaluate.\n");
       fflush(stdout);
       interpret_from_file(stdin, "stdin", vm, interpret_statement);
       printf("Goodbye!\n");
       fflush(stdout);
     }
+    vm_delete(vm);
+  } else {
+    void delete_module(void *ptr) {
+      ASSERT(NOT_NULL(ptr));
+      module_delete(ptr);
+    }
+    set_iterate(&modules, delete_module);
   }
-//#endif
 
   set_finalize(&modules);
   argstore_delete(store);
   argconfig_delete(config);
-
-//#ifndef NEW_PARSER
-  vm_delete(vm);
-//#endif
 
   optimize_finalize();
   expression_finalize();
@@ -200,10 +138,11 @@ int main(int argc, const char *argv[]) {
   alloc_finalize();
 #endif
 #ifdef DEBUG
-  printf("Maps: %d\nMap inserts: %d\nMap insert compares: %d\n"
-      "Map lookups: %d\nMap lookup compares: %d\n", MAP__count,
-      MAP__insert_count, MAP__insert_compares_count, MAP__lookup_count,
-      MAP__lookup_compares_count);
+  printf(
+      "Maps: %d\nMap inserts: %d\nMap insert compares: %d\n"
+      "Map lookups: %d\nMap lookup compares: %d\n",
+      MAP__count, MAP__insert_count, MAP__insert_compares_count,
+      MAP__lookup_count, MAP__lookup_compares_count);
   fflush(stdout);
 #endif
   return EXIT_SUCCESS;

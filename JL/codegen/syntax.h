@@ -129,6 +129,7 @@ DefineSyntax(anon_signature_nonconst);
 DefineSyntax(anon_signature_const);
 DefineSyntax(anon_signature);
 DefineSyntax(anon_function_definition);
+DefineSyntax(anon_function_lambda_rhs);
 
 #endif
 

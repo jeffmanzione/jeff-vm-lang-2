@@ -48,7 +48,8 @@ void populate_single_complex(const SyntaxTree *stree,
   single->prefix_exp = populate_expression(stree->first);
   SyntaxTree *cur = (SyntaxTree *)stree->second;
   while (true) {
-    Postfix postfix;
+    Postfix postfix = {
+        .type = Postfix_none, .id = NULL, .exp = NULL, .token = NULL};
     if (IS_SYNTAX(cur, field_expression1) || IS_SYNTAX(cur, field_next)) {
       populate_single_postfixes(cur->first, &postfix);
       expando_append(single->suffixes, &postfix);

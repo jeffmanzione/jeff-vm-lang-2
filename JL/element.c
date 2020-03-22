@@ -216,6 +216,7 @@ void decorate_function(VM *vm, Element func, Element module, uint32_t ins,
   memory_graph_set_field(vm->graph, func, NAME_KEY, string_create(vm, name));
   memory_graph_set_field(vm->graph, func, INS_INDEX, create_int(ins));
   memory_graph_set_field(vm->graph, func, PARENT_MODULE, module);
+  memory_graph_set_field(vm->graph, func, MODULE_KEY, module);
   if (NULL != args) {
     Element arg_e = create_array(vm->graph);
     int i;
