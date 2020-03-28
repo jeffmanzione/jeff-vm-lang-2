@@ -211,7 +211,7 @@ class CachedTextRenderer {
   new() {
     cache = struct.Cache()
   }
-  method write(key, src, params, handle) {
+  method write(key, src, params, sink) {
     parts_keys = cache.get(key, (src, params) {
       indices = []
       parts = []
@@ -223,7 +223,7 @@ class CachedTextRenderer {
           indices.append((params.keys[i], k_inds[j]))
         }
       }
-      indices.sort((t1, t2) { cmp(t1[1], t2[1]) })
+      indices.sort((t1, t2) -> cmp(t1[1], t2[1]))
       index = 0
       for (_, (key, i)) in indices {
         parts.append(src.substr(index, i))
@@ -234,18 +234,18 @@ class CachedTextRenderer {
       return (parts, keys)
     }, (src, params))
     if ~parts_keys | (parts_keys is error.Error) {
-      handle.send(NOT_FOUND)
+      sink(NOT_FOUND)
     } else {
       (parts, keys) = parts_keys
       len = keys.len + parts.len
       if len == 1 {
-        handle.send(parts[0])
+        sink(parts[0])
       }
       for i=0, i<len, i=i+1 {
         if i%2 == 0 {
-          handle.send(parts[i / 2])
+          sink(parts[i / 2])
         } else {
-          handle.send(params[keys[i / 2]])
+          sink(params[keys[i / 2]])
         }
       }
     }

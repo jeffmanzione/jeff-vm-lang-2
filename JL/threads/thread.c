@@ -175,11 +175,11 @@ Element Thread_get_result(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   WaitStatus status = thread_await(handle, duration);
   if (status != WAIT_OBJECT_0) {   // @suppress("Symbol is not resolved")
     if (status == WAIT_TIMEOUT) {  // @suppress("Symbol is not resolved")
-      return throw_error(vm, t, "Thread.get_result() timed out.");
+      return throw_error(vm, t, "Thread.get() timed out.");
     }
-    return throw_error(vm, t, "Thread.get_result() failed.");
+    return throw_error(vm, t, "Thread.get() failed.");
   }
-  //  DEBUGF("Thread_get_result=%d", status);
+  //  DEBUGF("Thread_get=%d", status);
   return obj_get_field(data->object, strings_intern("result"));
 }
 
@@ -211,7 +211,7 @@ Element add_thread_class(VM *vm, Element module) {
                             Thread_constructor, Thread_deconstructor);
   add_external_method(vm, thread_class, strings_intern("start"), Thread_start);
   add_external_method(vm, thread_class, strings_intern("wait"), Thread_wait);
-  add_external_method(vm, thread_class, strings_intern("get_result"),
+  add_external_method(vm, thread_class, strings_intern("get"),
                       Thread_get_result);
   return thread_class;
 }

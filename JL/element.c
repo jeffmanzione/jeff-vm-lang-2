@@ -286,7 +286,16 @@ Element create_method_instance(MemoryGraph *graph, Element object,
   memory_graph_set_field(
       graph, object,
       string_to_cstr(obj_get_field_obj(function_object, NAME_KEY)), elt);
-  //  DEBUGF("B");
+  return elt;
+}
+
+Element create_external_method_instance(MemoryGraph *graph, Element object,
+                                        Element method) {
+  ASSERT(ISOBJECT(object));
+  ASSERT(ISTYPE(method, class_external_method));
+  Element elt = create_obj_of_class(graph, class_external_methodinstance);
+  memory_graph_set_field(graph, elt, OBJ_KEY, object);
+  memory_graph_set_field(graph, elt, METHOD_KEY, method);
   return elt;
 }
 

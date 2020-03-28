@@ -124,7 +124,12 @@ Element maybe_create_class_with_parents(VM *vm, Element module_element,
     Expando *parent_classes = expando(Object *, expando_len(parents));
     void get_parent(void *ptr) {
       Element parent = obj_get_field(module_element, *((char **)ptr));
-      ASSERT(NONE != parent.type);
+      // TODO: Handle classes from other modules besides builtin.
+      if (NONE == parent.type) {
+        parent = obj_get_field(obj_get_field(vm->modules, BUILTIN_MODULE_NAME),
+                               *((char **)ptr));
+        ASSERT(NONE != parent.type);
+      }
       expando_append(parent_classes, &parent.obj);
     }
     expando_iterate(parents, get_parent);
@@ -268,6 +273,7 @@ void vm_merge_module(VM *vm, const char fn[]) {
   map_iterate(module_refs(module), add_ref);
 
   void add_class(const char class_name[], const Map *methods) {
+    DEBUGF("fn=%s class_name=%s", fn, class_name);
     Element class;
     if ((class = obj_get_field(vm->root, class_name)).type == NONE) {
       class = maybe_create_class_with_parents(vm, module_element, class_name);
@@ -362,6 +368,9 @@ Element maybe_wrap_in_instance(VM *vm, Element obj, Element func,
       (ISCLASS(obj) && func.obj == obj_get_field(obj, name).obj) ||
       ISTYPE(obj, class_methodinstance) || ISTYPE(obj, class_method) ||
       ISTYPE(obj, class_function) || ISTYPE(obj, class_external_function)) {
+    if (ISTYPE(func, class_external_method)) {
+      return create_external_method_instance(vm->graph, obj, func);
+    }
     return func;
   }
   // Create MethodInstance for methods since Methods do not contain any Object
@@ -392,6 +401,9 @@ Element vm_object_lookup_ckey(VM *vm, Element obj, CommonKey key) {
       !ISTYPE(obj, class_methodinstance) && !ISTYPE(obj, class_method) &&
       !ISTYPE(obj, class_function) && !ISTYPE(obj, class_external_function)) {
     return create_method_instance(vm->graph, obj, elt);
+  }
+  if (ISTYPE(elt, class_external_method)) {
+    return create_external_method_instance(vm->graph, obj, elt);
   }
   return elt;
 }
@@ -450,7 +462,8 @@ const Element get_old_resvals(Thread *t) {
 
 void call_external_fn(VM *vm, Thread *t, Element obj, Element external_func) {
   if (!ISTYPE(external_func, class_external_function) &&
-      !ISTYPE(external_func, class_external_method)) {
+      !ISTYPE(external_func, class_external_method) &&
+      !ISTYPE(external_func, class_external_methodinstance)) {
     vm_throw_error(
         vm, t, t_current_ins(t),
         "Cannot call ExternalFunction on something not ExternalFunction.");
@@ -485,26 +498,27 @@ void call_function_internal(VM *vm, Thread *t, Element obj, Element func) {
 
   Element new_block = t_new_block(t, obj, obj);
   memory_graph_set_field(vm->graph, new_block, CALLER_KEY, func);
-
-  Element arg_names = obj_get_field(function_object, ARGS_KEY);
-  if (arg_names.type != NONE) {
-    Q *args = (Q *)(int)arg_names.val.int_val;
-    Element res_args = t_get_resval(t);
-    if (args != NULL && Q_size(args) > 0 && NONE != res_args.type) {
-      if (Q_size(args) == 1 || res_args.type != OBJECT ||
-          TUPLE != res_args.obj->type) {
-        memory_graph_set_field(vm->graph, new_block, (char *)Q_get(args, 0),
-                               t_get_resval(t));
-      } else if (TUPLE == t_get_resval(t).obj->type) {
-        int i;
-        Tuple *tup = t_get_resval(t).obj->tuple;
-        for (i = 0; i < tuple_size(tup); ++i) {
-          memory_graph_set_field(vm->graph, new_block, (char *)Q_get(args, i),
-                                 tuple_get(tup, i));
-        }
-      }
-    }
-  }
+  //
+  //  Element arg_names = obj_get_field(function_object, ARGS_KEY);
+  //  if (arg_names.type != NONE) {
+  //    Q *args = (Q *)(int)arg_names.val.int_val;
+  //    Element res_args = t_get_resval(t);
+  //    if (args != NULL && Q_size(args) > 0 && NONE != res_args.type) {
+  //      if (Q_size(args) == 1 || res_args.type != OBJECT ||
+  //          TUPLE != res_args.obj->type) {
+  //        memory_graph_set_field(vm->graph, new_block, (char *)Q_get(args, 0),
+  //                               t_get_resval(t));
+  //      } else if (TUPLE == t_get_resval(t).obj->type) {
+  //        int i;
+  //        Tuple *tup = t_get_resval(t).obj->tuple;
+  //        for (i = 0; i < tuple_size(tup); ++i) {
+  //          memory_graph_set_field(vm->graph, new_block, (char *)Q_get(args,
+  //          i),
+  //                                 tuple_get(tup, i));
+  //        }
+  //      }
+  //    }
+  //  }
 
   t_set_module(t, parent,
                obj_get_field(function_object, INS_INDEX).val.int_val - 1);
@@ -533,12 +547,12 @@ void vm_call_new(VM *vm, Thread *t, Element class) {
 }
 
 void vm_call_fn(VM *vm, Thread *t, Element obj, Element func) {
-  if (!ISTYPE(func, class_function) && !ISTYPE(func, class_method) &&
-      !ISTYPE(func, class_external_function) &&
-      !ISTYPE(func, class_external_method) &&
-      !ISTYPE(func, class_methodinstance)) {
-    vm_throw_error(vm, t, t_current_ins(t),
-                   "Attempted to call something not a function of Class.");
+  if (ISTYPE(func, class_function) || ISTYPE(func, class_method)) {
+    call_function_internal(vm, t, obj, func);
+    return;
+  }
+  if (ISTYPE(func, class_methodinstance)) {
+    call_methodinstance(vm, t, func);
     return;
   }
   if (ISTYPE(func, class_external_function) ||
@@ -546,11 +560,19 @@ void vm_call_fn(VM *vm, Thread *t, Element obj, Element func) {
     call_external_fn(vm, t, obj, func);
     return;
   }
-  if (ISTYPE(func, class_methodinstance)) {
-    call_methodinstance(vm, t, func);
+  if (ISTYPE(func, class_external_methodinstance)) {
+    call_external_fn(vm, t, obj_get_field(func, OBJ_KEY),
+                     obj_get_field(func, METHOD_KEY));
     return;
   }
-  call_function_internal(vm, t, obj, func);
+  Element call_fn = obj_deep_lookup(func.obj, CALL_KEY);
+  if (is_object_type(&call_fn, OBJ)) {
+    //    elt_to_str(call_fn);
+    vm_call_fn(vm, t, func, call_fn);
+    return;
+  }
+  vm_throw_error(vm, t, t_current_ins(t),
+                 "Attempted to call something not a function or Class.");
 }
 
 void vm_to_string(const VM *vm, Element elt, FILE *target) {
@@ -598,7 +620,8 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
       if (ISOBJECT(elt)) {
         class = obj_lookup(elt.obj, CKey_class);
         if (inherits_from(class, class_function) ||
-            ISTYPE(elt, class_methodinstance)) {
+            ISTYPE(elt, class_methodinstance) ||
+            ISTYPE(elt, class_external_methodinstance)) {
           vm_call_fn(vm, t, obj_deep_lookup_ckey(elt.obj, CKey_module), elt);
         } else if (ISTYPE(elt, class_class)) {
           vm_call_new(vm, t, elt);
@@ -1044,7 +1067,8 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
         return true;
       }
       if (inherits_from(obj_lookup(target.obj, CKey_class), class_function) ||
-          ISTYPE(target, class_methodinstance)) {
+          ISTYPE(target, class_methodinstance) ||
+          ISTYPE(target, class_external_methodinstance)) {
         vm_call_fn(vm, t, obj, target);
       } else if (ISTYPE(target, class_class)) {
         vm_call_new(vm, t, target);
@@ -1217,33 +1241,40 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
       execute_tget(vm, t, ins, tuple, elt.val.int_val);
       break;
     case TLTE:
-      if (tuple.type != OBJECT || tuple.obj->type != TUPLE) {
-        vm_throw_error(
-            vm, t, ins,
-            "Attempted to compare tuple len on something not a tuple.");
-        return true;
-        break;
-      }
-      if (elt.type != VALUE || elt.val.type != INT) {
+      if (!is_value_type(&elt, INT)) {
         vm_throw_error(
             vm, t, ins,
             "Attempted to compare tuple len with something not an int.");
         return true;
       }
       tuple = t_get_resval(t);
+      if (!is_object_type(&tuple, TUPLE)) {
+        t_set_resval(t, create_int(1));
+        break;
+      }
       tuple_len = tuple_size(tuple.obj->tuple);
       t_set_resval(
           t, (tuple_len <= elt.val.int_val) ? create_int(1) : create_none());
 
       break;
-    case TEQ:
-      if (tuple.type != OBJECT || tuple.obj->type != TUPLE) {
+    case TGTE:
+      if (!is_value_type(&elt, INT)) {
         vm_throw_error(
             vm, t, ins,
-            "Attempted to compare tuple len on something not a tuple.");
+            "Attempted to compare tuple len with something not an int.");
         return true;
+      }
+      tuple = t_get_resval(t);
+      if (!is_object_type(&tuple, TUPLE)) {
+        t_set_resval(t, create_none());
         break;
       }
+      tuple_len = tuple_size(tuple.obj->tuple);
+      t_set_resval(
+          t, (tuple_len >= elt.val.int_val) ? create_int(1) : create_none());
+
+      break;
+    case TEQ:
       if (elt.type != VALUE || elt.val.type != INT) {
         vm_throw_error(
             vm, t, ins,
@@ -1251,6 +1282,10 @@ bool execute_val_param(VM *vm, Thread *t, Ins ins) {
         return true;
       }
       tuple = t_get_resval(t);
+      if (!is_object_type(&tuple, TUPLE)) {
+        t_set_resval(t, create_none());
+        break;
+      }
       int tuple_len = tuple_size(tuple.obj->tuple);
       t_set_resval(
           t, (tuple_len == elt.val.int_val) ? create_int(1) : create_none());

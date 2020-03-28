@@ -34,6 +34,7 @@ extern Element class_external_function;
 extern Element class_method;
 extern Element class_external_method;
 extern Element class_methodinstance;
+extern Element class_external_methodinstance;
 extern Element class_module;
 extern Element class_thread;
 

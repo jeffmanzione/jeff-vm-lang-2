@@ -97,7 +97,7 @@ def range(params) {
 }
 
 class Object {
-  method to_s() $module.concat(self.class.name, '', self.$adr)
+  method to_s() $module.concat(self.class.name, '@', self.$adr)
   method hash() {
     return $adr
   }
@@ -231,6 +231,11 @@ class Array {
       arr[i] = f(self[i])
     }
     arr
+  }
+  method each(f) {
+    for i=0, i<len, i=i+1 {
+      f(self[i])
+    }
   }
   method flatten() {
     arr = []
@@ -431,4 +436,26 @@ class KVIterator : Iterator {
     k = key_iter.next()[1]
     (k, container[k])
   }
+}
+
+class MemoizedFunction : Function {
+  field result, has_result
+  new(field target) {
+    result = None
+    has_result = False
+  }
+  method call(args) {
+    if ~has_result {
+      has_result = True
+      result = target(args)
+    }
+    return result
+  }
+  method to_s() {
+    cat(self.class.name, '(', target.to_s(), ')')
+  }
+}
+
+def memoize(fn) {
+  return MemoizedFunction(fn)
 }

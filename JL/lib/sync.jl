@@ -34,7 +34,7 @@ class AtomicInt {
   }
 }
 
-class ThreadPoolExecutor {  
+class ThreadPool {  
   field mutex, task_lock, threads, tasks
   new(field num_threads) {
     mutex = Mutex()

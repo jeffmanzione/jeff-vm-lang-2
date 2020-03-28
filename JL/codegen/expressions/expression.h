@@ -32,13 +32,11 @@ typedef struct ExpressionTree_ ExpressionTree;
 void expression_init();
 void expression_finalize();
 
-ExpressionTree* populate_expression(const SyntaxTree *tree);
+ExpressionTree *populate_expression(const SyntaxTree *tree);
 int produce_instructions(ExpressionTree *tree, Tape *tape);
 void delete_expression(ExpressionTree *tree);
 
-DefineExpression(identifier) {
-  Token *id;
-};
+DefineExpression(identifier) { Token *id; };
 
 DefineExpression(constant) {
   Token *token;
@@ -67,7 +65,10 @@ DefineExpression(primary_expression) {
 };
 
 typedef enum {
-  Postfix_none, Postfix_field, Postfix_fncall, Postfix_array_index
+  Postfix_none,
+  Postfix_field,
+  Postfix_fncall,
+  Postfix_array_index
 } PostfixType;
 
 typedef struct {
@@ -80,7 +81,7 @@ typedef struct {
 } Postfix;
 
 int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
-    Tape *tape);
+                    Tape *tape);
 
 DefineExpression(postfix_expression) {
   ExpressionTree *prefix;
@@ -96,7 +97,11 @@ DefineExpression(range_expression) {
 };
 
 typedef enum {
-  Unary_unknown, Unary_not, Unary_notc, Unary_negate, Unary_const
+  Unary_unknown,
+  Unary_not,
+  Unary_notc,
+  Unary_negate,
+  Unary_const
 } UnaryType;
 
 DefineExpression(unary_expression) {
@@ -108,13 +113,23 @@ DefineExpression(unary_expression) {
 typedef enum {
   BiType_unknown,
 
-  Mult_mult, Mult_div, Mult_mod,
+  Mult_mult,
+  Mult_div,
+  Mult_mod,
 
-  Add_add, Add_sub,
+  Add_add,
+  Add_sub,
 
-  Rel_lt, Rel_gt, Rel_lte, Rel_gte, Rel_eq, Rel_neq,
+  Rel_lt,
+  Rel_gt,
+  Rel_lte,
+  Rel_gte,
+  Rel_eq,
+  Rel_neq,
 
-  And_and, And_xor, And_or,
+  And_and,
+  And_xor,
+  And_or,
 
 } BiType;
 
@@ -125,9 +140,9 @@ typedef struct {
 } BiSuffix;
 
 #define BiDefineExpression(expr) \
-  DefineExpression(expr) { \
-    ExpressionTree *exp; \
-    Expando *suffixes; \
+  DefineExpression(expr) {       \
+    ExpressionTree *exp;         \
+    Expando *suffixes;           \
   }
 
 BiDefineExpression(multiplicative_expression);
@@ -151,12 +166,20 @@ DefineExpression(is_expression) {
   ExpressionTree *type;
 };
 
-DefineExpression(conditional_expression) {
-  IfElse if_else;
-};
+DefineExpression(conditional_expression) { IfElse if_else; };
 
-DefineExpression(anon_function_definition) {
-  Function func;
+DefineExpression(anon_function_definition) { Function func; };
+
+typedef struct {
+  Token *colon;
+  ExpressionTree *lhs;
+  ExpressionTree *rhs;
+} MapDecEntry;
+
+DefineExpression(map_declaration) {
+  Token *lbrce, *rbrce;
+  bool is_empty;
+  Expando *entries;
 };
 
 struct ExpressionTree_ {
@@ -167,6 +190,7 @@ struct ExpressionTree_ {
     Expression_string_literal string_literal;
     Expression_tuple_expression tuple_expression;
     Expression_array_declaration array_declaration;
+    Expression_map_declaration map_declaration;
     Expression_primary_expression primary_expression;
     Expression_postfix_expression postfix_expression;
     Expression_range_expression range_expression;

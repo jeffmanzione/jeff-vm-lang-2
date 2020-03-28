@@ -41,6 +41,7 @@ char *ERROR_KEY;
 char *ERROR_NAME;
 char *EXTERNAL_FUNCTION_NAME;
 char *EXTERNAL_METHOD_NAME;
+char *EXTERNAL_METHODINSTANCE_NAME;
 char *FALSE_KEYWORD;
 char *FUNCTION_NAME;
 char *FUNCTIONS_KEY;
@@ -129,6 +130,7 @@ void strings_insert_constants() {
   ERROR_NAME = strings_intern("Error");
   EXTERNAL_FUNCTION_NAME = strings_intern("ExternalFunction");
   EXTERNAL_METHOD_NAME = strings_intern("ExternalMethod");
+  EXTERNAL_METHODINSTANCE_NAME = strings_intern("ExternalMethodInstance");
   FALSE_KEYWORD = strings_intern("False");
   FUNCTION_NAME = strings_intern("Function");
   FUNCTIONS_KEY = strings_intern("functions");

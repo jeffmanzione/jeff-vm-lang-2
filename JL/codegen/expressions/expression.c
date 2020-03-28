@@ -883,6 +883,99 @@ ImplProduce(anon_function_definition, Tape *tape) {
   return produce_anon_function(&anon_function_definition->func, tape);
 }
 
+MapDecEntry populate_map_dec_entry(const SyntaxTree *tree) {
+  ASSERT(IS_SYNTAX(tree, map_declaration_entry));
+  MapDecEntry entry = {.colon = tree->second->first->token,
+                       .lhs = populate_expression(tree->first),
+                       .rhs = populate_expression(tree->second->second)};
+  return entry;
+}
+
+ImplPopulate(map_declaration, const SyntaxTree *stree) {
+  if (!IS_TOKEN(stree->first, LBRCE)) {
+    ERROR("Map declaration must start with '{'.");
+  }
+  map_declaration->lbrce = stree->first->token;
+  // No entries.
+  if (IS_TOKEN(stree->second, RBRCE)) {
+    map_declaration->rbrce = stree->second->token;
+    map_declaration->is_empty = true;
+    map_declaration->entries = NULL;
+    return;
+  }
+  const SyntaxTree *body = stree->second->first;
+  ASSERT(IS_TOKEN(stree->second->second, RBRCE));
+  map_declaration->rbrce = stree->second->second->token;
+  map_declaration->is_empty = false;
+  map_declaration->entries = expando(MapDecEntry, 4);
+  // Only 1 entry.
+  if (IS_SYNTAX(body, map_declaration_entry)) {
+    MapDecEntry entry = populate_map_dec_entry(body);
+    expando_append(map_declaration->entries, &entry);
+    return;
+  }
+  // Multiple entries.
+  ASSERT(IS_SYNTAX(body, map_declaration_list));
+  MapDecEntry first = populate_map_dec_entry(body->first);
+  expando_append(map_declaration->entries, &first);
+  SyntaxTree *remaining = body->second;
+  while (true) {
+    if (IS_SYNTAX(remaining, map_declaration_entry)) {
+      MapDecEntry entry = populate_map_dec_entry(remaining);
+      expando_append(map_declaration->entries, &entry);
+      break;
+    }
+    ASSERT(IS_SYNTAX(remaining, map_declaration_entry1));
+    // Last entry.
+    if (IS_TOKEN(remaining->first, COMMA)) {
+      remaining = remaining->second;
+      continue;
+    }
+    ASSERT(IS_SYNTAX(remaining->first->second, map_declaration_entry));
+    MapDecEntry entry = populate_map_dec_entry(remaining->first->second);
+    expando_append(map_declaration->entries, &entry);
+    remaining = remaining->second;
+  }
+}
+
+ImplDelete(map_declaration) {
+  if (map_declaration->is_empty) {
+    return;
+  }
+  void delete_entry(void *elt) {
+    MapDecEntry *entry = (MapDecEntry *)elt;
+    delete_expression(entry->lhs);
+    delete_expression(entry->rhs);
+  }
+  expando_iterate(map_declaration->entries, delete_entry);
+  expando_delete(map_declaration->entries);
+}
+
+ImplProduce(map_declaration, Tape *tape) {
+  int num_ins = 0, i;
+  num_ins +=
+      tape->ins_text(tape, PUSH, strings_intern("struct"),
+                     map_declaration->lbrce) +
+      tape->ins_text(tape, CLLN, strings_intern("Map"), map_declaration->lbrce);
+  if (map_declaration->is_empty) {
+    return num_ins;
+  }
+  num_ins += tape->ins_no_arg(tape, PUSH, map_declaration->lbrce);
+  for (i = 0; i < expando_len(map_declaration->entries); ++i) {
+    MapDecEntry *entry =
+        (MapDecEntry *)expando_get(map_declaration->entries, i);
+    num_ins += tape->ins_no_arg(tape, DUP, entry->colon) +
+               produce_instructions(entry->rhs, tape) +
+               tape->ins_no_arg(tape, PUSH, entry->colon) +
+               produce_instructions(entry->lhs, tape) +
+               tape->ins_no_arg(tape, PUSH, entry->colon) +
+               tape->ins_int(tape, TUPL, 2, entry->colon) +
+               tape->ins_text(tape, CALL, ARRAYLIKE_SET_KEY, entry->colon);
+  }
+  num_ins += tape->ins_no_arg(tape, RES, map_declaration->lbrce);
+  return num_ins;
+}
+
 void expression_init() {
   map_init_default(&populators);
   map_init_default(&producers);
@@ -893,6 +986,7 @@ void expression_init() {
   Register(string_literal);
   Register(tuple_expression);
   Register(array_declaration);
+  Register(map_declaration);
   Register(primary_expression);
   Register(postfix_expression);
   Register(range_expression);

@@ -31,6 +31,7 @@ extern char *ERROR_KEY;
 extern char *ERROR_NAME;
 extern char *EXTERNAL_FUNCTION_NAME;
 extern char *EXTERNAL_METHOD_NAME;
+extern char *EXTERNAL_METHODINSTANCE_NAME;
 extern char *FALSE_KEYWORD;
 extern char *FUNCTION_NAME;
 extern char *FUNCTIONS_KEY;

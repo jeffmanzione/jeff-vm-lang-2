@@ -193,18 +193,17 @@ int produce_all_arguments(Arguments *args, Tape *tape) {
   for (i = 0; i < num_args; ++i) {
     Argument *arg = (Argument *)expando_get(args->args, i);
     if (arg->has_default) {
-      num_ins += tape->ins_no_arg(tape, TLEN, arg->arg_name) +
-                 tape->ins_no_arg(tape, PUSH, arg->arg_name) +
-                 tape->ins_int(tape, PUSH, i, arg->arg_name) +
-                 tape->ins_no_arg(tape, LTE, arg->arg_name);
+      num_ins += tape->ins_no_arg(tape, PEEK, args->token) +
+                 tape->ins_int(tape, TGTE, i + 1, arg->arg_name);
 
       Tape *tmp = tape_create();
       int default_ins = produce_instructions(arg->default_value, tmp);
-      num_ins += tape->ins_int(tape, IF, 3, arg->arg_name) +
-                 tape->ins_no_arg(tape, PEEK, arg->arg_name) +
+      num_ins += tape->ins_int(tape, IFN, 3, arg->arg_name) +
+                 tape->ins_no_arg(tape, (i == num_args - 1) ? RES : PEEK,
+                                  arg->arg_name) +
                  tape->ins_int(tape, TGET, i, arg->arg_name) +
-                 tape->ins_int(tape, JMP, default_ins, arg->arg_name);
-      num_ins += default_ins;
+                 tape->ins_int(tape, JMP, default_ins, arg->arg_name) +
+                 default_ins;
       tape_append(tape, tmp);
       tape_delete(tmp);
     } else {
@@ -229,8 +228,9 @@ int produce_arguments(Arguments *args, Tape *tape) {
     if (arg->has_default) {
       Tape *defaults = tape_create();
       int num_default_ins = produce_instructions(arg->default_value, defaults);
-      num_ins += num_default_ins +
-                 tape->ins_int(tape, IF, num_default_ins, arg->arg_name);
+      num_ins += num_default_ins + tape->ins_no_arg(tape, PUSH, arg->arg_name) +
+                 tape->ins_int(tape, TGTE, 1, arg->arg_name) +
+                 tape->ins_int(tape, IF, num_default_ins + 1, arg->arg_name);
       tape_append(tape, defaults);
       num_ins += tape->ins_int(tape, JMP, 1, arg->arg_name) +
                  tape->ins_int(tape, TGET, 0, arg->arg_name);
@@ -245,7 +245,7 @@ int produce_arguments(Arguments *args, Tape *tape) {
   // Handle case where only 1 arg is passed and the rest are optional.
   Argument *first = (Argument *)expando_get(args->args, 0);
   num_ins += tape->ins_no_arg(tape, TLEN, first->arg_name) +
-             +tape->ins_no_arg(tape, PUSH, first->arg_name) +
+             tape->ins_no_arg(tape, PUSH, first->arg_name) +
              tape->ins_int(tape, PUSH, -1, first->arg_name) +
              tape->ins_no_arg(tape, EQ, first->arg_name);
 

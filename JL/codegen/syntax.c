@@ -260,9 +260,22 @@ ImplSyntax(array_declaration,
            Or(And(Type(LBRAC), Type(RBRAC)),
               And(Type(LBRAC), tuple_expression, Type(RBRAC))));
 
+ImplSyntax(map_declaration_entry,
+    And(postfix_expression, TypeLn(COLON), Ln(postfix_expression)));
+
+ImplSyntax(map_declaration_entry1,
+    Or(And(And(TypeLn(COMMA), Ln(map_declaration_entry)), map_declaration_entry1),
+       Epsilon));
+
+ImplSyntax(map_declaration_list,
+    And(map_declaration_entry, map_declaration_entry1));
+
+ImplSyntax(map_declaration,
+           Or(And(TypeLn(LBRCE), TypeLn(RBRCE)),
+              And(TypeLn(LBRCE), Ln(map_declaration_list), TypeLn(RBRCE))));
+
 // length_expression
 //     | expression |
-//
 ImplSyntax(length_expression, And(Type(PIPE), tuple_expression, Type(PIPE)));
 
 // primary_expression
@@ -270,6 +283,7 @@ ImplSyntax(length_expression, And(Type(PIPE), tuple_expression, Type(PIPE)));
 //     constant
 //     string_literal
 //     array_declaration
+//     map_declaration
 //     anon_function_definition
 //     ( expression )
 ImplSyntax(primary_expression,
@@ -279,6 +293,7 @@ ImplSyntax(primary_expression,
               constant,
               string_literal,
               array_declaration,
+              map_declaration,
               length_expression,
               And(Type(LPAREN), tuple_expression, Type(RPAREN))));
 
@@ -296,9 +311,9 @@ DefineSyntax(assignment_expression);
 ImplSyntax(
     postfix_expression1,
     Or(And(Type(LBRAC), tuple_expression, Type(RBRAC), postfix_expression1),
-       And(Type(LPAREN), Type(RPAREN), postfix_expression1),
-       And(Type(LPAREN), tuple_expression, Type(RPAREN), postfix_expression1),
-       And(Type(PERIOD), Or(identifier, new_expression), postfix_expression1),
+       And(TypeLn(LPAREN), TypeLn(RPAREN), postfix_expression1),
+       And(TypeLn(LPAREN), tuple_expression, TypeLn(RPAREN), postfix_expression1),
+       And(Opt(Type(ENDLINE)), Type(PERIOD), Or(identifier, new_expression), postfix_expression1),
        //       And(Type(INC), postfix_expression1),
        //       And(Type(DEC), postfix_expression1),
        Epsilon));

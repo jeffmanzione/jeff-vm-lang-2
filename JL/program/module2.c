@@ -119,7 +119,7 @@ void module_iterate_classes(const Module *m, ClassAction action) {
       const char *parent_class_name = *((char **)ptr);
       Map *parent_methods = map_lookup(module_classes(m), parent_class_name);
       // If parent not processed, process it.
-      if (set_lookup(&processed, parent_methods)) {
+      if (NULL == parent_methods || set_lookup(&processed, parent_methods)) {
         return;
       }
       Pair kv2;

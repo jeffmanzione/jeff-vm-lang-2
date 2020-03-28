@@ -25,6 +25,7 @@ Element class_external_function;
 Element class_method;
 Element class_external_method;
 Element class_methodinstance;
+Element class_external_methodinstance;
 Element class_module;
 Element class_error;
 Element class_thread;
@@ -45,6 +46,7 @@ void class_init(VM *vm) {
   class_external_method = create_class_stub(vm->graph);
   class_method = create_class_stub(vm->graph);
   class_methodinstance = create_class_stub(vm->graph);
+  class_external_methodinstance = create_class_stub(vm->graph);
   class_module = create_class_stub(vm->graph);
   class_error = create_class_stub(vm->graph);
   class_thread = create_class_stub(vm->graph);
@@ -63,6 +65,8 @@ void class_init(VM *vm) {
   class_fill(vm, class_method, METHOD_NAME, class_function, vm->root);
   class_fill(vm, class_methodinstance, METHOD_INSTANCE_NAME, class_object,
              vm->root);
+  class_fill(vm, class_external_methodinstance, EXTERNAL_METHODINSTANCE_NAME,
+             class_object, vm->root);
   class_fill(vm, class_module, MODULE_NAME, class_object, vm->root);
   class_fill(vm, class_error, ERROR_NAME, class_object, vm->root);
   class_fill(vm, class_thread, strings_intern("Thread"), class_object,

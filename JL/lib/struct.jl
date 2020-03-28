@@ -51,15 +51,19 @@ class Map {
   method __in__(const k) {
     __index__(k) != None
   }
-  
   method iter() const {
     KVIterator(keys.iter(), self)
+  }
+  method each(f) {
+    for (k, v) in self {
+      f(k, v)
+    }
   }
 }
 
 class Set {
   field map
-  new(sz) {
+  new(sz=31) {
     map = Map(sz)
   }
   method insert(k) {
@@ -71,12 +75,15 @@ class Set {
   method iter() {
     map.keys.iter()
   }
+  method each(f) {
+    map.each((k, v) -> f(k))
+  }
 }
 
 class Cache {
   field map, mutex
-  new() {
-    map = Map(255)
+  new(sz=255) {
+    map = Map(sz)
     mutex = sync.Mutex()
   }
   method get(k, factory, args, default=None) {
@@ -95,4 +102,20 @@ class Cache {
     mutex.release()
     return v
   }
+}
+
+class LoadingCache : Cache, Function {
+  new(field factory, sz=255) {
+    self.Cache.new(sz)
+  }
+  method get(const k) {
+    return self.Cache.get(k, factory, k)
+  }
+  method call(const k) {
+    get(k)
+  }
+}
+
+def cache(factory) {
+  return LoadingCache(factory)
 }

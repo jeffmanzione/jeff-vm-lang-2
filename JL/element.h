@@ -116,6 +116,8 @@ Element create_method(VM *vm, Element module, uint32_t ins, Element class,
                       const char name[], Q *args);
 Element create_method_instance(MemoryGraph *graph, Element object,
                                Element method);
+Element create_external_method_instance(MemoryGraph *graph, Element object,
+                                        Element method);
 
 Element val_to_elt(Value val);
 Value value_negate(Value val);

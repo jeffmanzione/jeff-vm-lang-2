@@ -53,6 +53,7 @@ typedef enum {
   CALL,
   CLLN,
   TUPL,
+  TGTE,
   TLTE,
   TEQ,
   DUP,
