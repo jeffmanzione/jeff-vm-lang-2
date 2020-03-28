@@ -62,7 +62,7 @@ class Error {
                  ' at line ', tok.line, ' col ', tok.col, ': ',
                  self.msg, '\n')
     tos.extend(concat(tok.line, ':', tok.line_text))
-    if tok.line_text & ~str(tok.line_text).ends_with('\n') {
+    if tok.line_text and ~str(tok.line_text).ends_with('\n') {
       tos.extend('\n')
     }
     for i=0, i<tok.col + 2, i=i+1 {

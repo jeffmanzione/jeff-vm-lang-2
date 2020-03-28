@@ -103,6 +103,8 @@ typedef enum {
   IN,
   NOTIN,
   CONST_T,
+  AND_T,
+  OR_T,
 } TokenType;
 
 typedef struct {

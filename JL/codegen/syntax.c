@@ -297,6 +297,14 @@ ImplSyntax(primary_expression,
               length_expression,
               And(Type(LPAREN), tuple_expression, Type(RPAREN))));
 
+
+ImplSyntax(primary_expression_no_constants,
+           Or(anon_function_definition,
+              identifier,
+              string_literal,
+              array_declaration,
+              map_declaration));
+
 DefineSyntax(assignment_expression);
 
 // postfix_expression
@@ -318,7 +326,8 @@ ImplSyntax(
        //       And(Type(DEC), postfix_expression1),
        Epsilon));
 ImplSyntax(postfix_expression,
-           And(primary_expression, postfix_expression1));
+           Or(And(primary_expression_no_constants, postfix_expression1),
+              primary_expression));
 
 ImplSyntax(range_expression,
            And(postfix_expression,
@@ -407,7 +416,7 @@ ImplSyntax(equality_expression,
 //    equality_expression
 //    and_expression & equality_expression
 ImplSyntax(and_expression1,
-           Or(And(Type(AMPER), and_expression),
+           Or(And(Type(AND_T), and_expression),
               Epsilon));
 ImplSyntax(and_expression,
            And(equality_expression, and_expression1));
@@ -425,7 +434,7 @@ ImplSyntax(xor_expression,
 //    xor_expression
 //    or_expression | xor_expression
 ImplSyntax(or_expression1,
-           Or(And(Type(PIPE), or_expression),
+           Or(And(Type(OR_T), or_expression),
               Epsilon));
 ImplSyntax(or_expression,
            And(xor_expression, or_expression1));
@@ -536,15 +545,8 @@ ImplSyntax(field_expression1,
        field_next,
        Epsilon));
 
-ImplSyntax(primary_expression_no_constants,
-           Or(identifier,
-              array_declaration,
-              anon_function_definition
-//              And(Type(LPAREN), tuple_expression, Type(RPAREN))
-              ));
-
 ImplSyntax(field_expression,
-    And(primary_expression_no_constants, field_expression1));
+    And(identifier, field_expression1));
 
 // assignment_lhs_single
 //    const x

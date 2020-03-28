@@ -92,7 +92,7 @@ class HttpRequest {
         field map) {}
     method to_s() {
       ret = concat(type, WHITE_SPACE, path)
-      if params & (params.keys.len > 0) {
+      if params and (params.keys.len > 0) {
         ret.extend(QUESTION)
         param_arr = []
         for (k, v) in params {
@@ -152,7 +152,7 @@ def parse_request(req) {
 def html_escape(text) {
   lts = text.find_all(LT)
   gts = text.find_all(GT)  
-  if (lts.len == 0)  & (gts.len == 0){
+  if (lts.len == 0)  and (gts.len == 0){
     return text.copy()
   }
   lts.extend(gts)
@@ -233,7 +233,7 @@ class CachedTextRenderer {
       parts.append(src.substr(index))
       return (parts, keys)
     }, (src, params))
-    if ~parts_keys | (parts_keys is error.Error) {
+    if ~parts_keys or (parts_keys is error.Error) {
       sink(NOT_FOUND)
     } else {
       (parts, keys) = parts_keys

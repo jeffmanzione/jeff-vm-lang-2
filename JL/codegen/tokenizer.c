@@ -16,9 +16,10 @@
 #include "../shared.h"
 
 char *keyword_to_type[] = {
-    "if",    "then",   "else",     "def",    "new", "field", "method", "class", "while",
-    "for",   "break",  "continue", "return", "as",  "is",    "try",   "catch",
-    "raise", "import", "module",   "exit",   "in",  "notin", "const"};
+    "if",    "then",  "else",  "def",   "new",      "field",  "method",
+    "class", "while", "for",   "break", "continue", "return", "as",
+    "is",    "try",   "catch", "raise", "import",   "module", "exit",
+    "in",    "notin", "const", "and",   "or"};
 
 struct FileInfo_ {
   char *name;

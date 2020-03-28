@@ -1,8 +1,8 @@
 module io
 
-self.IN = FileReader('__STDIN__')
-self.OUT = FileWriter('__STDOUT__', True)
-self.ERROR = FileWriter('__STDERR__', True)
+self.IN = const FileReader('__STDIN__')
+self.OUT = const FileWriter('__STDOUT__', True)
+self.ERROR = const FileWriter('__STDERR__', True)
 
 class FileInternal {
   field file
@@ -31,7 +31,7 @@ class FileInternal {
 class FileReader {
   field fi
   new(fn, binary=False) {
-    fi = FileInternal(fn, 'r', False, binary)
+    fi = const FileInternal(fn, 'r', False, binary)
   }
   method rewind() fi.rewind()
   method gets(n) fi.gets(n)
@@ -44,7 +44,7 @@ class FileReader {
 class FileWriter {
   field fi
   new(fn, append=False, binary=False) {
-    fi = FileInternal(fn, 'w', append, binary)
+    fi = const FileInternal(fn, 'w', append, binary)
   }
   method rewind() fi.rewind()
   method write(s) fi.puts(s)

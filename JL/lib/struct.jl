@@ -109,7 +109,7 @@ class LoadingCache : Cache, Function {
     self.Cache.new(sz)
   }
   method get(const k) {
-    return self.Cache.get(k, factory, k)
+    self.Cache.get(k, factory, k)
   }
   method call(const k) {
     get(k)

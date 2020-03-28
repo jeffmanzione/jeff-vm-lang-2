@@ -43,46 +43,4 @@ def log10(x) {
   log(10, x)
 }
 
-def sqrt(x) pow(x, 0.5) 
-
-class Rect {
-  new(top, left, width, height) {
-    self.top = top
-    self.left = left
-    self.width = width
-    self.height = height
-  }
-  method area() { self.width * self.height }
-  method contains(other) {
-    if ~(other is Rect) {
-      False
-    } else self.left <= other & self.top <= other.top & self.width >= other.width & self.height >= other.width
-  }
-  method to_s() {
-    rect = ''
-    for i=0, i<self.top, i=i+1
-      rect.append('\n')
-    for i=0, i<self.left, i=i+1
-      rect.append(' ')
-    rect.append('+')
-    for i=0,i<self.width,i=i+1
-      rect.append('-')
-    rect.append('+')
-    rect.append('\n')
-    for i=0, i<self.height, i=i+1 {
-      for j=0, j<self.left, j=j+1
-        rect.append(' ')
-      rect.append('|')
-      for j=0, j<self.width, j=j+1
-        rect.append(' ')
-      rect.append('|\n')
-    }
-    for i=0, i<self.left, i=i+1
-      rect.append(' ')
-    rect.append('+')
-    for i=0,i<self.width,i=i+1
-      rect.append('-')
-    rect.append('+')
-    rect
-  }
-}
+def sqrt(x) pow(x, 0.5)

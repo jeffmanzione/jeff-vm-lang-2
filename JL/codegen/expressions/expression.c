@@ -441,11 +441,11 @@ BiType relational_type_for_token(const Token *token) {
       return Rel_eq;
     case NEQUIV:
       return Rel_neq;
-    case AMPER:
+    case AND_T:
       return And_and;
     case CARET:
       return And_xor;
-    case PIPE:
+    case OR_T:
       return And_or;
     default:
       ERROR("Unknown type: %s", token->text);

@@ -36,7 +36,7 @@ def hash(v) {
 }
 
 def cmp(o1, o2) {
-  if (o1 is Object) & (o2 is Object) {
+  if (o1 is Object) and (o2 is Object) {
     return o1.cmp(o2)
   }
   o1 - o2
@@ -45,10 +45,10 @@ def cmp(o1, o2) {
 def eq(o1, o2) {
   if o1 ^ o2 return False
   if hash(o1) != hash(o2) return False
-  if (o1 is Object) & (o2 is Object) {
+  if (o1 is Object) and (o2 is Object) {
     return o1.eq(o2)
   }
-  if (o1 is Object) | (o2 is Object) {
+  if (o1 is Object) or (o2 is Object) {
     return False
   }
   return Int(o1) == Int(o2)
@@ -61,7 +61,7 @@ def neq(o1, o2) {
 class Range {
   new(field start, field inc, field end) {}
   method __in__(n) {
-    (n <= end) & (n >= start) & (n % inc == start % inc)
+    (n <= end) and (n >= start) and (n % inc == start % inc)
   }
   method __index__(i) {
     if (i < 0) raise Error(cat('Range index out of bounds. was ', i))
@@ -124,8 +124,9 @@ class Function {
 }
 
 class Method : Function {
-  method to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
-  method method_path() $module.concat($module.name, '.',
+  method to_s()
+      $module.concat(self.class.name, '(', self.method_path(), ')')
+  method method_path() $module.concat(self.parent_class.module.name, '.',
                            self.parent_class.name, '.',
                            self.Function.name)
   method call(obj, args) {
@@ -134,8 +135,9 @@ class Method : Function {
 }
 
 class ExternalMethod {
-  method to_s() $module.concat(self.class.name, '(', self.method_path(), ')')
-  method method_path() $module.concat(self.module.name, '.',
+  method to_s()
+      $module.concat(self.class.name, '(', self.method_path(), ')')
+  method method_path() $module.concat(self.parent_class.module.name, '.',
                            self.parent_class.name, '.',
                            self.Function.name)
   method call(obj, args) {
@@ -158,8 +160,11 @@ class MethodInstance {
 }
 
 class Module {
-  field name, classes, functions
-  method to_s() $module.concat('Module(name=', name, ', classes=', classes, ', functions=', functions, ')')
+  method to_s()
+      $module.concat(
+          'Module(name=', self.name,
+          ', classes=', self.classes,
+          ', functions=', self.functions, ')')
 }
 
 class Tuple {
@@ -276,7 +281,7 @@ class Array {
     True
   }
   method eq(o) {
-    if !0 return False
+    if ~o return False
     if o.len != len return False
     equals_range(o, 0, len)
   }
@@ -350,7 +355,7 @@ class String {
   method extend(arr, start=None, end=None) {
     if ~(arr is String) raise Error('Cannot extend something not a String.')
     if start {
-      if (start < 0) | (start > arr.len) {
+      if (start < 0) or (start > arr.len) {
         raise Error('Cannot extend with range before the start.')
       }
       if ~end {
@@ -403,7 +408,7 @@ class Iterator {
 class IndexIterator : Iterator {
   field indexable, start, end, i, index
   new(args) {
-    if (args is Array) | (args is String) {
+    if (args is Array) or (args is String) {
       indexable = args
       start = 0
       end = args.len
@@ -414,27 +419,24 @@ class IndexIterator : Iterator {
     }
     i = -1
     index = start - 1
-    self.Iterator.new(has_next_internal,
-                      next_internal2)
-  }
-  method has_next_internal() {
-    index < (end - 1)
-  }
-  method next_internal2() {
-    i = i + 1
-    index = index + 1
-    (i, indexable[index])
+    self.Iterator.new(
+        () -> index < (end - 1),
+        () {
+          i = i + 1
+          index = index + 1
+          (i, indexable[index])
+        })
   }
 }
 
 class KVIterator : Iterator {
   new(field key_iter, field container) {
-    self.Iterator.new(key_iter.has_next,
-                      next_internal2)
-  }
-  method next_internal2() {
-    k = key_iter.next()[1]
-    (k, container[k])
+    self.Iterator.new(
+        key_iter.has_next,
+        () {
+          k = key_iter.next()[1]
+          return (k, container[k]) ; return required.
+        })
   }
 }
 
