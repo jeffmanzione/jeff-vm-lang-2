@@ -118,6 +118,7 @@ Element create_method_instance(MemoryGraph *graph, Element object,
                                Element method);
 Element create_external_method_instance(MemoryGraph *graph, Element object,
                                         Element method);
+Element create_anonymous_function(VM *vm, Thread *t, Element func);
 
 Element val_to_elt(Value val);
 Value value_negate(Value val);

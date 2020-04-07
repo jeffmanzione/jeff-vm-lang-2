@@ -147,8 +147,6 @@ bool map_insert(Map *map, const void *key, const void *value) {
   MAP__insert_count++;
 #endif
   ASSERT(NOT_NULL(map));
-  //  DEBUGF("num_entries=%d entries_thresh=%d, table_sz=%d", map->num_entries,
-  //      map->entries_thresh, map->table_sz);
   if (map->num_entries > map->entries_thresh) {
     resize_table(map);
   }

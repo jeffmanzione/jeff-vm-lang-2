@@ -115,7 +115,9 @@ Element Thread_constructor(VM *vm, Thread *t, ExternalData *data,
   }
   Element e_fn = tuple_get(args, 0);
   if (!ISTYPE(e_fn, class_function) && !ISTYPE(e_fn, class_methodinstance) &&
-      !ISTYPE(e_fn, class_method) && !ISTYPE(e_fn, class_class)) {
+      !ISTYPE(e_fn, class_method) && !ISTYPE(e_fn, class_class) &&
+      !ISTYPE(e_fn, class_anon_function) &&
+      !ISTYPE(e_fn, class_external_methodinstance)) {
     return throw_error(vm, t, "Thread must be passed a function or class.");
   }
   Element e_arg = tuple_get(args, 1);

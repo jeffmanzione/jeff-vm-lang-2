@@ -86,7 +86,7 @@ class Cache {
     map = Map(sz)
     mutex = sync.Mutex()
   }
-  method get(k, factory, args, default=None) {
+  method get(k, factory, default=None) {
     mutex.acquire()
     v = map[k]
     if v {
@@ -94,7 +94,7 @@ class Cache {
       return v
     }
     try {
-      v = factory(args)
+      v = factory(k)
     } catch e {
       v = default
     }
@@ -109,7 +109,7 @@ class LoadingCache : Cache, Function {
     self.Cache.new(sz)
   }
   method get(const k) {
-    self.Cache.get(k, factory, k)
+    self.Cache.get(k, factory)
   }
   method call(const k) {
     get(k)

@@ -34,6 +34,7 @@ void argconfig_run(ArgConfig* const config) {
                                "io,"
                                "math,"
                                "net,"
+                               "stream,"
                                "struct,"
                                "sync,"
                                "time"));

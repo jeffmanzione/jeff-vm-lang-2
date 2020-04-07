@@ -30,7 +30,7 @@ struct VM_ {
 
 VM *vm_create(ArgStore *store);
 Element vm_add_module(VM *vm, const Module *module);
-Element vm_object_lookup(VM *vm, Element obj, const char name[]);
+Element vm_object_lookup(VM *vm, Thread *t, Element obj, const char name[]);
 const MemoryGraph *vm_get_graph(const VM *vm);
 void vm_delete(VM *vm);
 

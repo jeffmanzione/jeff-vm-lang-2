@@ -2,6 +2,7 @@ module builtin
 
 import io
 import math
+import stream
 
 def load_module(path) {
   load_module__(path)  ; External C function
@@ -335,6 +336,9 @@ class Array {
   }
   method iter() {
     IndexIterator(self)
+  }
+  method stream() {
+    $module.stream.Stream(self)
   }
 }
 

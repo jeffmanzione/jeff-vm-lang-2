@@ -21,6 +21,7 @@
 Strings strings;
 
 char *ADDRESS_KEY;
+char *ANON_FUNCTION_NAME;
 char *ARGS_KEY;
 char *ARGS_NAME;
 char *ARRAYLIKE_INDEX_KEY;
@@ -50,6 +51,7 @@ char *INITIALIZED;
 char *INS_INDEX;
 char *IN_FN_NAME;
 char *IP_FIELD;
+char *IS_ANONYMOUS;
 char *IS_EXTERNAL_KEY;
 char *IS_ITERATOR_BLOCK_KEY;
 char *ITER_FN_NAME;
@@ -110,6 +112,7 @@ void chunk_delete(Chunk *chunk) {
 
 void strings_insert_constants() {
   ADDRESS_KEY = strings_intern("$adr");
+  ANON_FUNCTION_NAME = strings_intern("AnonymousFunction");
   ARGS_KEY = strings_intern("$args");
   ARGS_NAME = strings_intern("args");
   ARRAYLIKE_INDEX_KEY = strings_intern("__index__");
@@ -139,6 +142,7 @@ void strings_insert_constants() {
   INS_INDEX = strings_intern("$ins");
   IN_FN_NAME = strings_intern("__in__");
   IP_FIELD = strings_intern("$ip");
+  IS_ANONYMOUS = strings_intern("$is_anonymous");
   IS_EXTERNAL_KEY = strings_intern("$is_external");
   IS_ITERATOR_BLOCK_KEY = strings_intern("$is_iterator_block");
   ITER_FN_NAME = strings_intern("iter");

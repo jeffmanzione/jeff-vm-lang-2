@@ -11,6 +11,7 @@
 #include "../datastructure/set.h"
 #include "../threads/thread_interface.h"
 extern char *ADDRESS_KEY;
+extern char *ANON_FUNCTION_NAME;
 extern char *ARGS_KEY;
 extern char *ARGS_NAME;
 extern char *ARRAYLIKE_INDEX_KEY;
@@ -40,6 +41,7 @@ extern char *INITIALIZED;
 extern char *INS_INDEX;
 extern char *IN_FN_NAME;
 extern char *IP_FIELD;
+extern char *IS_ANONYMOUS;
 extern char *IS_EXTERNAL_KEY;
 extern char *IS_ITERATOR_BLOCK_KEY;
 extern char *ITER_FN_NAME;

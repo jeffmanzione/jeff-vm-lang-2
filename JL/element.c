@@ -23,6 +23,7 @@
 #include "ltable/ltable.h"
 #include "memory/memory_graph.h"
 #include "program/module.h"
+#include "threads/thread.h"
 #include "threads/thread_interface.h"
 #include "vm/vm.h"
 
@@ -217,6 +218,8 @@ void decorate_function(VM *vm, Element func, Element module, uint32_t ins,
   memory_graph_set_field(vm->graph, func, INS_INDEX, create_int(ins));
   memory_graph_set_field(vm->graph, func, PARENT_MODULE, module);
   memory_graph_set_field(vm->graph, func, MODULE_KEY, module);
+  memory_graph_set_field(vm->graph, func, IS_ANONYMOUS,
+                         name[0] == '$' ? create_int(1) : create_none());
   if (NULL != args) {
     Element arg_e = create_array(vm->graph);
     int i;
@@ -296,6 +299,15 @@ Element create_external_method_instance(MemoryGraph *graph, Element object,
   Element elt = create_obj_of_class(graph, class_external_methodinstance);
   memory_graph_set_field(graph, elt, OBJ_KEY, object);
   memory_graph_set_field(graph, elt, METHOD_KEY, method);
+  return elt;
+}
+
+Element create_anonymous_function(VM *vm, Thread *t, Element func) {
+  ASSERT(ISOBJECT(func));
+  Element elt = create_obj_of_class(vm->graph, class_anon_function);
+  memory_graph_set_field(vm->graph, elt, OBJ_KEY, t_current_block(t));
+  memory_graph_set_field(vm->graph, elt, METHOD_KEY, func);
+
   return elt;
 }
 

@@ -134,7 +134,7 @@ Element object_lookup(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   if (!ISTYPE(*arg, class_string)) {
     return throw_error(vm, t, "Cannot call $lookup with a non-String.");
   }
-  return vm_object_lookup(vm, data->object, string_to_cstr(*arg));
+  return vm_object_lookup(vm, t, data->object, string_to_cstr(*arg));
 }
 
 void merge_object_class(VM *vm) {

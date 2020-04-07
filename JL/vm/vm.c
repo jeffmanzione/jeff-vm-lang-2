@@ -273,7 +273,6 @@ void vm_merge_module(VM *vm, const char fn[]) {
   map_iterate(module_refs(module), add_ref);
 
   void add_class(const char class_name[], const Map *methods) {
-    DEBUGF("fn=%s class_name=%s", fn, class_name);
     Element class;
     if ((class = obj_get_field(vm->root, class_name)).type == NONE) {
       class = maybe_create_class_with_parents(vm, module_element, class_name);
@@ -361,33 +360,43 @@ void vm_delete(VM *vm) {
 
 const MemoryGraph *vm_get_graph(const VM *vm) { return vm->graph; }
 
-Element maybe_wrap_in_instance(VM *vm, Element obj, Element func,
+Element maybe_wrap_in_instance(VM *vm, Thread *t, Element obj, Element func,
                                const char name[]) {
+  if (!is_object_type(&func, OBJ)) {
+    return func;
+  }
+  // Wrap anonymous functions in their context.
+  if ((ISTYPE(func, class_function) || ISTYPE(func, class_method)) &&
+      NONE != obj_deep_lookup(func.obj, IS_ANONYMOUS).type) {
+    return create_anonymous_function(vm, t, func);
+  }
   // Do not box methods if they are directly retrieved from a class.
   if (!ISTYPE(func, class_method) ||
       (ISCLASS(obj) && func.obj == obj_get_field(obj, name).obj) ||
       ISTYPE(obj, class_methodinstance) || ISTYPE(obj, class_method) ||
-      ISTYPE(obj, class_function) || ISTYPE(obj, class_external_function)) {
+      ISTYPE(obj, class_anon_function) || ISTYPE(obj, class_function) ||
+      ISTYPE(obj, class_external_function)) {
     if (ISTYPE(func, class_external_method)) {
       return create_external_method_instance(vm->graph, obj, func);
     }
     return func;
+  } else {
+    // Create MethodInstance for methods since Methods do not contain any Object
+    // state.
+    return create_method_instance(vm->graph, obj, func);
   }
-  // Create MethodInstance for methods since Methods do not contain any Object
-  // state.
-  return create_method_instance(vm->graph, obj, func);
 }
 
-Element vm_object_lookup(VM *vm, Element obj, const char name[]) {
+Element vm_object_lookup(VM *vm, Thread *t, Element obj, const char name[]) {
   if (OBJECT != obj.type) {
     return create_none();
   }
   Element elt = obj_deep_lookup(obj.obj, name);
 
-  return maybe_wrap_in_instance(vm, obj, elt, name);
+  return maybe_wrap_in_instance(vm, t, obj, elt, name);
 }
 
-Element vm_object_lookup_ckey(VM *vm, Element obj, CommonKey key) {
+Element vm_object_lookup_ckey(VM *vm, Thread *t, Element obj, CommonKey key) {
   if (OBJECT != obj.type) {
     return create_none();
   }
@@ -401,9 +410,15 @@ Element vm_object_lookup_ckey(VM *vm, Element obj, CommonKey key) {
       !ISTYPE(obj, class_methodinstance) && !ISTYPE(obj, class_method) &&
       !ISTYPE(obj, class_function) && !ISTYPE(obj, class_external_function)) {
     return create_method_instance(vm->graph, obj, elt);
-  }
-  if (ISTYPE(elt, class_external_method)) {
+  } else if (ISTYPE(elt, class_external_method)) {
     return create_external_method_instance(vm->graph, obj, elt);
+  }
+
+  // Wrap anonymous functions in their context.
+  if (is_object_type(&elt, OBJ) &&
+      (ISTYPE(elt, class_function) || ISTYPE(elt, class_method)) &&
+      NONE != obj_deep_lookup(elt.obj, IS_ANONYMOUS).type) {
+    elt = create_anonymous_function(vm, t, elt);
   }
   return elt;
 }
@@ -416,7 +431,7 @@ Element vm_object_get(VM *vm, Thread *t, const char name[], bool *has_error) {
     *has_error = true;
     return create_none();
   }
-  return vm_object_lookup(vm, resval, name);
+  return vm_object_lookup(vm, t, resval, name);
 }
 
 Element vm_object_get_ckey(VM *vm, Thread *t, CommonKey key, bool *has_error) {
@@ -427,7 +442,7 @@ Element vm_object_get_ckey(VM *vm, Thread *t, CommonKey key, bool *has_error) {
     *has_error = true;
     return create_none();
   }
-  return vm_object_lookup_ckey(vm, resval, key);
+  return vm_object_lookup_ckey(vm, t, resval, key);
 }
 
 Element vm_lookup(VM *vm, Thread *t, const char name[]) {
@@ -440,7 +455,7 @@ Element vm_lookup(VM *vm, Thread *t, const char name[]) {
       Element class = obj_lookup(block.obj, CKey_class);
       Element class_field = obj_get_field(class, name);
       if (NONE != class_field.type) {
-        return maybe_wrap_in_instance(vm, block, class_field, name);
+        return maybe_wrap_in_instance(vm, t, block, class_field, name);
       }
     }
     block = obj_lookup(block.obj, CKey_$parent);
@@ -469,7 +484,7 @@ void call_external_fn(VM *vm, Thread *t, Element obj, Element external_func) {
         "Cannot call ExternalFunction on something not ExternalFunction.");
     return;
   }
-  Element module = vm_object_lookup(vm, external_func, PARENT_MODULE);
+  Element module = vm_object_lookup(vm, t, external_func, PARENT_MODULE);
   if (NONE != module.type) {
     vm_maybe_initialize_and_execute(vm, t, module);
   }
@@ -565,9 +580,14 @@ void vm_call_fn(VM *vm, Thread *t, Element obj, Element func) {
                      obj_get_field(func, METHOD_KEY));
     return;
   }
+  if (ISTYPE(func, class_anon_function)) {
+    Element context = obj_get_field(func, OBJ_KEY);
+    Element internal_func = obj_get_field(func, METHOD_KEY);
+    vm_call_fn(vm, t, context, internal_func);
+    return;
+  }
   Element call_fn = obj_deep_lookup(func.obj, CALL_KEY);
   if (is_object_type(&call_fn, OBJ)) {
-    //    elt_to_str(call_fn);
     vm_call_fn(vm, t, func, call_fn);
     return;
   }
@@ -586,7 +606,7 @@ void execute_object_operation(VM *vm, Thread *t, Element lhs, Element rhs,
   memory_graph_tuple_add(vm->graph, args, rhs);
   Element builtin = vm_lookup_module(vm, BUILTIN_MODULE_NAME);
   ASSERT(NONE != builtin.type);
-  Element fn = vm_object_lookup(vm, builtin, func_name);
+  Element fn = vm_object_lookup(vm, t, builtin, func_name);
   ASSERT(NONE != fn.type);
   t_set_resval(t, args);
   vm_call_fn(vm, t, builtin, fn);
@@ -621,7 +641,8 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         class = obj_lookup(elt.obj, CKey_class);
         if (inherits_from(class, class_function) ||
             ISTYPE(elt, class_methodinstance) ||
-            ISTYPE(elt, class_external_methodinstance)) {
+            ISTYPE(elt, class_external_methodinstance) ||
+            ISTYPE(elt, class_anon_function)) {
           vm_call_fn(vm, t, obj_deep_lookup_ckey(elt.obj, CKey_module), elt);
         } else if (ISTYPE(elt, class_class)) {
           vm_call_new(vm, t, elt);
@@ -661,7 +682,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         }
         memory_graph_array_set(vm->graph, elt, index.val.int_val, new_val);
       } else {
-        Element set_fn = vm_object_lookup(vm, elt, ARRAYLIKE_SET_KEY);
+        Element set_fn = vm_object_lookup(vm, t, elt, ARRAYLIKE_SET_KEY);
         if (NONE == set_fn.type) {
           vm_throw_error(
               vm, t, ins,
@@ -705,7 +726,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         }
         return true;
       } else {
-        Element index_fn = vm_object_lookup(vm, elt, ARRAYLIKE_INDEX_KEY);
+        Element index_fn = vm_object_lookup(vm, t, elt, ARRAYLIKE_INDEX_KEY);
         if (NONE == index_fn.type) {
           vm_throw_error(
               vm, t, ins,
@@ -1060,7 +1081,7 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
         vm_throw_error(vm, t, ins, "Cannot call a non-object.");
         return true;
       }
-      Element target = vm_object_lookup(vm, obj, ins.str);
+      Element target = vm_object_lookup(vm, t, obj, ins.str);
       if (OBJECT != target.type) {
         vm_throw_error(vm, t, ins, "Object has no such function '%s'.",
                        ins.str);
@@ -1068,7 +1089,8 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       }
       if (inherits_from(obj_lookup(target.obj, CKey_class), class_function) ||
           ISTYPE(target, class_methodinstance) ||
-          ISTYPE(target, class_external_methodinstance)) {
+          ISTYPE(target, class_external_methodinstance) ||
+          ISTYPE(target, class_anon_function)) {
         vm_call_fn(vm, t, obj, target);
       } else if (ISTYPE(target, class_class)) {
         vm_call_new(vm, t, target);
@@ -1404,11 +1426,7 @@ bool execute(VM *vm, Thread *t) {
       status = execute_no_param(vm, t, ins);
   }
   if (NONE != obj_get_field(t_current_block(t), ERROR_KEY).type) {
-    //    // TODO: Does this need to be a loop?
-    //    while (NONE != obj_get_field(vm_current_block(vm, t), ERROR_KEY).type)
-    //    {
     catch_error(vm, t);
-    //    }
     return true;
   }
 
@@ -1432,7 +1450,6 @@ void vm_maybe_initialize_and_execute(VM *vm, Thread *t,
   ASSERT(NONE != module_element.type);
   t_new_block(t, module_element, module_element);
   t_set_module(t, module_element, 0);
-  //  int i = 0;
   while (execute(vm, t))
     ;
   t_back(t);

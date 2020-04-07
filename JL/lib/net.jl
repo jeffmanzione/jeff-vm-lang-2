@@ -137,11 +137,11 @@ def parse_request(req) {
     (path, params) = parse_params(path)
     protocol = req_head[2].split(F_SLASH)
     
-    map = struct.Map(51)
-    for i=1, i<parts.len, i=i+1 {
-      kv = parts[i].split(COLON)
-      map[kv[0].trim()] = kv[1].trim()
-    }
+    ;map = struct.Map(51)
+    ;for i=1, i<parts.len, i=i+1 {
+    ;  kv = parts[i].split(COLON)
+    ;  map[kv[0].trim()] = kv[1].trim()
+    ;}
     return HttpRequest(type, path, params, protocol[0], protocol[1], None)
   } catch e {
     io.fprintln(io.ERROR, e)
@@ -212,7 +212,7 @@ class CachedTextRenderer {
     cache = struct.Cache()
   }
   method write(key, src, params, sink) {
-    parts_keys = cache.get(key, (src, params) {
+    parts_keys = cache.get(key, (_) {
       indices = []
       parts = []
       keys = []
@@ -232,7 +232,7 @@ class CachedTextRenderer {
       }
       parts.append(src.substr(index))
       return (parts, keys)
-    }, (src, params))
+    })
     if ~parts_keys or (parts_keys is error.Error) {
       sink(NOT_FOUND)
     } else {
@@ -240,6 +240,7 @@ class CachedTextRenderer {
       len = keys.len + parts.len
       if len == 1 {
         sink(parts[0])
+        return
       }
       for i=0, i<len, i=i+1 {
         if i%2 == 0 {

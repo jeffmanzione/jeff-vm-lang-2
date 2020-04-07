@@ -21,6 +21,7 @@ Element class_string;
 
 Element class_tuple;
 Element class_function;
+Element class_anon_function;
 Element class_external_function;
 Element class_method;
 Element class_external_method;
@@ -42,6 +43,7 @@ void class_init(VM *vm) {
   class_array = create_class_stub(vm->graph);
   class_tuple = create_class_stub(vm->graph);
   class_function = create_class_stub(vm->graph);
+  class_anon_function = create_class_stub(vm->graph);
   class_external_function = create_class_stub(vm->graph);
   class_external_method = create_class_stub(vm->graph);
   class_method = create_class_stub(vm->graph);
@@ -58,6 +60,8 @@ void class_init(VM *vm) {
   // Time to fill them
   class_fill(vm, class_tuple, TUPLE_NAME, class_object, vm->root);
   class_fill(vm, class_function, FUNCTION_NAME, class_object, vm->root);
+  class_fill(vm, class_anon_function, ANON_FUNCTION_NAME, class_object,
+             vm->root);
   class_fill(vm, class_external_function, EXTERNAL_FUNCTION_NAME,
              class_function, vm->root);
   class_fill(vm, class_external_method, EXTERNAL_METHOD_NAME,
