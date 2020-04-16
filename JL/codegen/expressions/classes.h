@@ -8,8 +8,6 @@
 #ifndef CODEGEN_EXPRESSIONS_CLASSES_H_
 #define CODEGEN_EXPRESSIONS_CLASSES_H_
 
-#ifdef NEW_PARSER
-
 #include <stdbool.h>
 
 #include "../../datastructure/expando.h"
@@ -39,10 +37,9 @@ typedef struct {
   Expando *methods;  // Function.
 } Class;
 
-DefineExpression(class_definition) {
-  Class class;
-};
 
-#endif
+Class populate_class(const SyntaxTree *stree);
+int produce_class(Class *class, Tape *tape);
+void delete_class(Class *class);
 
 #endif /* CODEGEN_EXPRESSIONS_CLASSES_H_ */

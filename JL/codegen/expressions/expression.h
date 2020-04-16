@@ -10,8 +10,6 @@
 
 #include <stdbool.h>
 
-#ifdef NEW_PARSER
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -217,14 +215,8 @@ struct ExpressionTree_ {
     Expression_jump_statement jump_statement;
     Expression_break_statement break_statement;
     Expression_exit_statement exit_statement;
-    Expression_module_statement module_statement;
-    Expression_import_statement import_statement;
-    Expression_function_definition function_definition;
-    Expression_class_definition class_definition;
     Expression_file_level_statement_list file_level_statement_list;
   };
 };
-
-#endif
 
 #endif /* CODEGEN_EXPRESSIONS_EXPRESSION_H_ */

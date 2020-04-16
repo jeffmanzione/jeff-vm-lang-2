@@ -8,8 +8,6 @@
 #ifndef CODEGEN_EXPRESSIONS_LOOPS_H_
 #define CODEGEN_EXPRESSIONS_LOOPS_H_
 
-#ifdef NEW_PARSER
-
 #include "../tokenizer.h"
 #include "assignment.h"
 #include "expression_macros.h"
@@ -34,7 +32,5 @@ DefineExpression(while_statement) {
   ExpressionTree *condition;
   ExpressionTree *body;
 };
-
-#endif
 
 #endif /* CODEGEN_EXPRESSIONS_LOOPS_H_ */

@@ -15,6 +15,8 @@ void optimizer_ResPush(OptimizeHelper *oh, const Tape *const tape, int start,
                        int end);
 void optimizer_SetRes(OptimizeHelper *oh, const Tape *const tape, int start,
                       int end);
+void optimizer_SetPush(OptimizeHelper *oh, const Tape *const tape, int start,
+                      int end);
 void optimizer_GetPush(OptimizeHelper *oh, const Tape *const tape, int start,
                        int end);
 void optimizer_JmpRes(OptimizeHelper *oh, const Tape *const tape, int start,

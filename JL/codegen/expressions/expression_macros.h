@@ -8,8 +8,6 @@
 #ifndef CODEGEN_EXPRESSIONS_EXPRESSION_MACROS_H_
 #define CODEGEN_EXPRESSIONS_EXPRESSION_MACROS_H_
 
-#ifdef NEW_PARSER
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -117,7 +115,5 @@ ExpressionTree *__extract_tree(Expando *expando_of_tree, int index);
     map_insert(&producers, name, Produce_##name);   \
     map_insert(&deleters, name, Delete_##name);     \
   }
-
-#endif
 
 #endif /* CODEGEN_EXPRESSIONS_EXPRESSION_MACROS_H_ */

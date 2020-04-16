@@ -65,7 +65,6 @@ DefineSyntax(conditional_expression);
 DefineSyntax(assignment_expression);
 DefineSyntax(assignment_tuple);
 
-#ifdef NEW_PARSER
 DefineSyntax(primary_expression_no_constants);
 DefineSyntax(const_assignment_expression);
 DefineSyntax(array_index_assignment);
@@ -133,8 +132,6 @@ DefineSyntax(anon_signature_const);
 DefineSyntax(anon_signature);
 DefineSyntax(anon_function_definition);
 DefineSyntax(anon_function_lambda_rhs);
-
-#endif
 
 DefineSyntax(tuple_expression);
 DefineSyntax(tuple_expression1);

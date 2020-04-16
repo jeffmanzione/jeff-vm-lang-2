@@ -194,9 +194,10 @@ class Tuple {
 class Array {
   field len
   method copy() {
-    cpy = Array()
+    cpy = []
+    cpy[len = 1] = None
     for i=0, i<len, i=i+1 {
-      cpy.append(self[i])
+      cpy[i] = self[i]
     }
     cpy
   }
@@ -262,8 +263,19 @@ class Array {
         return s
       }
     }
-    a = self[0]
-    for i=1, i<len, i=i+1 {
+    i = 0
+    a = None
+    if s {
+      if s is Function {
+        a = s()
+      } else {
+        a = s
+      }
+    } else {
+      a = self[0]
+      i = 1
+    }
+    for _, i<len, i=i+1 {
       a = f(a, self[i])
     }
     a

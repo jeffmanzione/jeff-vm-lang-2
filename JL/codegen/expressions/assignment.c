@@ -5,8 +5,6 @@
  *      Author: Jeff
  */
 
-#ifdef NEW_PARSER
-
 #include "assignment.h"
 
 #include "../../error.h"
@@ -239,5 +237,3 @@ ImplProduce(assignment_expression, Tape *tape) {
          produce_assignment(&assignment_expression->assignment, tape,
                             assignment_expression->eq_token);
 }
-
-#endif

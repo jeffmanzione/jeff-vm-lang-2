@@ -5,8 +5,6 @@
  *      Author: Jeff
  */
 
-#ifdef NEW_PARSER
-
 #include "statements.h"
 
 #include <limits.h>
@@ -226,5 +224,3 @@ ImplDelete(exit_statement) {
 ImplProduce(exit_statement, Tape *tape) {
   return tape->ins_no_arg(tape, EXIT, exit_statement->token);
 }
-
-#endif

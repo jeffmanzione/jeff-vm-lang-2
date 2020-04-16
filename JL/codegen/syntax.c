@@ -385,7 +385,6 @@ ImplSyntax(in_expression1,
 ImplSyntax(in_expression,
            And(additive_expression, in_expression1));
 
-#ifdef NEW_PARSER
 // relational_expression
 //    in_expression
 //    relational_expression < in_expression
@@ -438,58 +437,7 @@ ImplSyntax(or_expression1,
               Epsilon));
 ImplSyntax(or_expression,
            And(xor_expression, or_expression1));
-#else
 
-// relational_expression
-//    in_expression
-//    relational_expression < in_expression
-//    relational_expression > in_expression
-//    relational_expression <= in_expression
-//    relational_expression >= in_expression
-ImplSyntax(relational_expression1,
-           Or(And(Type(LTHAN), in_expression, relational_expression1),
-              And(Type(GTHAN), in_expression, relational_expression1),
-              And(Type(LTHANEQ), in_expression, relational_expression1),
-              And(Type(GTHANEQ), in_expression, relational_expression1),
-              Epsilon));
-ImplSyntax(relational_expression, And(in_expression, relational_expression1));
-
-// equality_expression
-//    relational_expression
-//    equality_expression == relational_expression
-//    equality_expression != relational_expression
-ImplSyntax(equality_expression1,
-           Or(And(Type(EQUIV), relational_expression, equality_expression1),
-              And(Type(NEQUIV), relational_expression, equality_expression1),
-              Epsilon));
-ImplSyntax(equality_expression,
-           And(relational_expression, equality_expression1));
-
-// and_expression
-//    equality_expression
-//    and_expression & equality_expression
-ImplSyntax(and_expression1,
-           Or(And(Type(AMPER), equality_expression, and_expression1),
-              Epsilon));
-ImplSyntax(and_expression, And(equality_expression, and_expression1));
-
-// xor_expression
-//    and_expression
-//    xor_expression ^ and_expression
-ImplSyntax(xor_expression1,
-           Or(And(Type(CARET), and_expression, xor_expression1),
-              Epsilon));
-ImplSyntax(xor_expression, And(and_expression, xor_expression1));
-
-// or_expression
-//    xor_expression
-//    or_expression | xor_expression
-ImplSyntax(or_expression1,
-           Or(And(Type(PIPE), xor_expression, or_expression1),
-              Epsilon));
-ImplSyntax(or_expression, And(xor_expression, or_expression1));
-
-#endif
 // is_expression
 //    or_expression
 //    or_expression is identifier
@@ -510,8 +458,6 @@ ImplSyntax(conditional_expression,
               And(TypeLn(IF_T), Ln(is_expression), Opt(TypeLn(THEN)),
                   conditional_expression),
               is_expression));
-
-#ifdef NEW_PARSER
 
 ImplSyntax(const_assignment_expression,
     And(TypeLn(CONST_T), identifier));
@@ -583,25 +529,6 @@ ImplSyntax(assignment_lhs,
 ImplSyntax(assignment_expression,
            Or(And(assignment_lhs, TypeLn(EQUALS), conditional_expression),
               conditional_expression));
-#else
-
-// assignment_expression
-//    conditional_expression
-//    assignment_tuple = assignment_expression
-//    unary_expression = assignment_expression
-ImplSyntax(assignment_expression,
-           Or(And(assignment_tuple, Type(EQUALS), assignment_expression),
-              And(Opt(TypeLn(CONST_T)), unary_expression, Type(EQUALS),
-                  assignment_expression),
-              conditional_expression));
-
-// assignment_tuple
-//    function_argument_list
-//    ( function_argument_list )
-ImplSyntax(assignment_tuple,
-           Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
-              function_argument_list));
-#endif
 
 // expression
 //    assignment_expression
@@ -619,25 +546,11 @@ ImplSyntax(expression_statement, Ln(tuple_expression));
 DefineSyntax(statement);
 DefineSyntax(statement_list);
 
-#ifdef NEW_PARSER
-
 ImplSyntax(foreach_statement,
            And(And(TypeLn(FOR),
                  Or(And(TypeLn(LPAREN), And(assignment_lhs, TypeLn(IN), conditional_expression), TypeLn(RPAREN)),
                      And(assignment_lhs, TypeLn(IN), conditional_expression))),
                statement));
-#else
-ImplSyntax(foreach_statement,
-           And(TypeLn(FOR),
-               Or(And(TypeLn(LPAREN), Or(assignment_tuple, identifier),
-                      TypeLn(IN), assignment_expression, TypeLn(RPAREN)),
-                  And(Or(assignment_tuple, identifier), TypeLn(IN),
-                      assignment_expression)),
-               statement));
-#endif
-
-
-#ifdef NEW_PARSER
 
 ImplSyntax(
     for_statement,
@@ -654,24 +567,6 @@ ImplSyntax(
 ImplSyntax(while_statement,
            And(And(TypeLn(WHILE), Ln(conditional_expression)),
                statement));
-
-#else
-
-ImplSyntax(
-    for_statement,
-    And(TypeLn(FOR),
-        Or(And(assignment_expression, TypeLn(COMMA), assignment_expression,
-               TypeLn(COMMA), Ln(assignment_expression)),
-           And(TypeLn(LPAREN),
-               And(assignment_expression, TypeLn(COMMA), assignment_expression,
-                   TypeLn(COMMA), Ln(assignment_expression)),
-               TypeLn(RPAREN))),
-        statement));
-
-ImplSyntax(while_statement,
-           And(TypeLn(WHILE), Ln(tuple_expression), statement));
-
-#endif
 
 // iteration_statement
 //    while expression  statement
@@ -706,8 +601,6 @@ ImplSyntax(exit_statement, TypeLn(EXIT_T));
 //    raise expression
 ImplSyntax(raise_statement, And(TypeLn(RAISE), Ln(assignment_expression)));
 
-#ifdef NEW_PARSER
-
 ImplSyntax(catch_assign,
     Or(And(TypeLn(LPAREN),
         assignment_lhs, TypeLn(RPAREN)),
@@ -720,19 +613,6 @@ ImplSyntax(try_statement,
            Or(And(And(TypeLn(TRY), Ln(statement), And(TypeLn(CATCH), catch_assign)), Ln(statement)),
               And(And(TypeLn(TRY), Ln(statement), And(TypeLn(CATCH), catch_assign)),
                   Ln(statement))));
-
-#else
-
-// try_statement
-//    try statement catch identifier statement
-//    try statement catch ( identifier ) statement
-ImplSyntax(try_statement,
-           Or(And(TypeLn(TRY), Ln(statement), TypeLn(CATCH), TypeLn(WORD),
-                  Ln(statement)),
-              And(TypeLn(TRY), Ln(statement), TypeLn(CATCH), TypeLn(LPAREN),
-                  TypeLn(WORD), TypeLn(RPAREN), Ln(statement))));
-
-#endif
 
 // jump_statement
 //    return \n
@@ -756,8 +636,6 @@ ImplSyntax(const_expression,
                Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
                   identifier),
                Opt(default_value_expression)));
-
-#ifdef NEW_PARSER
 
 ImplSyntax(function_arg_default_value,
            And(TypeLn(EQUALS), conditional_expression));
@@ -908,38 +786,6 @@ ImplSyntax(anon_function_definition,
               And(anon_signature,
                   compound_statement)));
 
-#else
-
-// function_definition
-//    def identifier ( argument_list ) statement
-ImplSyntax(function_definition,
-           And(Type(DEF), identifier, Type(LPAREN), Opt(function_argument_list),
-               TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
-
-// new_definition
-//    def new ( argument_list ) statement
-ImplSyntax(new_definition,
-           And(Type(DEF), Type(NEW), Type(LPAREN), Opt(function_argument_list),
-               TypeLn(RPAREN), statement));
-
-// function_argument_list
-//    identifier | function_argument_list , identifier
-ImplSyntax(function_argument_list1,
-           Or(And(TypeLn(COMMA), function_argument_list), Epsilon));
-
-ImplSyntax(function_argument_list,
-           And(Or(And(TypeLn(LPAREN), function_argument_list, TypeLn(RPAREN)),
-                  const_expression),
-               function_argument_list1));
-
-// function_definition
-//    method identifier ( argument_list ) statement
-ImplSyntax(method_definition,
-           And(Type(METHOD), identifier, Type(LPAREN), Opt(function_argument_list),
-               TypeLn(RPAREN), Opt(Type(CONST_T)), statement));
-
-#endif
-
 ImplSyntax(identifier_list1,
     Or(And(And(TypeLn(COMMA), identifier), identifier_list1),
        Epsilon));
@@ -982,9 +828,6 @@ ImplSyntax(parent_class_list, And(Ln(identifier), parent_class_list1));
 ImplSyntax(parent_classes,
            And(TypeLn(COLON), parent_class_list));
 
-
-#ifdef NEW_PARSER
-
 ImplSyntax(class_compound_statement,
     Or(And(TypeLn(LBRCE), TypeLn(RBRCE)),
        And(TypeLn(LBRCE), Ln(class_statement_list), TypeLn(RBRCE))));
@@ -999,18 +842,6 @@ ImplSyntax(class_definition,
            And(And(Type(CLASS), class_name_and_inheritance),
                Or(class_compound_statement,
                   Ln(class_statement))));
-
-#else
-
-// class_definition
-//    class identifier statement
-//    class identifier parent_classes statement
-ImplSyntax(class_definition,
-           And(Type(CLASS), Ln(identifier), Opt(parent_classes),
-               Or(And(TypeLn(LBRCE), Ln(class_statement_list), TypeLn(RBRCE)),
-                  Ln(class_statement))));
-
-#endif
 
 // import_statement
 //    import identifier

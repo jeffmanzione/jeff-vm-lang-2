@@ -28,7 +28,6 @@
 #include "program/tape.h"
 #include "vm/vm.h"
 
-#ifdef NEW_PARSER
 void test_expression(const char expression[]) {
   FILE *file = tmpfile();
   printf("EXPR: %s\n", expression);
@@ -57,8 +56,6 @@ void test_expression(const char expression[]) {
   file_info_delete(fi);
   expression_finalize();
 }
-#endif
-
 int main(int argc, const char *argv[]) {
 #ifdef MEMORY_WRAPPER
   alloc_init();

@@ -1404,7 +1404,7 @@ bool execute(VM *vm, Thread *t) {
   fprintf(stdout, "module(%s,t=%d) ", module_name(t_get_module(t).obj->module),
           (int)t->id);
   fflush(stdout);
-  ins_to_str(ins, stdout);
+  ins_to_str(ins, stdout);fflush(stdout);
   fprintf(stdout, "\n");
   fflush(stdout);
   fflush(stderr);

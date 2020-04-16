@@ -386,10 +386,11 @@ void string_escaped(const char input[], FILE *file) {
       break;
       // and so on
     default:
-      if (iscntrl(ch))
+      if (iscntrl(ch)) {
         fprintf(file, "\\%03o", ch);
-      else
+      } else {
         fputc(ch, file);
+      }
     }
   }
 }

@@ -8,22 +8,10 @@
 #ifndef CODEGEN_EXPRESSIONS_FILES_H_
 #define CODEGEN_EXPRESSIONS_FILES_H_
 
-#ifdef NEW_PARSER
-
 #include "../../datastructure/expando.h"
 #include "../tokenizer.h"
 #include "assignment.h"
 #include "expression_macros.h"
-
-DefineExpression(module_statement) {
-  const Token *module_token;
-  const Token *module_name;
-};
-
-DefineExpression(import_statement) {
-  const Token *import_token;
-  const Token *module_name;
-};
 
 typedef struct {
   bool is_const, is_field, has_default;
@@ -46,8 +34,6 @@ typedef struct {
   Arguments args;
   ExpressionTree *body;
 } Function;
-
-DefineExpression(function_definition) { Function func; };
 
 typedef void (*FuncDefPopulator)(const SyntaxTree *fn_identifier,
                                  Function *func);
@@ -73,8 +59,28 @@ Function populate_function(const SyntaxTree *stree);
 
 int produce_arguments(Arguments *args, Tape *tape);
 
-DefineExpression(file_level_statement_list) { Expando *statements; };
+typedef struct {
+  bool is_named;
+  Token *module_token;
+  Token *module_name;
+} ModuleName;
 
-#endif
+typedef struct {
+  Token *import_token;
+  Token *module_name;
+} Import;
+
+
+typedef struct {
+  ModuleName name;
+  Expando *imports;
+  Expando *classes;
+  Expando *functions;
+  Expando *statements;
+} ModuleDef;
+
+DefineExpression(file_level_statement_list) {
+  ModuleDef def;
+};
 
 #endif /* CODEGEN_EXPRESSIONS_FILES_H_ */

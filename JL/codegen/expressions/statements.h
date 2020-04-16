@@ -8,8 +8,6 @@
 #ifndef CODEGEN_EXPRESSIONS_STATEMENTS_H_
 #define CODEGEN_EXPRESSIONS_STATEMENTS_H_
 
-#ifdef NEW_PARSER
-
 #include "../../datastructure/expando.h"
 #include "assignment.h"
 #include "expression_macros.h"
@@ -65,7 +63,5 @@ DefineExpression(break_statement) {
 DefineExpression(exit_statement) {
   const Token *token;
 };
-
-#endif
 
 #endif /* CODEGEN_EXPRESSIONS_STATEMENTS_H_ */

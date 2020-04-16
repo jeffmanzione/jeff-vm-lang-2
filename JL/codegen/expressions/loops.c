@@ -5,8 +5,6 @@
  *      Author: Jeff
  */
 
-#ifdef NEW_PARSER
-
 #include "loops.h"
 
 #include <limits.h>
@@ -193,5 +191,3 @@ ImplProduce(while_statement, Tape *tape) {
 
   return num_ins;
 }
-
-#endif

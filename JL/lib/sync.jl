@@ -1,6 +1,7 @@
 module sync
 
 import io
+import struct
 
 self.INIFINITE = 2147483647
 self.LOCK_ACQUIRED = 0
@@ -52,7 +53,6 @@ class ThreadPool {
     task = None
     while True {
       task_lock.lock(INFINITE)
-
       mutex.acquire()
       if tasks.len > 0 {
         task = tasks.pop(1)[0]
@@ -69,26 +69,37 @@ class ThreadPool {
   }
   method execute_future(f) {
     mutex.acquire()
+    if f.mark {
+      mutex.release()
+      return f
+    }
     tasks.append(f)
+    f.mark = True
     mutex.release()
     
     task_lock.unlock()
     return f
   }
   method execute(fn, args=None) {
-    f = Future(fn, args, self)
+    f = None
+    if fn is TaskGraph {
+      f = TaskGraphFuture(fn, self)
+    } else {
+      f = Future(fn, args, self)
+    }
     return execute_future(f)
   }
 }
 
 class Future {
-  field listeners, listeners_mutex, result, has_result, read_mutex
+  field listeners, listeners_mutex, result, has_result, read_mutex, mark
   new(field fn, field args, field ex) {
     listeners = []
     listeners_mutex = Mutex()
     result = None
     has_result = False
     read_mutex = Semaphore(0, 1)
+    mark = False
   }
   method exec() {
     result = fn(args)
@@ -112,8 +123,10 @@ class Future {
       return result
     }
   }
-  method thenDo(fn) {
-    f = Future(fn, None, ex)
+  method then_do(fn) {
+    return _then_do_future(Future(fn, None, ex))
+  }
+  method _then_do_future(f) {
     listeners_mutex.acquire()
     if has_result {
       f.args = result
@@ -126,5 +139,98 @@ class Future {
   }
   method wait() {
     get()
+  }
+}
+
+class TaskGraph {
+  field next_id, nodes, roots
+  new() {
+    next_id = 0
+    nodes = []
+    roots = []
+  }
+  method add_node(work, deps=None) {
+    id = _next_id()
+    if ~deps {
+      roots.append(id)
+    }
+    deps = _wrap_deps(deps)
+    node = _WorkNode(id, deps, work)
+    nodes.append(node)
+    deps.each(node_id -> nodes[node_id]._add_dep_for(id))
+    return id
+  }
+  method _next_id() {
+    retval = next_id
+    next_id = next_id + 1
+    return retval
+  }
+  method _wrap_deps(deps) {
+    if ~deps {
+      return []
+    } else if deps is Array {
+      return deps
+    } else {
+      return [deps]
+    }
+  }
+}
+
+class _WorkNode {
+  field deps_for
+  new(field id, field depends_on, field work) {
+    deps_for = []
+  }
+  method _add_dep_for(dep_id) {
+    deps_for.append(dep_id)
+  }
+  method to_s() {
+    return concat('_WorkNode(id=', id, ',depends_on=', depends_on, ',deps_for=', deps_for, ')')
+  }
+}
+
+class TaskGraphFuture : Future {
+  new(field task_graph, field ex) {
+    self.Future.new(_execute_graph, None, ex)
+  }
+  ; Why do I have to do this?
+  method get() {
+    return self.Future.get()
+  }
+  method exec() {
+    return self.Future.exec()
+  }
+  method _execute_graph() {
+    visited = []
+    visited[task_graph.nodes.len - 1] = None
+    _create_futures(visited)
+    io.println(visited)
+    return visited.map((future) {
+      future.get()
+    })
+  }
+  method _create_futures(visited) {
+    next_to_process = task_graph.roots.copy()
+    
+    while next_to_process.len > 0 {
+      id = next_to_process.pop()
+      ; Skip if already visited
+      if visited[id] {
+        continue
+      }
+      node = task_graph.nodes[id]
+      future = $module.Future(
+          () {
+            result_map = {}
+            for (_, dep) in node.depends_on {
+              result_map[dep] = visited[dep].get()
+            }
+            io.println('id=', dep, result_map)
+            return node.work(result_map)
+          }, None, ex)
+      visited[id] = future
+      node.deps_for.each(next_to_process.append)
+      node.depends_on.each(dep_id -> visited[id]._then_do_future(future))
+    }
   }
 }

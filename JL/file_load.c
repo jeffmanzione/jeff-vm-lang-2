@@ -131,7 +131,7 @@ Module* load_fn_jm(const char fn[], const ArgStore *store) {
   return module;
 }
 
-Module* load_fn_jl(const char fn[], const ArgStore *store) {
+Module *load_fn_jl(const char fn[], const ArgStore *store) {
   bool should_optimize = argstore_lookup_bool(store, ArgKey__OPTIMIZE);
   bool out_machine = argstore_lookup_bool(store, ArgKey__OUT_MACHINE);
   bool out_binary = argstore_lookup_bool(store, ArgKey__OUT_BINARY);
@@ -165,8 +165,8 @@ Module* load_fn_jl(const char fn[], const ArgStore *store) {
   }
   if (should_optimize) {
     if (out_unoptimized) {
-      FILE *file = FILE_FN(combine_path_file(uoout_dir, file_name, ".jc"),
-          "w+");
+      char *unoptimized_fn = combine_path_file(uoout_dir, file_name, ".jc");
+      FILE *file = FILE_FN(unoptimized_fn, "w+");
       tape_write(tape, file);
       fclose(file);
     }

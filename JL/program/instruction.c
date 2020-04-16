@@ -42,6 +42,7 @@ Ins instruction(Op op) {
   Ins ins;
   ins.param = NO_PARAM;
   ins.op = op;
+  ins.id = NULL;
   return ins;
 }
 
@@ -61,28 +62,7 @@ Ins instruction_id(Op op, const char id[]) {
   return ins;
 }
 
-// Ins instruction_goto(Op op, uint32_t go_to) {
-//  Ins ins;
-//  ins.param = GOTO_PARAM;
-//  ins.op = op;
-//  ins.go_to = go_to;
-//  return ins;
-//}
-
 Ins instruction_str(Op op, const char *str) {
-  //  int escaped_count = count_chars(str, '\\');
-  //  // Include null char.
-  //  int new_len = strlen(str) - escaped_count + 1;
-  //  char *buffer = ALLOC_ARRAY2(char, new_len);
-  //  S_ASSERT(new_len - 1 == string_unescape(str, buffer, new_len));
-  //  Ins ins;
-  //  ins.param = STR_PARAM;
-  //  ins.op = op;
-  //  ins.str = strings_intern_range(buffer, 1, new_len - 2);
-  //  DEBUGF("BEFORE='%s'", str);
-  //  DEBUGF("AFTER='%s'", buffer);
-  //  DEALLOC(buffer);
-
   Ins ins;
   ins.param = STR_PARAM;
   ins.op = op;
@@ -97,12 +77,11 @@ Ins noop_instruction() {
 }
 
 void ins_to_str(Ins ins, FILE *file) {
-  //  DEBUGF("A");
   fprintf(file, "%s", instructions[(int)ins.op]);
-  fflush(stdout);
+  fflush(file);
   if (ins.param == VAL_PARAM) {
     fprintf(file, " ");
-    fflush(stdout);
+    fflush(file);
     val_to_str(ins.val, file);
     if (ins.op == SGET) {
       fprintf(file, "(%s)", CKey_lookup_str(ins.val.int_val));
@@ -110,12 +89,12 @@ void ins_to_str(Ins ins, FILE *file) {
     fflush(stdout);
   } else if (ins.param == ID_PARAM) {
     fprintf(file, " %s", ins.id);
-    fflush(stdout);
+    fflush(file);
     //  } else if (ins.param == GOTO_PARAM) {
     //    fprintf(file, " adr(%d)", ins.go_to);
   } else if (ins.param == STR_PARAM) {
     fprintf(file, " '%s'", ins.str);
-    fflush(stdout);
+    fflush(file);
   }
 }
 

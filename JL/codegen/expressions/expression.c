@@ -5,8 +5,6 @@
  *      Author: Jeff
  */
 
-#ifdef NEW_PARSER
-
 #include "expression.h"
 
 #include <stddef.h>
@@ -1016,11 +1014,6 @@ void expression_init() {
   Register(break_statement);
   Register(exit_statement);
 
-  Register(module_statement);
-  Register(import_statement);
-  Register(function_definition);
-
-  Register(class_definition);
   Register(file_level_statement_list);
 }
 
@@ -1055,5 +1048,3 @@ void delete_expression(ExpressionTree *tree) {
   delete (tree);
   DEALLOC(tree);
 }
-
-#endif

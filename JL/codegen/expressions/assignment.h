@@ -8,8 +8,6 @@
 #ifndef CODEGEN_EXPRESSIONS_ASSIGNMENT_H_
 #define CODEGEN_EXPRESSIONS_ASSIGNMENT_H_
 
-#ifdef NEW_PARSER
-
 #include "../../datastructure/expando.h"
 #include "../tokenizer.h"
 #include "expression_macros.h"
@@ -54,7 +52,5 @@ DefineExpression(assignment_expression) {
 Assignment populate_assignment(const SyntaxTree *stree);
 void delete_assignment(Assignment *assignment);
 int produce_assignment(Assignment *assign, Tape *tape, const Token *eq_token);
-
-#endif
 
 #endif /* CODEGEN_EXPRESSIONS_ASSIGNMENT_H_ */
