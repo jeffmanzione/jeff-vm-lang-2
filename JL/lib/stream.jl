@@ -3,15 +3,20 @@ module stream
 self.list = ((a, x) -> a.append(x), () -> [])
 self.sum = (a, x) -> a + x
 
+; Lazy-computes map() and collect() operations on iterables.
 class Stream {
   field fns
   new(field iterable) {
     fns = []
   }
+  ; Applies [fn] to all members of the stream.
+  ; The order of the iterable is unaffected.
   method map(fn) {
     fns.append(fn)
     return self
   }
+  ; Applies [fn] to the each member of the stream.
+  ; 
   method each(fn) {
     for (_, elt) in iterable {
       result = _apply_fns(elt)

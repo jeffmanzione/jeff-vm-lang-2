@@ -67,7 +67,7 @@ class ThreadPool {
       }
     }
   }
-  method execute_future(f) {
+  method _execute_future(f) {
     mutex.acquire()
     if f.mark {
       mutex.release()
@@ -87,7 +87,7 @@ class ThreadPool {
     } else {
       f = Future(fn, args, self)
     }
-    return execute_future(f)
+    return _execute_future(f)
   }
 }
 
@@ -107,7 +107,7 @@ class Future {
     has_result = True
     for (_,f) in listeners {
       f.args = result
-      ex.execute_future(f)
+      ex._execute_future(f)
     }
     listeners_mutex.release()
     read_mutex.unlock()
@@ -130,7 +130,7 @@ class Future {
     listeners_mutex.acquire()
     if has_result {
       f.args = result
-      ex.execute_future(f)
+      ex._execute_future(f)
     } else {
       listeners.append(f)
     }
@@ -204,14 +204,11 @@ class TaskGraphFuture : Future {
     visited = []
     visited[task_graph.nodes.len - 1] = None
     _create_futures(visited)
-    io.println(visited)
-    return visited.map((future) {
-      future.get()
-    })
+    task_graph.roots.each(id -> ex._execute_future(visited[id]))
+    return visited.map(f -> f.get())
   }
   method _create_futures(visited) {
     next_to_process = task_graph.roots.copy()
-    
     while next_to_process.len > 0 {
       id = next_to_process.pop()
       ; Skip if already visited
@@ -220,14 +217,26 @@ class TaskGraphFuture : Future {
       }
       node = task_graph.nodes[id]
       future = $module.Future(
-          () {
+          (node) {
             result_map = {}
             for (_, dep) in node.depends_on {
               result_map[dep] = visited[dep].get()
             }
-            io.println('id=', dep, result_map)
-            return node.work(result_map)
-          }, None, ex)
+            result = node.work(result_map)
+            node.deps_for.each((id) {
+              child = task_graph.nodes[id]
+              child_future = visited[id]
+              child_future.read_mutex.lock(INFINITE)
+              all_deps_completed = child.depends_on.stream()
+                                        .map(id -> task_graph.nodes[id])
+                                        .collect((a,b) -> a and b)
+              if all_deps_completed {
+                ex._execute_future(child_future)
+              }
+              child_future.read_mutex.unlock()
+            })
+            return result
+          }, node, ex)
       visited[id] = future
       node.deps_for.each(next_to_process.append)
       node.depends_on.each(dep_id -> visited[id]._then_do_future(future))
