@@ -51,10 +51,6 @@ DEB_FN(void, memory_graph_set_field, MemoryGraph *memory_graph,
 #define memory_graph_set_field(...) \
   CALL_FN(memory_graph_set_field__, __VA_ARGS__)
 
-void memory_graph_set_field_const(MemoryGraph *memory_graph,
-                                  const Element parent, const char field_name[],
-                                  const Element field_val);
-
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
                           const char field_name[], const Element field_val);
 
@@ -87,8 +83,6 @@ int memory_graph_free_space(MemoryGraph *memory_graph);
 void memory_graph_print(const MemoryGraph *graph, FILE *file);
 
 Array *extract_array(Element element);
-
-Mutex memory_graph_mutex(const MemoryGraph *graph);
 
 // Element memory_graph_new_thread();
 

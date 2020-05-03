@@ -871,8 +871,7 @@ int produce_anon_function(Function *func, Tape *tape) {
              tape->anon_label(tape, func->def_token);
   tape_append(tape, tmp);
   tape_delete(tmp);
-  num_ins += func_ins + tape->ins_text(tape, RES, SELF, func->def_token) +
-             tape->ins_anon(tape, GET, func->def_token);
+  num_ins += func_ins + tape->ins_anon(tape, RES, func->def_token);
 
   return num_ins;
 }

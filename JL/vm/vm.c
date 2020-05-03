@@ -464,11 +464,11 @@ Element vm_lookup(VM *vm, Thread *t, const char name[]) {
   if (NONE == block.type) {
     // Try checking the thread if all else fails.
     if (NONE != (lookup = obj_get_field(t->self, name)).type) {
-      return lookup;
+      return maybe_wrap_in_instance(vm, t, block, lookup, name);
     }
     return create_none();
   }
-  return lookup;
+  return maybe_wrap_in_instance(vm, t, block, lookup, name);
 }
 
 const Element get_old_resvals(Thread *t) {
@@ -1404,7 +1404,8 @@ bool execute(VM *vm, Thread *t) {
   fprintf(stdout, "module(%s,t=%d) ", module_name(t_get_module(t).obj->module),
           (int)t->id);
   fflush(stdout);
-  ins_to_str(ins, stdout);fflush(stdout);
+  ins_to_str(ins, stdout);
+  fflush(stdout);
   fprintf(stdout, "\n");
   fflush(stdout);
   fflush(stderr);

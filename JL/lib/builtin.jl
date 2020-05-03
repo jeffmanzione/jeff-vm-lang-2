@@ -278,7 +278,7 @@ class Array {
     for _, i<len, i=i+1 {
       a = f(a, self[i])
     }
-    a
+    return a
   }
   method equals_range(array, start, end) {
     if (start < 0) return False

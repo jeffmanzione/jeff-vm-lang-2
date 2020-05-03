@@ -33,7 +33,6 @@ typedef struct MemoryGraph_ {
   Set /*<Node>*/ nodes;
   Set /*<Node>*/ roots;
 
-  //  Set/*<Thread>*/threads;
 #ifdef ENABLE_MEMORY_LOCK
   ThreadHandle access_mutex;
 #endif
@@ -311,6 +310,7 @@ DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
   NodeEdge tmp_parent_edge = {parent_node, -1};
 
 #ifdef ENABLE_MEMORY_LOCK
+  //  begin_read(graph->rw_lock);
   acquire_all_mutex(parent_node, child_node);
 #endif
   // Remove edge from parent to child
@@ -348,10 +348,6 @@ DEB_FN(void, memory_graph_set_field, MemoryGraph *graph, const Element parent,
   }
   obj_set_field(parent, field_name, field_val);
 }
-
-void memory_graph_set_field_const(MemoryGraph *memory_graph,
-                                  const Element parent, const char field_name[],
-                                  const Element field_val) {}
 
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
                           const char field_name[], const Element field_val) {
@@ -415,7 +411,6 @@ int memory_graph_free_space(MemoryGraph *graph) {
 #endif
 
   int nodes_deleted = 0;
-
   // default table size to # of nodes. This will avoid resizing the table.
   Set *marked =
       set_create(set_size(&graph->nodes) * 2, node_hasher, node_comparator);
@@ -498,11 +493,6 @@ Element memory_graph_array_pop(MemoryGraph *graph, const Element parent) {
 
 void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
                                 const Element element) {
-  //  DEBUGF("ENQUEUE");
-  //  elt_to_str(element, stdout);
-  //  printf("\n");
-  //  fflush(stdout);
-
   ASSERT_NOT_NULL(graph);
   Array *arr = extract_array(parent);
   Array_enqueue(arr, element);
@@ -534,12 +524,6 @@ Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
 
 Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent) {
   ASSERT_NOT_NULL(graph);
-
-  //  DEBUGF("ARRAY DEQUEUE");
-  //  elt_to_str(parent, stdout);
-  //  printf("\n");
-  //  fflush(stdout);
-
   Array *arr = extract_array(parent);
   Element element = Array_dequeue(arr);
   if (OBJECT == element.type) {
@@ -631,9 +615,3 @@ void memory_graph_print(const MemoryGraph *graph, FILE *file) {
   set_iterate(&graph->nodes, print_edges_for_child);
   fprintf(file, "}\n\n");
 }
-
-#ifdef ENABLE_MEMORY_LOCK
-Mutex memory_graph_mutex(const MemoryGraph *graph) {
-  return graph->access_mutex;
-}
-#endif

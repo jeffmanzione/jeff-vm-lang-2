@@ -106,22 +106,24 @@ class HttpRequest {
 }
 
 def parse_params(path) {
-  query_parts = path.split(QUESTION)
-  path = query_parts[0]
-  params = struct.Map(31)
-  for (_, i) in range(1, query_parts.len) {
-    part = query_parts[i]
-    param_parts = part.split(AMPER)
-    for (_, param) in param_parts {
-      kv = param.split(EQUALS)
-      if kv.len < 2 {
-        params[kv[0]] = '1'
-      } else {
-        params[kv[0]] = kv[1]
-      }
-    }
+  q_index = path.find(QUESTION)
+  if ~q_index {
+    return (path, {})
   }
-  (path, params)
+  (
+    path.substr(0, q_index),
+    path.substr(q_index + 1)
+      .split(AMPER)
+      .collect(
+        (a, part) {
+          eq_index = part.find(EQUALS)
+          if ~eq_index {
+            a[part] ='1'
+          }
+          a[part.substr(0, eq_index)] = part.substr(eq_index + 1)
+          return a
+        },
+        {}))
 }
 
 def parse_request(req) {
@@ -137,11 +139,11 @@ def parse_request(req) {
     (path, params) = parse_params(path)
     protocol = req_head[2].split(F_SLASH)
     
-    ;map = struct.Map(51)
-    ;for i=1, i<parts.len, i=i+1 {
-    ;  kv = parts[i].split(COLON)
-    ;  map[kv[0].trim()] = kv[1].trim()
-    ;}
+    map = {}
+    for i=1, i<parts.len, i=i+1 {
+      kv = parts[i].split(COLON)
+      map[kv[0].trim()] = kv[1].trim()
+    }
     return HttpRequest(type, path, params, protocol[0], protocol[1], None)
   } catch e {
     io.fprintln(io.ERROR, e)

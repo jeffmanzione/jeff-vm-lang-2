@@ -63,7 +63,7 @@ RWLock *create_rwlock() {
 void begin_read(RWLock *lock) {
   mutex_await(lock->reader, INFINITE);
   if (++lock->blocking_readers_count == 1) {
-    while (semaphore_lock(lock->global, 0) != WAIT_OBJECT_0)
+    while (semaphore_lock(lock->global, INFINITE) != WAIT_OBJECT_0)
       ;
   }
   mutex_release(lock->reader);
@@ -77,7 +77,7 @@ void end_read(RWLock *lock) {
   mutex_release(lock->reader);
 }
 void begin_write(RWLock *lock) {
-  while (semaphore_lock(lock->global, 0) != WAIT_OBJECT_0)
+  while (semaphore_lock(lock->global, INFINITE) != WAIT_OBJECT_0)
     ;
 }
 

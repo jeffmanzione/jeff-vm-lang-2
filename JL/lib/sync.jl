@@ -43,13 +43,13 @@ class ThreadPool {
     threads = []
     tasks = []
     for i=0, i<num_threads, i=i+1 {
-      threads.append(Thread(execute_task, None))
+      threads.append(Thread(_execute_task, None))
     }
     for (_,t) in threads {
       t.start()
     }
   }
-  method execute_task() {
+  method _execute_task() {
     task = None
     while True {
       task_lock.lock(INFINITE)
@@ -137,6 +137,12 @@ class Future {
     listeners_mutex.release()
     return f
   }
+  method is_complete() {
+    read_mutex.lock(0)
+    res = has_result
+    read_mutex.unlock()
+    return res
+  }
   method wait() {
     get()
   }
@@ -195,7 +201,7 @@ class TaskGraphFuture : Future {
   }
   ; Why do I have to do this?
   method get() {
-    return self.Future.get()
+    return self.Future.get().map(f -> f.get())
   }
   method exec() {
     return self.Future.exec()
@@ -205,7 +211,7 @@ class TaskGraphFuture : Future {
     visited[task_graph.nodes.len - 1] = None
     _create_futures(visited)
     task_graph.roots.each(id -> ex._execute_future(visited[id]))
-    return visited.map(f -> f.get())
+    return visited
   }
   method _create_futures(visited) {
     next_to_process = task_graph.roots.copy()
@@ -216,30 +222,40 @@ class TaskGraphFuture : Future {
         continue
       }
       node = task_graph.nodes[id]
-      future = $module.Future(
-          (node) {
-            result_map = {}
-            for (_, dep) in node.depends_on {
-              result_map[dep] = visited[dep].get()
-            }
-            result = node.work(result_map)
-            node.deps_for.each((id) {
-              child = task_graph.nodes[id]
-              child_future = visited[id]
-              child_future.read_mutex.lock(INFINITE)
-              all_deps_completed = child.depends_on.stream()
-                                        .map(id -> task_graph.nodes[id])
-                                        .collect((a,b) -> a and b)
-              if all_deps_completed {
-                ex._execute_future(child_future)
-              }
-              child_future.read_mutex.unlock()
-            })
-            return result
-          }, node, ex)
+      future = _WorkNodeFuture(node, visited, task_graph, ex)
       visited[id] = future
       node.deps_for.each(next_to_process.append)
-      node.depends_on.each(dep_id -> visited[id]._then_do_future(future))
     }
+    return visited
+  }
+}
+
+class _WorkNodeFuture : Future {
+  new(field node, field visited, field task_graph, field ex) {
+    self.Future.new(node.work, None, ex)
+  }
+  method get() {
+    return self.Future.get()
+  }
+  method exec() {
+    result_map = {}
+    for (_, dep) in node.depends_on {
+      result_map[dep] = visited[dep].get()
+    }
+    self.Future.args = result_map
+    self.Future.exec()
+    node.deps_for.each((id) {
+      child = task_graph.nodes[id]
+      child_future = visited[id]
+      all_deps_completed = child.depends_on.stream()
+                                .map(id -> visited[id].is_complete())
+                                .collect((a,b) -> a and b)
+      if all_deps_completed {
+        ex._execute_future(child_future)
+      }
+    })
+  }
+  method is_complete() {
+    return self.Future.is_complete()
   }
 }
