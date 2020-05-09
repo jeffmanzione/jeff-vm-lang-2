@@ -33,8 +33,10 @@ typedef struct MemoryGraph_ {
   Set /*<Node>*/ nodes;
   Set /*<Node>*/ roots;
 
+  //  Set/*<Thread>*/threads;
 #ifdef ENABLE_MEMORY_LOCK
   ThreadHandle access_mutex;
+//  RWLock *rw_lock;
 #endif
 } MemoryGraph;
 
@@ -69,6 +71,7 @@ MemoryGraph *memory_graph_create() {
   MemoryGraph *graph = ALLOC2(MemoryGraph);
 #ifdef ENABLE_MEMORY_LOCK
   graph->access_mutex = mutex_create(NULL);
+//  graph->rw_lock = create_rwlock();
 #endif
   set_init(&graph->nodes, DEFAULT_NODE_TABLE_SZ, default_hasher,
            default_comparator);
@@ -174,6 +177,7 @@ void memory_graph_delete(MemoryGraph *graph) {
   set_finalize(&graph->nodes);
 #ifdef ENABLE_MEMORY_LOCK
   mutex_close(graph->access_mutex);
+//  close_rwlock(graph->rw_lock);
 #endif
   DEALLOC(graph);
 }
@@ -265,6 +269,7 @@ DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
 
 #ifdef ENABLE_MEMORY_LOCK
   acquire_all_mutex(parent_node, child_node);
+//  begin_read(graph->rw_lock);
 #endif
   // if There is already an edge, increase the edge count
   if (NULL != (child_edge = set_lookup(children_of_parent, &tmp_child_edge))) {
@@ -281,6 +286,7 @@ DEB_FN(void, memory_graph_inc_edge, MemoryGraph *graph,
     set_insert(parents_of_child, node_edge_create(parent_node));
   }
 #ifdef ENABLE_MEMORY_LOCK
+  //  end_read(graph->rw_lock);
   release_all_mutex(parent_node, child_node);
 #endif
 }
@@ -324,6 +330,7 @@ DEB_FN(void, memory_graph_dec_edge, MemoryGraph *graph,
 
 #ifdef ENABLE_MEMORY_LOCK
   release_all_mutex(parent_node, child_node);
+//  end_read(graph->rw_lock);
 #endif
 }
 #define memory_graph_dec_edge(...) CALL_FN(memory_graph_dec_edge__, __VA_ARGS__)
@@ -408,6 +415,7 @@ int memory_graph_free_space(MemoryGraph *graph) {
 
 #ifdef ENABLE_MEMORY_LOCK
   mutex_await(graph->access_mutex, INFINITE);
+//  begin_write(graph->rw_lock);
 #endif
 
   int nodes_deleted = 0;
@@ -435,6 +443,7 @@ int memory_graph_free_space(MemoryGraph *graph) {
   set_delete(marked);
 
 #ifdef ENABLE_MEMORY_LOCK
+  //  end_write(graph->rw_lock);
   mutex_release(graph->access_mutex);
 #endif
   return nodes_deleted;
