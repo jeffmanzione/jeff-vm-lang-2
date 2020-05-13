@@ -10,6 +10,8 @@
 #include "../arena/strings.h"
 #include "../datastructure/map.h"
 
+#define CKEY_TABLE_SZ 251
+
 char *ckeys[CKey_END];
 
 Map ckey_table_;
@@ -20,7 +22,7 @@ void CKey_set(CommonKey key, const char *str) {
 }
 
 void CKey_init() {
-  map_init_default(&ckey_table_);
+  map_init(&ckey_table_, CKEY_TABLE_SZ, default_hasher, default_comparator);
   CKey_set(CKey_$ip, IP_FIELD);
   CKey_set(CKey_$module, MODULE_FIELD);
   CKey_set(CKey_$has_error, ERROR_KEY);

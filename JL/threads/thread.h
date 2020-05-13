@@ -41,9 +41,11 @@ void t_set_ip(Thread *t, uint32_t ip);
 void t_shift_ip(Thread *t, int32_t);
 
 const Element t_get_resval(const Thread *t);
+const Element *t_get_resval_ptr(const Thread *t);
 void t_set_resval(Thread *t, const Element elt);
 
 Element t_current_block(const Thread *t);
+Element *t_current_block_ptr(const Thread *t);
 // Creates a block with the specified obj as the parent
 Element t_new_block(Thread *t, Element parent, Element new_this);
 // goes back one block

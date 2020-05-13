@@ -66,7 +66,9 @@ typedef enum {
   Postfix_none,
   Postfix_field,
   Postfix_fncall,
-  Postfix_array_index
+  Postfix_array_index,
+  Postfix_increment,
+  Postfix_decrement
 } PostfixType;
 
 typedef struct {

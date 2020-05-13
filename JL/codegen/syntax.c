@@ -322,8 +322,8 @@ ImplSyntax(
        And(TypeLn(LPAREN), TypeLn(RPAREN), postfix_expression1),
        And(TypeLn(LPAREN), tuple_expression, TypeLn(RPAREN), postfix_expression1),
        And(Opt(Type(ENDLINE)), Type(PERIOD), Or(identifier, new_expression), postfix_expression1),
-       //       And(Type(INC), postfix_expression1),
-       //       And(Type(DEC), postfix_expression1),
+//       And(Type(INCREMENT), postfix_expression1),
+//       And(Type(DECREMENT), postfix_expression1),
        Epsilon));
 ImplSyntax(postfix_expression,
            Or(And(primary_expression_no_constants, postfix_expression1),

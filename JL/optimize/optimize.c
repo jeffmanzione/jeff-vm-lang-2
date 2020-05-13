@@ -35,7 +35,6 @@ void optimize_init() {
   register_optimizer("ResPush2", optimizer_ResPush2);
   register_optimizer("RetRet", optimizer_RetRet);
   register_optimizer("PeekRes", optimizer_PeekRes);
-  //  register_optimizer("Increment", optimizer_Increment);
   register_optimizer("SetEmpty", optimizer_SetEmpty);
   register_optimizer("PeekPeek", optimizer_PeekPeek);
   register_optimizer("PushResEmpty", optimizer_PushResEmpty);
@@ -45,11 +44,10 @@ void optimize_init() {
   register_optimizer("GetPush", optimizer_GetPush);
   register_optimizer("Nil", optimizer_Nil);
   register_optimizer("GetSpecial", optimizer_GetSpecial);
+  //  register_optimizer("Increment", optimizer_Increment);
 }
 
-void optimize_finalize() {
-  expando_delete(optimizers);
-}
+void optimize_finalize() { expando_delete(optimizers); }
 
 void populate_gotos(OptimizeHelper *oh) {
   map_init_default(&oh->i_gotos);
@@ -59,8 +57,8 @@ void populate_gotos(OptimizeHelper *oh) {
     if (!is_goto(c->ins.op)) {
       continue;
     }
-    int index = i + (int) c->ins.val.int_val;
-    map_insert(&oh->i_gotos, (void*) index, (void*) i);
+    int index = i + (int)c->ins.val.int_val;
+    map_insert(&oh->i_gotos, (void *)index, (void *)i);
   }
 }
 
@@ -71,7 +69,7 @@ void oh_init(OptimizeHelper *oh, const Tape *tape) {
   map_init_default(&oh->inserts);
   populate_gotos(oh);
   tape_populate_mappings(oh->tape, &oh->i_to_refs, &oh->i_to_class_starts,
-      &oh->i_to_class_ends);
+                         &oh->i_to_class_ends);
 }
 
 void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
@@ -84,12 +82,12 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
   Expando *new_index = expando(int, DEFAULT_EXPANDO_SIZE);
   for (i = 0; i < old_len; i++) {
     char *text = NULL;
-    if (NULL != (text = map_lookup(&oh->i_to_class_ends, (void* )i))) {
+    if (NULL != (text = map_lookup(&oh->i_to_class_ends, (void *)i))) {
       Token tok;
       token_fill(&tok, WORD, 0, 0, text);
       new_tape->endclass(new_tape, &tok);
     }
-    if (NULL != (text = map_lookup(&oh->i_to_class_starts, (void* )i))) {
+    if (NULL != (text = map_lookup(&oh->i_to_class_starts, (void *)i))) {
       Token tok;
       token_fill(&tok, WORD, 0, 0, text);
       Expando *parents;
@@ -99,17 +97,17 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
         Queue q_parents;
         queue_init(&q_parents);
         void add_parent_class(void *ptr) {
-          queue_add(&q_parents, *((char**) ptr));
+          queue_add(&q_parents, *((char **)ptr));
         }
         expando_iterate(parents, add_parent_class);
         new_tape->class_with_parents(new_tape, &tok, &q_parents);
         queue_shallow_delete(&q_parents);
       }
     }
-    if (NULL != (text = map_lookup(&oh->i_to_refs, (void* )i))) {
+    if (NULL != (text = map_lookup(&oh->i_to_refs, (void *)i))) {
       Token tok;
       token_fill(&tok, WORD, 0, 0, text);
-      Q *args = map_lookup(&t->fn_args, (void* )i);
+      Q *args = map_lookup(&t->fn_args, (void *)i);
       if (NULL == args) {
         new_tape->label(new_tape, &tok);
       } else {
@@ -118,7 +116,7 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
     }
     const InsContainer *c = tape_get(t, i);
     int new_len = tape_len(new_tape);
-    Adjustment *insert = map_lookup(&oh->inserts, (void* )i);
+    Adjustment *insert = map_lookup(&oh->inserts, (void *)i);
     if (NULL != insert) {
       int j;
       for (j = insert->start; j < insert->end; j++) {
@@ -127,7 +125,7 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
         tape_insc(new_tape, tape_get(t, j));
       }
     }
-    Adjustment *a = map_lookup(&oh->i_to_adj, (void* )i);
+    Adjustment *a = map_lookup(&oh->i_to_adj, (void *)i);
     if (NULL != a && REMOVE == a->type) {
       int new_index_val = new_len - 1;
       expando_append(new_index, &new_index_val);
@@ -160,28 +158,28 @@ void oh_resolve(OptimizeHelper *oh, Tape *new_tape) {
     }
     ASSERT(VAL_PARAM == c->ins.param);
     int diff = c->ins.val.int_val;
-    int old_i = *((int*) expando_get(old_index, i));
+    int old_i = *((int *)expando_get(old_index, i));
     int old_goto_i = old_i + diff;
-    int new_goto_i = *((int*) expando_get(new_index, old_goto_i));
+    int new_goto_i = *((int *)expando_get(new_index, old_goto_i));
     c->ins.val = create_int(new_goto_i - i).val;
   }
   expando_delete(old_index);
   expando_delete(new_index);
   tape_clear_mappings(&oh->i_to_refs, &oh->i_to_class_starts,
-      &oh->i_to_class_ends);
+                      &oh->i_to_class_ends);
   map_finalize(&oh->i_to_adj);
   map_finalize(&oh->inserts);
   map_finalize(&oh->i_gotos);
   expando_delete(oh->adjustments);
 }
 
-Tape* optimize(Tape *const t) {
+Tape *optimize(Tape *const t) {
   Tape *tape = t;
   int i, opts_len = expando_len(optimizers);
   for (i = 0; i < opts_len; i++) {
     OptimizeHelper oh;
     oh_init(&oh, tape);
-    (*((Optimizer*) expando_get(optimizers, i)))(&oh, tape, 0, tape_len(tape));
+    (*((Optimizer *)expando_get(optimizers, i)))(&oh, tape, 0, tape_len(tape));
     Tape *new_tape = tape_create();
     oh_resolve(&oh, new_tape);
     tape_delete(tape);
@@ -211,5 +209,5 @@ void Int32_swap(void *x, void *y) {
 }
 
 int Int32_compare(void *x, void *y) {
-  return *((int32_t*) x) - *((int32_t*) y);
+  return *((int32_t *)x) - *((int32_t *)y);
 }

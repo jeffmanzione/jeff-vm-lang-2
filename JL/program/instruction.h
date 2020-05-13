@@ -49,6 +49,8 @@ typedef enum {
   MOD,
   INC,
   DEC,
+  FINC,
+  FDEC,
   SINC,
   CALL,
   CLLN,

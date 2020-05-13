@@ -51,16 +51,21 @@ DEB_FN(void, memory_graph_set_field, MemoryGraph *memory_graph,
 #define memory_graph_set_field(...) \
   CALL_FN(memory_graph_set_field__, __VA_ARGS__)
 
+DEB_FN(void, memory_graph_set_field_ptr, MemoryGraph *memory_graph,
+       Object *parent, const char field_name[], const Element *field_val);
+#define memory_graph_set_field_ptr(...) \
+  CALL_FN(memory_graph_set_field_ptr__, __VA_ARGS__)
+
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
                           const char field_name[], const Element field_val);
 
-void memory_graph_array_push(MemoryGraph *graph, const Element parent,
-                             const Element element);
+void memory_graph_array_push(MemoryGraph *graph, Object *parent,
+                             const Element *element);
 
-void memory_graph_array_set(MemoryGraph *graph, const Element parent,
-                            int64_t index, const Element element);
+void memory_graph_array_set(MemoryGraph *graph, Object *parent, int64_t index,
+                            const Element *element);
 
-Element memory_graph_array_pop(MemoryGraph *graph, const Element parent);
+Element memory_graph_array_pop(MemoryGraph *graph, Object *parent);
 
 void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
                                 const Element element);

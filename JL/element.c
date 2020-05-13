@@ -27,6 +27,8 @@
 #include "threads/thread_interface.h"
 #include "vm/vm.h"
 
+const Element ELEMENT_NONE = {.type = NONE};
+
 Element create_obj_of_class_unsafe_inner(MemoryGraph *graph, Map *objs,
                                          Element class);
 Element create_method_instance(MemoryGraph *graph, Element object,
@@ -58,19 +60,19 @@ Element create_obj_unsafe_base(MemoryGraph *graph) {
 
 void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
                                 Element class) {
-  memory_graph_set_field(graph, element, CLASS_KEY, class);
-  memory_graph_set_field(graph, element, PARENT,
-                         obj_lookup(class.obj, CKey_module));
-  Element parents = obj_lookup(class.obj, CKey_parents);
+  memory_graph_set_field_ptr(graph, element.obj, CLASS_KEY, &class);
+  memory_graph_set_field_ptr(graph, element.obj, PARENT,
+                             obj_lookup_ptr(class.obj, CKey_module));
+  Element *parents = obj_lookup_ptr(class.obj, CKey_parents);
   // Object class
-  if (NONE == parents.type) {
+  if (NONE == parents->type) {
     return;
   }
 
-  ASSERT(OBJECT == parents.type, ARRAY == parents.obj->type);
+  ASSERT(OBJECT == parents->type, ARRAY == parents->obj->type);
   int i;
-  for (i = 0; i < Array_size(parents.obj->array); ++i) {
-    Element parent_class = Array_get(parents.obj->array, i);
+  for (i = 0; i < Array_size(parents->obj->array); ++i) {
+    Element parent_class = Array_get(parents->obj->array, i);
     ASSERT(ISCLASS(parent_class));
     // Check if we already created a type of this class.
     Object *obj = map_lookup(objs, parent_class.obj);
@@ -83,8 +85,9 @@ void create_obj_unsafe_complete(MemoryGraph *graph, Map *objs, Element element,
     // Add it as a member with the class name as the field name.
     Element name = obj_lookup(parent_class.obj, CKey_name);
     if (NONE != name.type) {
-      memory_graph_set_field(graph, element, string_to_cstr(name),
-                             element_for_obj(obj));
+      Element elt = element_for_obj(obj);
+      memory_graph_set_field_ptr(graph, element.obj, string_to_cstr(name),
+                                 &elt);
     }
   }
   //  ASSERT(NONE != obj_get_field(class, METHODS_KEY).type);
@@ -139,7 +142,8 @@ Element create_obj_of_class(MemoryGraph *graph, Element class) {
   if (class.obj == class_array.obj) {
     elt.obj->type = ARRAY;
     elt.obj->array = Array_create();
-    memory_graph_set_field(graph, elt, LENGTH_KEY, create_int(0));
+    Element zero = create_int(0);
+    memory_graph_set_field_ptr(graph, elt.obj, LENGTH_KEY, &zero);
   }
   return elt;
 }
@@ -167,8 +171,8 @@ Element string_create_len_unescape(VM *vm, const char *str, size_t len) {
   if (NULL != str) {
     String_append_unescape(string, str, len);
   }
-  memory_graph_set_field(vm->graph, elt, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, elt.obj, LENGTH_KEY, &string_size);
   return elt;
 }
 
@@ -190,8 +194,8 @@ Element string_add(VM *vm, Element str1, Element str2) {
   String *target = String_extract(elt);
   String_append(target, String_extract(str1));
   String_append(target, String_extract(str2));
-  memory_graph_set_field(vm->graph, elt, LENGTH_KEY,
-                         create_int(String_size(target)));
+  Element string_size = create_int(String_size(target));
+  memory_graph_set_field_ptr(vm->graph, elt.obj, LENGTH_KEY, &string_size);
   return elt;
 }
 
@@ -205,8 +209,8 @@ Element create_tuple(MemoryGraph *graph) {
 
 Element create_module(VM *vm, const Module *module) {
   Element elt = create_obj_of_class(vm->graph, class_module);
-  memory_graph_set_field(vm->graph, elt, NAME_KEY,
-                         string_create(vm, module_name(module)));
+  Element string = string_create(vm, module_name(module));
+  memory_graph_set_field_ptr(vm->graph, elt.obj, NAME_KEY, &string);
   elt.obj->type = MODULE;
   elt.obj->module = module;
   return elt;
@@ -214,12 +218,14 @@ Element create_module(VM *vm, const Module *module) {
 
 void decorate_function(VM *vm, Element func, Element module, uint32_t ins,
                        const char name[], Q *args) {
-  memory_graph_set_field(vm->graph, func, NAME_KEY, string_create(vm, name));
-  memory_graph_set_field(vm->graph, func, INS_INDEX, create_int(ins));
-  memory_graph_set_field(vm->graph, func, PARENT_MODULE, module);
-  memory_graph_set_field(vm->graph, func, MODULE_KEY, module);
-  memory_graph_set_field(vm->graph, func, IS_ANONYMOUS,
-                         name[0] == '$' ? create_int(1) : create_none());
+  Element name_elt = string_create(vm, name);
+  memory_graph_set_field_ptr(vm->graph, func.obj, NAME_KEY, &name_elt);
+  Element index = create_int(ins);
+  memory_graph_set_field_ptr(vm->graph, func.obj, INS_INDEX, &index);
+  memory_graph_set_field_ptr(vm->graph, func.obj, PARENT_MODULE, &module);
+  memory_graph_set_field_ptr(vm->graph, func.obj, MODULE_KEY, &module);
+  Element is_anon = name[0] == '$' ? create_int(1) : create_none();
+  memory_graph_set_field_ptr(vm->graph, func.obj, IS_ANONYMOUS, &is_anon);
   if (NULL != args) {
     Element arg_e = create_array(vm->graph);
     int i;
@@ -229,9 +235,9 @@ void decorate_function(VM *vm, Element func, Element module, uint32_t ins,
           vm->graph, arg_e,
           str == NULL ? create_none() : string_create(vm, str));
     }
-    memory_graph_set_field(vm->graph, func, ARGS_NAME, arg_e);
-    memory_graph_set_field(vm->graph, func, ARGS_KEY,
-                           create_int((uint32_t)args));
+    memory_graph_set_field_ptr(vm->graph, func.obj, ARGS_NAME, &arg_e);
+    Element arg_count = create_int((uint32_t)args);
+    memory_graph_set_field_ptr(vm->graph, func.obj, ARGS_KEY, &arg_count);
   }
 }
 
@@ -259,7 +265,7 @@ Element create_method(VM *vm, Element module, uint32_t ins, Element class,
   Object *function_object = *((Object **)expando_get(elt.obj->parent_objs, 0));
   decorate_function(vm, element_for_obj(function_object), module, ins, name,
                     args);
-  memory_graph_set_field(vm->graph, elt, PARENT_CLASS, class);
+  memory_graph_set_field_ptr(vm->graph, elt.obj, PARENT_CLASS, &class);
   return elt;
 }
 
@@ -273,7 +279,7 @@ Element create_external_method(VM *vm, Element class, const char name[],
       (*((Object **)expando_get(elt.obj->parent_objs, 0)))->parent_objs, 0));
   decorate_function(vm, element_for_obj(function_object),
                     obj_get_field(class, PARENT_MODULE), -1, name, NULL);
-  memory_graph_set_field(vm->graph, elt, PARENT_CLASS, class);
+  memory_graph_set_field_ptr(vm->graph, elt.obj, PARENT_CLASS, &class);
   return elt;
 }
 
@@ -282,13 +288,13 @@ Element create_method_instance(MemoryGraph *graph, Element object,
   ASSERT(ISOBJECT(object));
   ASSERT(ISTYPE(method, class_method));
   Element elt = create_obj_of_class(graph, class_methodinstance);
-  memory_graph_set_field(graph, elt, OBJ_KEY, object);
-  memory_graph_set_field(graph, elt, METHOD_KEY, method);
+  memory_graph_set_field_ptr(graph, elt.obj, OBJ_KEY, &object);
+  memory_graph_set_field_ptr(graph, elt.obj, METHOD_KEY, &method);
   Object *function_object =
       *((Object **)expando_get(method.obj->parent_objs, 0));
-  memory_graph_set_field(
-      graph, object,
-      string_to_cstr(obj_get_field_obj(function_object, NAME_KEY)), elt);
+  memory_graph_set_field_ptr(
+      graph, object.obj,
+      string_to_cstr(obj_get_field_obj(function_object, NAME_KEY)), &elt);
   return elt;
 }
 
@@ -297,16 +303,17 @@ Element create_external_method_instance(MemoryGraph *graph, Element object,
   ASSERT(ISOBJECT(object));
   ASSERT(ISTYPE(method, class_external_method));
   Element elt = create_obj_of_class(graph, class_external_methodinstance);
-  memory_graph_set_field(graph, elt, OBJ_KEY, object);
-  memory_graph_set_field(graph, elt, METHOD_KEY, method);
+  memory_graph_set_field_ptr(graph, elt.obj, OBJ_KEY, &object);
+  memory_graph_set_field_ptr(graph, elt.obj, METHOD_KEY, &method);
   return elt;
 }
 
 Element create_anonymous_function(VM *vm, Thread *t, Element func) {
   ASSERT(ISOBJECT(func));
   Element elt = create_obj_of_class(vm->graph, class_anon_function);
-  memory_graph_set_field(vm->graph, elt, OBJ_KEY, t_current_block(t));
-  memory_graph_set_field(vm->graph, elt, METHOD_KEY, func);
+  memory_graph_set_field_ptr(vm->graph, elt.obj, OBJ_KEY,
+                             t_current_block_ptr(t));
+  memory_graph_set_field_ptr(vm->graph, elt.obj, METHOD_KEY, &func);
 
   return elt;
 }
@@ -322,39 +329,42 @@ Element val_to_elt(Value val) {
   return elt;
 }
 
-void obj_set_field(Element elt, const char field_name[], Element field_val) {
-  ASSERT(elt.type == OBJECT);
-  ASSERT_NOT_NULL(elt.obj);
+void obj_set_field(Object *obj, const char field_name[],
+                   const Element *const field_val) {
+  ASSERT_NOT_NULL(obj);
+  ASSERT_NOT_NULL(field_val);
 
   CommonKey key = CKey_lookup_key(field_name);
   if (key >= 0) {
-    elt.obj->ltable[key] = field_val;
+    obj->ltable[key] = *field_val;
   }
 
   ElementContainer *old;
-  if (NULL != (old = map_lookup(&elt.obj->fields, field_name))) {
-    old->elt = field_val;
+  if (NULL != (old = map_lookup(&obj->fields, field_name))) {
+    old->elt = *field_val;
     return;
   }
   ElementContainer *elt_ptr = ARENA_ALLOC(ElementContainer);
   elt_ptr->is_const = false;
   elt_ptr->is_private = false;
-  elt_ptr->elt = field_val;
+  elt_ptr->elt = *field_val;
 
-  map_insert(&elt.obj->fields, field_name, elt_ptr);
+  map_insert(&obj->fields, field_name, elt_ptr);
 }
 
-Element obj_lookup(Object *obj, CommonKey key) {
-  Element e = obj->ltable[key];
-  return e;
+Element obj_lookup(Object *obj, CommonKey key) { return obj->ltable[key]; }
+
+Element *obj_lookup_ptr(Object *obj, CommonKey key) {
+  return &obj->ltable[key];
 }
 
-ElementContainer *obj_get_field_obj_raw(Object *obj, const char field_name[]) {
+ElementContainer *obj_get_field_obj_raw(const Object *const obj,
+                                        const char field_name[]) {
   ASSERT_NOT_NULL(obj);
   return map_lookup(&obj->fields, field_name);
 }
 
-Element obj_get_field_obj(Object *obj, const char field_name[]) {
+Element obj_get_field_obj(const Object *const obj, const char field_name[]) {
   ASSERT_NOT_NULL(obj);
   ElementContainer *to_return = obj_get_field_obj_raw(obj, field_name);
 
@@ -364,9 +374,10 @@ Element obj_get_field_obj(Object *obj, const char field_name[]) {
   return to_return->elt;
 }
 
-Element obj_get_field_ptr(Element *elt, const char field_name[]) {
-  ASSERT(OBJECT == elt->type);
-  return obj_get_field_obj(elt->obj, field_name);
+Element *obj_get_field_ptr(const Object *const obj, const char field_name[]) {
+  ASSERT(NOT_NULL(obj));
+  ElementContainer *ec = obj_get_field_obj_raw(obj, field_name);
+  return &ec->elt;
 }
 
 Element obj_get_field(Element elt, const char field_name[]) {
@@ -401,35 +412,85 @@ void obj_delete_ptr(Object *obj, bool free_mem) {
   }
 }
 
-Element obj_deep_lookup(Object *obj, const char name[]) {
-  Element to_return = create_none();
+Element *obj_deep_lookup(const Object *const elt, const char name[]) {
+  Element *to_return = (Element *)&ELEMENT_NONE;
 
   Set checked;
   set_init_default(&checked);
   Q to_process;
   Q_init(&to_process);
-  Q_enqueue(&to_process, obj);
+  Q_enqueue(&to_process, (Object *)elt);
 
   while (Q_size(&to_process) > 0) {
     Object *obj = Q_dequeue(&to_process);
     ASSERT(NOT_NULL(obj));
     // Check object.
-    Element field = obj_get_field_obj(obj, name);
-    if (NONE != field.type) {
-      if (!(ISCLASS_OBJ(obj) && ISTYPE(field, class_method))) {
+    ElementContainer *field = obj_get_field_obj_raw(obj, name);
+    if (NONE != field) {
+      if (!(ISCLASS_OBJ(obj) && ISTYPE(field->elt, class_method))) {
+        to_return = &field->elt;
+        break;
+      }
+    }
+    // Check class.
+    Element *class = obj_lookup_ptr(obj, CKey_class);
+    // Class Object
+    if (NONE == class->type) {
+      continue;
+    }
+    ASSERT(ISCLASS(*class));
+    field = obj_get_field_obj_raw(class->obj, name);
+    if (NULL != field) {
+      to_return = &field->elt;
+      break;
+    }
+    // Mark that we already checked this object.
+    set_insert(&checked, obj);
+    int i;
+    // Look through all parent objects.
+    for (i = 0; i < expando_len(obj->parent_objs); ++i) {
+      Object *parent_obj = *((Object **)expando_get(obj->parent_objs, i));
+      // Add them to the queue if we haven't already checked them.
+      if (NULL == set_lookup(&checked, parent_obj)) {
+        Q_enqueue(&to_process, parent_obj);
+      }
+    }
+  }
+  Q_finalize(&to_process);
+  set_finalize(&checked);
+
+  return to_return;
+}
+
+Element *obj_deep_lookup_ckey(const Object *const obj, CommonKey key) {
+  Element *to_return = (Element *)&ELEMENT_NONE;
+
+  Set checked;
+  set_init_default(&checked);
+  Q to_process;
+  Q_init(&to_process);
+  Q_enqueue(&to_process, (Object *)obj);
+
+  while (Q_size(&to_process) > 0) {
+    Object *obj = Q_dequeue(&to_process);
+    ASSERT(NOT_NULL(obj));
+    // Check object.
+    Element *field = obj_lookup_ptr(obj, key);
+    if (NONE != field->type) {
+      if (!(ISCLASS_OBJ(obj) && ISTYPE(*field, class_method))) {
         to_return = field;
         break;
       }
     }
     // Check class.
-    Element class = obj_lookup(obj, CKey_class);
+    Element *class = obj_lookup_ptr(obj, CKey_class);
     // Class Object
-    if (NONE == class.type) {
+    if (NONE == class->type) {
       continue;
     }
-    ASSERT(ISCLASS(class));
-    field = obj_get_field(class, name);
-    if (NONE != field.type) {
+    ASSERT(ISCLASS_OBJ(class->obj));
+    field = obj_lookup_ptr(class->obj, key);
+    if (NONE != field->type) {
       to_return = field;
       break;
     }
@@ -451,63 +512,13 @@ Element obj_deep_lookup(Object *obj, const char name[]) {
   return to_return;
 }
 
-Element obj_deep_lookup_ckey(Object *obj, CommonKey key) {
-  Element to_return = create_none();
-
-  Set checked;
-  set_init_default(&checked);
-  Q to_process;
-  Q_init(&to_process);
-  Q_enqueue(&to_process, obj);
-
-  while (Q_size(&to_process) > 0) {
-    Object *obj = Q_dequeue(&to_process);
-    ASSERT(NOT_NULL(obj));
-    // Check object.
-    Element field = obj_lookup(obj, key);
-    if (NONE != field.type) {
-      if (!(ISCLASS_OBJ(obj) && ISTYPE(field, class_method))) {
-        to_return = field;
-        break;
-      }
-    }
-    // Check class.
-    Element class = obj_lookup(obj, CKey_class);
-    // Class Object
-    if (NONE == class.type) {
-      continue;
-    }
-    ASSERT(ISCLASS(class));
-    field = obj_lookup(class.obj, key);
-    if (NONE != field.type) {
-      to_return = field;
-      break;
-    }
-    // Mark that we already checked this object.
-    set_insert(&checked, obj);
-    int i;
-    // Look through all parent objects.
-    for (i = 0; i < expando_len(obj->parent_objs); ++i) {
-      Object *parent_obj = *((Object **)expando_get(obj->parent_objs, i));
-      // Add them to the queue if we haven't already checked them.
-      if (NULL == set_lookup(&checked, parent_obj)) {
-        Q_enqueue(&to_process, parent_obj);
-      }
-    }
-  }
-  Q_finalize(&to_process);
-  set_finalize(&checked);
-
-  return to_return;
-}
-
-void class_parents_action(Element child_class, ObjectActionUntil process) {
-  if (!ISCLASS(child_class)) {
+void class_parents_action(Object *child_class, ObjectActionUntil process) {
+  if (!ISCLASS_OBJ(child_class)) {
     return;
   }
   Q to_process;
   Q_init(&to_process);
-  Q_enqueue(&to_process, child_class.obj);
+  Q_enqueue(&to_process, child_class);
 
   while (Q_size(&to_process) > 0) {
     Object *class_obj = Q_dequeue(&to_process);
@@ -516,16 +527,16 @@ void class_parents_action(Element child_class, ObjectActionUntil process) {
     if (process(class_obj)) {
       break;
     }
-    Element parents = obj_lookup(class_obj, CKey_parents);
-    if (NONE == parents.type) {
+    Element *parents = obj_lookup_ptr(class_obj, CKey_parents);
+    if (NONE == parents->type) {
       continue;
     }
-    ASSERT(OBJECT == parents.type, ARRAY == parents.obj->type);
+    ASSERT(OBJECT == parents->type, ARRAY == parents->obj->type);
     int i;
-    for (i = 0; i < Array_size(parents.obj->array); ++i) {
-      Element parent = Array_get(parents.obj->array, i);
-      ASSERT(NONE != parent.type);
-      Q_enqueue(&to_process, parent.obj);
+    for (i = 0; i < Array_size(parents->obj->array); ++i) {
+      Element *parent = Array_get_ref(parents->obj->array, i);
+      ASSERT(NONE != parent->type);
+      Q_enqueue(&to_process, parent->obj);
     }
   }
   Q_finalize(&to_process);

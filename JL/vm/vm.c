@@ -367,7 +367,7 @@ Element maybe_wrap_in_instance(VM *vm, Thread *t, Element obj, Element func,
   }
   // Wrap anonymous functions in their context.
   if ((ISTYPE(func, class_function) || ISTYPE(func, class_method)) &&
-      NONE != obj_deep_lookup(func.obj, IS_ANONYMOUS).type) {
+      NONE != obj_deep_lookup(func.obj, IS_ANONYMOUS)->type) {
     return create_anonymous_function(vm, t, func);
   }
   // Do not box methods if they are directly retrieved from a class.
@@ -391,16 +391,16 @@ Element vm_object_lookup(VM *vm, Thread *t, Element obj, const char name[]) {
   if (OBJECT != obj.type) {
     return create_none();
   }
-  Element elt = obj_deep_lookup(obj.obj, name);
+  Element *elt = obj_deep_lookup(obj.obj, name);
 
-  return maybe_wrap_in_instance(vm, t, obj, elt, name);
+  return maybe_wrap_in_instance(vm, t, obj, *elt, name);
 }
 
 Element vm_object_lookup_ckey(VM *vm, Thread *t, Element obj, CommonKey key) {
   if (OBJECT != obj.type) {
     return create_none();
   }
-  Element elt = obj_deep_lookup_ckey(obj.obj, key);
+  Element elt = *obj_deep_lookup_ckey(obj.obj, key);
 
   // Create MethodInstance for methods since Methods do not contain any Object
   // state.
@@ -417,7 +417,7 @@ Element vm_object_lookup_ckey(VM *vm, Thread *t, Element obj, CommonKey key) {
   // Wrap anonymous functions in their context.
   if (is_object_type(&elt, OBJ) &&
       (ISTYPE(elt, class_function) || ISTYPE(elt, class_method)) &&
-      NONE != obj_deep_lookup(elt.obj, IS_ANONYMOUS).type) {
+      NONE != obj_deep_lookup(elt.obj, IS_ANONYMOUS)->type) {
     elt = create_anonymous_function(vm, t, elt);
   }
   return elt;
@@ -586,9 +586,9 @@ void vm_call_fn(VM *vm, Thread *t, Element obj, Element func) {
     vm_call_fn(vm, t, context, internal_func);
     return;
   }
-  Element call_fn = obj_deep_lookup(func.obj, CALL_KEY);
-  if (is_object_type(&call_fn, OBJ)) {
-    vm_call_fn(vm, t, func, call_fn);
+  Element *call_fn = obj_deep_lookup(func.obj, CALL_KEY);
+  if (is_object_type(call_fn, OBJ)) {
+    vm_call_fn(vm, t, func, *call_fn);
     return;
   }
   vm_throw_error(vm, t, t_current_ins(t),
@@ -639,11 +639,11 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
       }
       if (ISOBJECT(elt)) {
         class = obj_lookup(elt.obj, CKey_class);
-        if (inherits_from(class, class_function) ||
+        if (inherits_from(class.obj, class_function.obj) ||
             ISTYPE(elt, class_methodinstance) ||
             ISTYPE(elt, class_external_methodinstance) ||
             ISTYPE(elt, class_anon_function)) {
-          vm_call_fn(vm, t, obj_deep_lookup_ckey(elt.obj, CKey_module), elt);
+          vm_call_fn(vm, t, *obj_deep_lookup_ckey(elt.obj, CKey_module), elt);
         } else if (ISTYPE(elt, class_class)) {
           vm_call_new(vm, t, elt);
         }
@@ -680,7 +680,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
                          "Cannot index an array with something not an int.");
           return true;
         }
-        memory_graph_array_set(vm->graph, elt, index.val.int_val, new_val);
+        memory_graph_array_set(vm->graph, elt.obj, index.val.int_val, &new_val);
       } else {
         Element set_fn = vm_object_lookup(vm, t, elt, ARRAYLIKE_SET_KEY);
         if (NONE == set_fn.type) {
@@ -902,7 +902,7 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
         break;
       }
       class = obj_lookup(lhs.obj, CKey_class);
-      if (inherits_from(class, rhs)) {
+      if (inherits_from(class.obj, rhs.obj)) {
         res = element_true(vm);
       } else {
         res = element_false(vm);
@@ -918,9 +918,30 @@ bool execute_no_param(VM *vm, Thread *t, Ins ins) {
   return true;
 }
 
+void inc(VM *vm, Thread *t, Ins ins, Element *elt, int inc_val) {
+  if (VALUE != elt->type) {
+    vm_throw_error(vm, t, ins,
+                   "Cannot increment '%s' because it is not a value-type.",
+                   ins.str);
+    return;
+  }
+  switch (elt->val.type) {
+    case INT:
+      elt->val.int_val += inc_val;
+      break;
+    case FLOAT:
+      elt->val.float_val += inc_val;
+      break;
+    case CHAR:
+      elt->val.char_val += inc_val;
+      break;
+  }
+}
+
 bool execute_id_param(VM *vm, Thread *t, Ins ins) {
   ASSERT_NOT_NULL(ins.str);
   Element block = t_current_block(t);
+  const Element *resval_ptr, *block_ptr, *val;
   Element module, resval, new_res_val, obj;
   bool has_error = false;
   switch (ins.op) {
@@ -965,7 +986,10 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       break;
     case FLD:
       resval = t_get_resval(t);
-      ASSERT(resval.type == OBJECT);
+      if (resval.type != OBJECT) {
+        vm_throw_error(vm, t, ins, "Cannot set field on non-Object.");
+        return true;
+      }
       if (resval.obj->is_const) {
         vm_throw_error(vm, t, ins, "Cannot modify const Object.");
         return true;
@@ -1017,54 +1041,67 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
       }
       break;
     case INC:
-      new_res_val = vm_object_get(vm, t, ins.str, &has_error);
-      if (has_error) {
+      resval_ptr = t_get_resval_ptr(t);
+      if (NULL == resval_ptr || OBJECT != resval_ptr->type) {
+        vm_throw_error(vm, t, ins,
+                       "Cannot increment member '%s' of non-object.", ins.str);
         return true;
       }
-      if (VALUE != new_res_val.type) {
+      val = obj_deep_lookup(resval_ptr->obj, ins.str);
+      if (NULL == val || VALUE != val->type) {
         vm_throw_error(vm, t, ins,
                        "Cannot increment '%s' because it is not a value-type.",
                        ins.str);
         return true;
       }
-      switch (new_res_val.val.type) {
-        case INT:
-          new_res_val.val.int_val++;
-          break;
-        case FLOAT:
-          new_res_val.val.float_val++;
-          break;
-        case CHAR:
-          new_res_val.val.char_val++;
-          break;
-      }
-      memory_graph_set_var(vm->graph, block, ins.str, new_res_val);
-      t_set_resval(t, new_res_val);
+      inc(vm, t, ins, (Element *)val, 1);
+      t_set_resval(t, *val);
       break;
     case DEC:
-      new_res_val = vm_object_get(vm, t, ins.str, &has_error);
-      if (has_error) {
+      resval_ptr = t_get_resval_ptr(t);
+      if (OBJECT != resval_ptr->type) {
+        vm_throw_error(vm, t, ins,
+                       "Cannot increment member '%s' of non-object.", ins.str);
         return true;
       }
-      if (VALUE != new_res_val.type) {
+      val = obj_deep_lookup(resval_ptr->obj, ins.str);
+      if (VALUE != val->type) {
         vm_throw_error(vm, t, ins,
                        "Cannot increment '%s' because it is not a value-type.",
                        ins.str);
         return true;
       }
-      switch (new_res_val.val.type) {
-        case INT:
-          new_res_val.val.int_val--;
-          break;
-        case FLOAT:
-          new_res_val.val.float_val--;
-          break;
-        case CHAR:
-          new_res_val.val.char_val--;
-          break;
+      inc(vm, t, ins, (Element *)val, -1);
+      t_set_resval(t, *val);
+      break;
+    case FINC:
+      block_ptr = t_current_block_ptr(t);
+      val = obj_deep_lookup(block_ptr->obj, ins.str);
+      if (NULL == val || VALUE != val->type) {
+        vm_throw_error(vm, t, ins,
+                       "Cannot increment '%s' because it is not a value-type.",
+                       ins.str);
+        return true;
       }
-      memory_graph_set_field(vm->graph, block, ins.str, new_res_val);
-      t_set_resval(t, new_res_val);
+      inc(vm, t, ins, (Element *)val, 1);
+      t_set_resval(t, *val);
+      break;
+    case FDEC:
+      block_ptr = t_current_block_ptr(t);
+      if (NULL == block_ptr || OBJECT != block_ptr->type) {
+        vm_throw_error(vm, t, ins,
+                       "Cannot increment member '%s' of non-object.", ins.str);
+        return true;
+      }
+      val = obj_deep_lookup(block_ptr->obj, ins.str);
+      if (NULL == val || VALUE != val->type) {
+        vm_throw_error(vm, t, ins,
+                       "Cannot increment '%s' because it is not a value-type.",
+                       ins.str);
+        return true;
+      }
+      inc(vm, t, ins, (Element *)val, -1);
+      t_set_resval(t, *val);
       break;
     case CLLN:
       t_set_resval(t, vm->empty_tuple);  // @suppress("No break at end of case")
@@ -1087,7 +1124,8 @@ bool execute_id_param(VM *vm, Thread *t, Ins ins) {
                        ins.str);
         return true;
       }
-      if (inherits_from(obj_lookup(target.obj, CKey_class), class_function) ||
+      if (inherits_from(obj_lookup_ptr(target.obj, CKey_class)->obj,
+                        class_function.obj) ||
           ISTYPE(target, class_methodinstance) ||
           ISTYPE(target, class_external_methodinstance) ||
           ISTYPE(target, class_anon_function)) {
@@ -1446,7 +1484,8 @@ void vm_maybe_initialize_and_execute(VM *vm, Thread *t,
   memory_graph_set_field(vm->graph, module_element, INITIALIZED,
                          element_true(vm));
 
-  memory_graph_array_push(vm->graph, get_old_resvals(t), t_get_resval(t));
+  memory_graph_array_push(vm->graph, get_old_resvals(t).obj,
+                          t_get_resval_ptr(t));
 
   ASSERT(NONE != module_element.type);
   t_new_block(t, module_element, module_element);
@@ -1455,7 +1494,7 @@ void vm_maybe_initialize_and_execute(VM *vm, Thread *t,
     ;
   t_back(t);
 
-  t_set_resval(t, memory_graph_array_pop(vm->graph, get_old_resvals(t)));
+  t_set_resval(t, memory_graph_array_pop(vm->graph, get_old_resvals(t).obj));
 
   mutex_release(vm->module_init_mutex);
 }

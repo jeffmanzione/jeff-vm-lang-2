@@ -64,16 +64,17 @@ void thread_start(Thread *t, VM *vm) {
 
   Element current_block = t_current_block(t);
 
-  if (inherits_from(obj_get_field(fn, CLASS_KEY), class_function)) {
+  if (inherits_from(obj_get_field_obj(fn.obj, CLASS_KEY).obj,
+                    class_function.obj)) {
     Element parent_module = obj_get_field(fn, PARENT_MODULE);
     t_set_module(t, parent_module, 0);
     vm_call_fn(vm, t, parent_module, fn);
     t_shift_ip(t, 1);
   } else if (ISTYPE(fn, class_methodinstance)) {
-    Element parent_module =
+    Element *parent_module =
         obj_deep_lookup(obj_get_field(fn, METHOD_KEY).obj, PARENT_MODULE);
-    t_set_module(t, parent_module, 0);
-    vm_call_fn(vm, t, parent_module, fn);
+    t_set_module(t, *parent_module, 0);
+    vm_call_fn(vm, t, *parent_module, fn);
     t_shift_ip(t, 1);
   } else {
     ERROR("NOOOOOOOOOO");
@@ -293,7 +294,7 @@ Element t_new_block(Thread *t, Element parent, Element new_this) {
   memory_graph_set_field(t->graph, old_block, STACK_SIZE_NAME,
                          create_int(Array_size(t->stack.obj->array)));
 
-  memory_graph_array_push(t->graph, t->saved_blocks, old_block);
+  memory_graph_array_push(t->graph, t->saved_blocks.obj, &old_block);
 
   Element new_block;
 
@@ -309,7 +310,7 @@ Element t_new_block(Thread *t, Element parent, Element new_this) {
 // Returns false if there is an error.
 bool t_back(Thread *t) {
   ASSERT_NOT_NULL(t);
-  Element parent_block = memory_graph_array_pop(t->graph, t->saved_blocks);
+  Element parent_block = memory_graph_array_pop(t->graph, t->saved_blocks.obj);
   // Remove accumulated stack.
   // TODO: Maybe consider an increased stack a bug in the future.
   Element old_stack_size = obj_get_field(parent_block, STACK_SIZE_NAME);
@@ -336,10 +337,11 @@ bool t_back(Thread *t) {
 
 void t_shift_ip(Thread *t, int num_ins) {
   ASSERT_NOT_NULL(t);
-  Element block = t_current_block(t);
-  ASSERT(OBJECT == block.type);
-  memory_graph_set_field(t->graph, block, IP_FIELD,
-                         create_int(t_get_ip(t) + num_ins));
+  Element *block = t_current_block_ptr(t);
+  ASSERT(OBJECT == block->type);
+  ElementContainer *ip = obj_get_field_obj_raw(block->obj, IP_FIELD);
+  ASSERT(NOT_NULL(ip), ip->elt.type == VALUE);
+  ip->elt.val.int_val += num_ins;
 }
 
 Ins t_current_ins(const Thread *t) {
@@ -351,22 +353,27 @@ Ins t_current_ins(const Thread *t) {
 }
 
 Element t_current_block(const Thread *t) { return t->current_block; }
+Element *t_current_block_ptr(const Thread *t) {
+  return (Element *)&t->current_block;
+}
 
 uint32_t t_get_ip(const Thread *t) {
   ASSERT_NOT_NULL(t);
-  Element block = t_current_block(t);
-  ASSERT(OBJECT == block.type);
-  Element ip = obj_get_field(block, IP_FIELD);
-  ASSERT(VALUE == ip.type,
-         INT == ip.val.type);  // @suppress("Symbol is not resolved")
-  return (uint32_t)ip.val.int_val;
+  Element *block = t_current_block_ptr(t);
+  ASSERT(OBJECT == block->type);
+  Element *ip = obj_get_field_ptr(block->obj, IP_FIELD);
+  ASSERT(VALUE == ip->type,
+         INT == ip->val.type);  // @suppress("Symbol is not resolved")
+  return (uint32_t)ip->val.int_val;
 }
 
 void t_set_ip(Thread *t, uint32_t ip) {
   ASSERT_NOT_NULL(t);
-  Element block = t_current_block(t);
-  ASSERT(OBJECT == block.type);
-  memory_graph_set_field(t->graph, block, IP_FIELD, create_int(ip));
+  Element *block = t_current_block_ptr(t);
+  ASSERT(OBJECT == block->type);
+  Element *ipc = obj_get_field_ptr(block->obj, IP_FIELD);
+  ASSERT(NOT_NULL(ipc), ipc->type == VALUE);
+  ipc->val.int_val = ip;
 }
 
 void t_set_module_for_block(Thread *t, Element module_element, uint32_t ip,
@@ -392,9 +399,13 @@ DEB_FN(Element, t_get_module, const Thread *t) {
 }
 
 void t_set_resval(Thread *t, const Element elt) {
-  memory_graph_set_field(t->graph, t->self, RESULT_VAL, elt);
+  memory_graph_set_field_ptr(t->graph, t->self.obj, RESULT_VAL, &elt);
 }
 
 const Element t_get_resval(const Thread *t) {
   return obj_lookup(t->self.obj, CKey_$resval);
+}
+
+const Element *t_get_resval_ptr(const Thread *t) {
+  return obj_lookup_ptr(t->self.obj, CKey_$resval);
 }

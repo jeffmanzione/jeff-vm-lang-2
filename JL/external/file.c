@@ -61,8 +61,9 @@ Element file_constructor(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   }
 
   ASSERT(NOT_NULL(data));
-  memory_graph_set_field(vm->graph, data->object, strings_intern("success"),
-                         (NULL == file) ? create_none() : create_int(1));
+  Element success = (NULL == file) ? create_none() : create_int(1);
+  memory_graph_set_field_ptr(vm->graph, data->object.obj,
+                             strings_intern("success"), &success);
 
   if (NULL != file) {
     ThreadHandle write_mutex = mutex_create(NULL);
@@ -146,8 +147,8 @@ Element file_getall(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   ASSERT(actually_read <= fsize);
 
   String_rshrink(string, fsize - actually_read);
-  memory_graph_set_field(vm->graph, elt, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element read = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, elt.obj, LENGTH_KEY, &read);
   return elt;
 }
 

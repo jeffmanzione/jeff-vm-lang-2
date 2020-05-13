@@ -188,6 +188,16 @@ void postfix_period(const SyntaxTree *ext, const SyntaxTree *tail,
   postfix_helper(tail->second, suffixes);
 }
 
+void postfix_increment(const SyntaxTree *inc, Expando *suffixes) {
+  Postfix postfix = {.type = inc->token->type == INCREMENT ? Postfix_increment
+                                                           : Postfix_decrement,
+                     .token = inc->token,
+                     .id = NULL,
+                     .exp = NULL};
+  ASSERT(IS_LEAF(inc));
+  expando_append(suffixes, &postfix);
+}
+
 void postfix_surround_helper(const SyntaxTree *suffix, Expando *suffixes,
                              PostfixType postfix_type, TokenType opener,
                              TokenType closer) {
@@ -226,6 +236,14 @@ void postfix_surround_helper(const SyntaxTree *suffix, Expando *suffixes,
 }
 
 void postfix_helper(const SyntaxTree *suffix, Expando *suffixes) {
+  if (IS_LEAF(suffix)) {
+    if (IS_TOKEN(suffix, INCREMENT) || IS_TOKEN(suffix, DECREMENT)) {
+      postfix_increment(suffix, suffixes);
+      return;
+    } else {
+      ERROR("Unknown leaf postfix.");
+    }
+  }
   const SyntaxTree *ext = suffix->first;
   switch (ext->token->type) {
     case PERIOD:
@@ -238,6 +256,11 @@ void postfix_helper(const SyntaxTree *suffix, Expando *suffixes) {
       postfix_surround_helper(suffix, suffixes, Postfix_array_index, LBRAC,
                               RBRAC);
       break;
+    case INCREMENT:
+    case DECREMENT:
+      postfix_increment(ext, suffixes);
+      postfix_helper(suffix->second, suffixes);
+      break;
     default:
       ERROR("Unknown postfix.");
   }
@@ -247,7 +270,6 @@ ImplPopulate(postfix_expression, const SyntaxTree *stree) {
   postfix_expression->prefix = populate_expression(stree->first);
   postfix_expression->suffixes = expando(Postfix, DEFAULT_EXPANDO_SIZE);
 
-  //  int num_ins = 0;
   SyntaxTree *suffix = stree->second;
   postfix_helper(suffix, postfix_expression->suffixes);
 }
@@ -297,6 +319,10 @@ int produce_postfix(int *i, int num_postfix, Expando *suffixes, Postfix **next,
     } else {
       num_ins += tape->ins(tape, GET, cur->id);
     }
+  } else if (cur->type == Postfix_increment) {
+    // TODO
+  } else if (cur->type == Postfix_decrement) {
+    // TODO
   } else {
     ERROR("Unknown postfix_expression.");
   }

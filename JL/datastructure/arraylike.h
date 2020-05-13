@@ -37,6 +37,7 @@
   type name##_dequeue(name* const);                                  \
   void name##_set(name* const, uint32_t, type);                      \
   type name##_get(name* const, uint32_t);                            \
+  type* name##_get_ref(name* const, uint32_t);                       \
   type name##_remove(name* const, uint32_t);                         \
   uint32_t name##_size(const name* const);                           \
   bool name##_is_empty(const name* const);                           \
@@ -192,6 +193,11 @@
   type name##_get(name* const array, uint32_t index) {                         \
     ASSERT(NOT_NULL(array), index >= 0, index < array->num_elts);              \
     return array->table[index];                                                \
+  }                                                                            \
+                                                                               \
+  type* name##_get_ref(name* const array, uint32_t index) {                    \
+    ASSERT(NOT_NULL(array), index >= 0, index < array->num_elts);              \
+    return &array->table[index];                                               \
   }                                                                            \
                                                                                \
   type name##_remove(name* const array, uint32_t index) {                      \

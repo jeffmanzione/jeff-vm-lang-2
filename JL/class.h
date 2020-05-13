@@ -47,6 +47,6 @@ Element class_create_list(VM *vm, const char class_name[],
 void class_fill_list(VM *vm, Element class, const char class_name[],
                      Expando *parent_classes, Element module_or_class);
 
-bool inherits_from(Element class, Element super);
+bool inherits_from(Object *class, Object *super);
 
 #endif /* CLASS_H_ */

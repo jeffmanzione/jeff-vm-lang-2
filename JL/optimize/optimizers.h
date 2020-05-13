@@ -16,7 +16,7 @@ void optimizer_ResPush(OptimizeHelper *oh, const Tape *const tape, int start,
 void optimizer_SetRes(OptimizeHelper *oh, const Tape *const tape, int start,
                       int end);
 void optimizer_SetPush(OptimizeHelper *oh, const Tape *const tape, int start,
-                      int end);
+                       int end);
 void optimizer_GetPush(OptimizeHelper *oh, const Tape *const tape, int start,
                        int end);
 void optimizer_JmpRes(OptimizeHelper *oh, const Tape *const tape, int start,
@@ -30,9 +30,8 @@ void optimizer_RetRet(OptimizeHelper *oh, const Tape *const tape, int start,
 void optimizer_PeekRes(OptimizeHelper *oh, const Tape *const tape, int start,
                        int end);
 
-// void optimizer_Increment(OptimizeHelper *oh, const Tape * const tape, int
-// start,
-//    int end);
+void optimizer_Increment(OptimizeHelper *oh, const Tape *const tape, int start,
+                         int end);
 void optimizer_SetEmpty(OptimizeHelper *oh, const Tape *const tape, int start,
                         int end);
 void optimizer_PushResEmpty(OptimizeHelper *oh, const Tape *const tape,
@@ -46,7 +45,6 @@ void optimizer_SimpleMath(OptimizeHelper *oh, const Tape *const tape, int start,
                           int end);
 void optimizer_GetSpecial(OptimizeHelper *oh, const Tape *const tape, int start,
                           int end);
-
 void optimizer_Nil(OptimizeHelper *oh, const Tape *const tape, int start,
                    int end);
 #endif /* OPTIMIZERS_H_ */

@@ -130,15 +130,15 @@ Element class_create_list(VM *vm, const char class_name[],
   return elt;
 }
 
-bool inherits_from(Element class, Element super) {
-  ASSERT(ISCLASS(class), ISCLASS(super));
-  if (class.obj == super.obj) {
+bool inherits_from(Object *class, Object *super) {
+  ASSERT(ISCLASS_OBJ(class), ISCLASS_OBJ(super));
+  if (class == super) {
     return true;
   }
 
   bool inherits = false;
   bool find_super(Object * class) {
-    inherits = (class == super.obj);
+    inherits = (class == super);
     return inherits;
   }
   class_parents_action(class, find_super);

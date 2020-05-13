@@ -82,18 +82,13 @@ MemoryGraph *memory_graph_create() {
   return graph;
 }
 
-uint32_t node_edge_hasher(const void *ptr) {
-  ASSERT_NOT_NULL(ptr);
-  NodeEdge *edge = (NodeEdge *)ptr;
-  return node_hasher(edge->node);
+uint32_t node_edge_hasher(const NodeEdge *edge) {
+  ASSERT_NOT_NULL(edge);
+  return edge->node->id.int_id;
 }
 
-int32_t node_edge_comparator(const void *ptr1, const void *ptr2) {
-  ASSERT_NOT_NULL(ptr1);
-  ASSERT_NOT_NULL(ptr2);
-  NodeEdge *edge1 = (NodeEdge *)ptr1;
-  NodeEdge *edge2 = (NodeEdge *)ptr2;
-  return node_comparator(edge1->node, edge2->node);
+int32_t node_edge_comparator(const NodeEdge *edge1, const NodeEdge *edge2) {
+  return edge1->node->id.int_id - edge2->node->id.int_id;
 }
 
 Node *node_create(MemoryGraph *graph) {
@@ -109,10 +104,10 @@ Node *node_create(MemoryGraph *graph) {
 #ifdef ENABLE_MEMORY_LOCK
   mutex_release(graph->access_mutex);
 #endif
-  set_init(&node->parents, DEFAULT_TABLE_SZ, node_edge_hasher,
-           node_edge_comparator);
-  set_init(&node->children, DEFAULT_TABLE_SZ, node_edge_hasher,
-           node_edge_comparator);
+  set_init(&node->parents, DEFAULT_TABLE_SZ, (Hasher)node_edge_hasher,
+           (Comparator)node_edge_comparator);
+  set_init(&node->children, DEFAULT_TABLE_SZ, (Hasher)node_edge_hasher,
+           (Comparator)node_edge_comparator);
 #ifdef ENABLE_MEMORY_LOCK
   node->access_mutex = mutex_create(NULL);
 #endif
@@ -195,7 +190,8 @@ Element memory_graph_new_node(MemoryGraph *graph) {
       .obj = &node->obj,
   };
   e.obj->is_const = false;
-  memory_graph_set_field(graph, e, ADDRESS_KEY, create_int((int32_t)e.obj));
+  Element adr = create_int((int32_t)e.obj);
+  memory_graph_set_field_ptr(graph, e.obj, ADDRESS_KEY, &adr);
   return e;
 }
 
@@ -353,7 +349,43 @@ DEB_FN(void, memory_graph_set_field, MemoryGraph *graph, const Element parent,
   if (OBJECT == field_val.type) {
     memory_graph_inc_edge(graph, parent.obj, field_val.obj);
   }
-  obj_set_field(parent, field_name, field_val);
+  obj_set_field(parent.obj, field_name, &field_val);
+}
+
+DEB_FN(void, memory_graph_set_field_ptr, MemoryGraph *graph, Object *parent,
+       const char field_name[], const Element *field_val) {
+  ASSERT_NOT_NULL(graph);
+  ASSERT_NOT_NULL(parent);
+  ElementContainer *ref = obj_get_field_obj_raw(parent, field_name);
+  // No existing ref.
+  if (NULL == ref) {
+    if (OBJECT == field_val->type) {
+      memory_graph_inc_edge(graph, parent, field_val->obj);
+    }
+    obj_set_field(parent, field_name, field_val);
+    return;
+  }
+  // If the field is already set to an object, remove the edge to the old child
+  // node.
+  if (OBJECT == ref->elt.type) {
+    memory_graph_dec_edge(graph, parent, ref->elt.obj);
+  }
+  if (OBJECT == field_val->type) {
+    memory_graph_inc_edge(graph, parent, field_val->obj);
+  }
+  CommonKey key = CKey_lookup_key(field_name);
+  if (key >= 0) {
+    parent->ltable[key] = *field_val;
+  }
+  ref->elt = *field_val;
+}
+
+DEB_FN(void, memory_graph_set_field_ptr_value, MemoryGraph *graph,
+       Object *parent, const char field_name[], const Value val) {
+  ASSERT_NOT_NULL(graph);
+  ASSERT_NOT_NULL(parent);
+  Element e = {.type = VALUE, .val = val};
+  obj_set_field(parent, field_name, &e);
 }
 
 void memory_graph_set_var(MemoryGraph *graph, const Element block,
@@ -385,7 +417,7 @@ void memory_graph_set_var(MemoryGraph *graph, const Element block,
     memory_graph_inc_edge(graph, relevant_block.obj, field_val.obj);
   }
 
-  obj_set_field(relevant_block, field_name, field_val);
+  obj_set_field(relevant_block.obj, field_name, &field_val);
 }
 
 void traverse_subtree(MemoryGraph *graph, Set *marked, Node *node) {
@@ -456,47 +488,47 @@ Array *extract_array(Element element) {
   return element.obj->array;
 }
 
-void memory_graph_array_push(MemoryGraph *graph, const Element parent,
-                             const Element element) {
+void memory_graph_array_push(MemoryGraph *graph, Object *parent,
+                             const Element *element) {
   ASSERT_NOT_NULL(graph);
-  Array *arr = extract_array(parent);
-  Array_push(arr, element);
-  if (OBJECT == element.type) {
-    memory_graph_inc_edge(graph, parent.obj, element.obj);
+  Array *arr = parent->array;
+  Array_push(arr, *element);
+  if (OBJECT == element->type) {
+    memory_graph_inc_edge(graph, parent, element->obj);
   }
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_size = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent, LENGTH_KEY, &array_size);
 }
 
-void memory_graph_array_set(MemoryGraph *graph, const Element parent,
-                            int64_t index, const Element element) {
+void memory_graph_array_set(MemoryGraph *graph, Object *parent, int64_t index,
+                            const Element *element) {
   ASSERT(NOT_NULL(graph), index >= 0);
-  Array *arr = extract_array(parent);
+  Array *arr = parent->array;
   if (index < Array_size(arr)) {
     Element old = Array_get(arr, index);
     if (old.type == OBJECT) {
-      memory_graph_dec_edge(graph, parent.obj, old.obj);
+      memory_graph_dec_edge(graph, parent, old.obj);
     }
   }
-  Array_set(arr, index, element);
-  if (OBJECT == element.type) {
-    memory_graph_inc_edge(graph, parent.obj, element.obj);
+  Array_set(arr, index, *element);
+  if (OBJECT == element->type) {
+    memory_graph_inc_edge(graph, parent, element->obj);
   }
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_size = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent, LENGTH_KEY, &array_size);
 }
 
-Element memory_graph_array_pop(MemoryGraph *graph, const Element parent) {
+Element memory_graph_array_pop(MemoryGraph *graph, Object *parent) {
   ASSERT_NOT_NULL(graph);
-  ASSERT(OBJECT == parent.type, ARRAY == parent.obj->type);
-  Array *arr = extract_array(parent);
+  ASSERT(ARRAY == parent->type);
+  Array *arr = parent->array;
   ASSERT(Array_size(arr) > 0);
   Element element = Array_pop(arr);
   if (OBJECT == element.type) {
-    memory_graph_dec_edge(graph, parent.obj, element.obj);
+    memory_graph_dec_edge(graph, parent, element.obj);
   }
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_size = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent, LENGTH_KEY, &array_size);
   return element;
 }
 
@@ -508,8 +540,8 @@ void memory_graph_array_enqueue(MemoryGraph *graph, const Element parent,
   if (OBJECT == element.type) {
     memory_graph_inc_edge(graph, parent.obj, element.obj);
   }
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_size = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent.obj, LENGTH_KEY, &array_size);
 }
 
 Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
@@ -526,8 +558,8 @@ Element memory_graph_array_join(MemoryGraph *graph, const Element a1,
   }
   set_iterate(&a1.obj->node->children, append_child_edges);
   set_iterate(&a2.obj->node->children, append_child_edges);
-  memory_graph_set_field(graph, joined, LENGTH_KEY,
-                         create_int(Array_size(joined.obj->array)));
+  Element array_size = create_int(Array_size(joined.obj->array));
+  memory_graph_set_field_ptr(graph, joined.obj, LENGTH_KEY, &array_size);
   return joined;
 }
 
@@ -538,8 +570,8 @@ Element memory_graph_array_dequeue(MemoryGraph *graph, const Element parent) {
   if (OBJECT == element.type) {
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_size = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent.obj, LENGTH_KEY, &array_size);
   return element;
 }
 
@@ -551,8 +583,8 @@ Element memory_graph_array_remove(MemoryGraph *graph, const Element parent,
   if (OBJECT == element.type) {
     memory_graph_dec_edge(graph, parent.obj, element.obj);
   }
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_size = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent.obj, LENGTH_KEY, &array_size);
   return element;
 }
 
@@ -575,8 +607,8 @@ void memory_graph_array_shift(MemoryGraph *graph, const Element parent,
   }
   // TODO: Need to inc edges of members that are now present twice.
   Array_shift_amount(arr, start, count, shift);
-  memory_graph_set_field(graph, parent, LENGTH_KEY,
-                         create_int(Array_size(arr)));
+  Element array_len = create_int(Array_size(arr));
+  memory_graph_set_field_ptr(graph, parent.obj, LENGTH_KEY, &array_len);
 }
 
 void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,
@@ -586,8 +618,9 @@ void memory_graph_tuple_add(MemoryGraph *graph, const Element tuple,
   if (OBJECT == elt.type) {
     memory_graph_inc_edge(graph, tuple.obj, elt.obj);
   }
-  memory_graph_set_field(graph, tuple, LENGTH_KEY,
-                         create_int(tuple_size(tuple.obj->tuple)));
+
+  Element tuple_len = create_int(tuple_size(tuple.obj->tuple));
+  memory_graph_set_field_ptr(graph, tuple.obj, LENGTH_KEY, &tuple_len);
 }
 
 void memory_graph_print(const MemoryGraph *graph, FILE *file) {

@@ -90,8 +90,9 @@ String *String_of(VM *vm, ExternalData *data, const char *src, size_t len) {
 
 void String_fill(VM *vm, ExternalData *data, String *string) {
   map_insert(&data->state, STRING_NAME, string);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
 }
 
 Element string_constructor(VM *vm, Thread *t, ExternalData *data,
@@ -251,8 +252,9 @@ Element string_set(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   } else {
     ERROR("BAD STRING.");
   }
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return create_none();
 }
 
@@ -265,8 +267,9 @@ Element string_extend(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   String *tail = String_extract(*arg);
   ASSERT(NOT_NULL(tail));
   String_append(head, tail);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(head)));
+  Element string_size = create_int(String_size(head));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -300,8 +303,9 @@ Element string_extend_range(VM *vm, Thread *t, ExternalData *data,
   ASSERT(NOT_NULL(substr));
 
   String_append_range(string, substr, start.val.int_val, end.val.int_val);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -320,8 +324,9 @@ Element string_ltrim(VM *vm, Thread *t, ExternalData *data, Element *arg) {
     ++i;
   }
   String_lshrink(string, i);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -333,8 +338,9 @@ Element string_rtrim(VM *vm, Thread *t, ExternalData *data, Element *arg) {
     ++i;
   }
   String_rshrink(string, i);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -351,8 +357,9 @@ Element string_trim(VM *vm, Thread *t, ExternalData *data, Element *arg) {
     ++i;
   }
   String_rshrink(string, i);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -366,8 +373,9 @@ Element string_lshrink(VM *vm, Thread *t, ExternalData *data, Element *arg) {
     return throw_error(vm, t, "Cannot shrink more than the entire size.");
   }
   String_lshrink(string, arg->val.int_val);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -381,8 +389,9 @@ Element string_rshrink(VM *vm, Thread *t, ExternalData *data, Element *arg) {
     return throw_error(vm, t, "Cannot shrink more than the entire size.");
   }
   String_rshrink(string, arg->val.int_val);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 
@@ -390,8 +399,9 @@ Element string_clear(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   String *string = map_lookup(&data->state, STRING_NAME);
   ASSERT(NOT_NULL(string));
   String_clear(string);
-  memory_graph_set_field(vm->graph, data->object, LENGTH_KEY,
-                         create_int(String_size(string)));
+  Element string_size = create_int(String_size(string));
+  memory_graph_set_field_ptr(vm->graph, data->object.obj, LENGTH_KEY,
+                             &string_size);
   return data->object;
 }
 

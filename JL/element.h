@@ -85,6 +85,8 @@ typedef struct ElementContainer_ {
   Element elt;
 } ElementContainer;
 
+extern const Element ELEMENT_NONE;
+
 Element create_none();
 Element create_int(int64_t val);
 Element create_float(double val);
@@ -124,18 +126,21 @@ Element val_to_elt(Value val);
 Value value_negate(Value val);
 
 Element obj_lookup(Object *obj, CommonKey key);
-void obj_set_field(Element elt, const char field_name[], Element field_val);
-ElementContainer *obj_get_field_obj_raw(Object *obj, const char field_name[]);
-Element obj_get_field_obj(Object *obj, const char field_name[]);
+Element *obj_lookup_ptr(Object *obj, CommonKey key);
+void obj_set_field(Object *elt, const char field_name[],
+                   const Element *const field_val);
+ElementContainer *obj_get_field_obj_raw(const Object *const obj,
+                                        const char field_name[]);
+Element obj_get_field_obj(const Object *constobj, const char field_name[]);
 Element obj_get_field(Element elt, const char field_name[]);
-Element obj_get_field_ptr(Element *elt, const char field_name[]);
-Element obj_deep_lookup(Object *obj, const char name[]);
-Element obj_deep_lookup_ckey(Object *obj, CommonKey key);
+Element *obj_get_field_ptr(const Object *const obj, const char field_name[]);
+Element *obj_deep_lookup(const Object *const obj, const char name[]);
+Element *obj_deep_lookup_ckey(const Object *const obj, CommonKey key);
 void obj_delete_ptr(Object *obj, bool free_mem);
 
 void class_parents(Element child_class, Set *classes);
 typedef bool (*ObjectActionUntil)(Object *);
-void class_parents_action(Element child_class, ObjectActionUntil process);
+void class_parents_action(Object *child_class, ObjectActionUntil process);
 
 // Will fail if there is a cycle
 void obj_to_str(Object *obj, FILE *file);
