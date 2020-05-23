@@ -67,6 +67,7 @@ typedef enum {
   Postfix_field,
   Postfix_fncall,
   Postfix_array_index,
+  // Increments/decrements.
   Postfix_increment,
   Postfix_decrement
 } PostfixType;
