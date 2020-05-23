@@ -25,6 +25,7 @@
 #define SOCKET_ERROR (-1)
 
 static Element sh_class;
+Element class_socket;
 
 Element SocketHandle_constructor(VM *vm, Thread *t, ExternalData *data,
                                  Element *arg);
@@ -51,7 +52,7 @@ Element Socket_constructor(VM *vm, Thread *t, ExternalData *data,
     return throw_error(vm, t, "Could not bind to socket.");
   }
   if (SOCKET_ERROR == socket_listen(socket, tuple_get(tuple, 4).val.int_val)) {
-    return throw_error(vm, t, "Could not listen to ocket.");
+    return throw_error(vm, t, "Could not listen to socket.");
   }
   return data->object;
 }
@@ -175,11 +176,11 @@ Element add_sockethandle_class(VM *vm, Element module) {
 }
 
 Element add_socket_class(VM *vm, Element module) {
-  Element socket_class =
+  class_socket =
       create_external_class(vm, module, strings_intern("Socket"),
                             Socket_constructor, Socket_deconstructor);
-  add_external_method(vm, socket_class, strings_intern("accept"),
+  add_external_method(vm, class_socket, strings_intern("accept"),
                       Socket_accept);
-  add_external_method(vm, socket_class, strings_intern("close"), Socket_close);
-  return socket_class;
+  add_external_method(vm, class_socket, strings_intern("close"), Socket_close);
+  return class_socket;
 }

@@ -74,6 +74,7 @@ ImplProduce(compound_statement, Tape *tape) {
 ImplPopulate(try_statement, const SyntaxTree *stree) {
   ASSERT(!IS_LEAF(stree), !IS_LEAF(stree->first),
          IS_TOKEN(stree->first->first, TRY));
+  try_statement->try_token = stree->first->first->token;
   try_statement->try_body = populate_expression(stree->first->second->first);
 
   ASSERT(!IS_LEAF(stree->first->second->second),
@@ -104,8 +105,9 @@ ImplProduce(try_statement, Tape *tape) {
 
   int goto_pos = try_ins - 1;
 
-  num_ins +=
-      tape->ins_int(tape, CTCH, goto_pos, try_statement->catch_token) + try_ins;
+  num_ins += tape->ins_no_arg(tape, NBLK, try_statement->try_token) +
+             tape->ins_int(tape, CTCH, goto_pos, try_statement->catch_token) +
+             try_ins;
   tape_append(tape, try_body_tape);
 
   Tape *error_assign_tape = tape_create();
@@ -119,8 +121,10 @@ ImplProduce(try_statement, Tape *tape) {
   num_ins += num_assign + catch_ins;
   tape_append(tape, error_assign_tape);
   tape_append(tape, catch_body_tape);
-  num_ins += tape->ins_no_arg(tape, RNIL, try_statement->catch_token) +
-             tape->ins_text(tape, SET, "$try_goto", try_statement->catch_token);
+  num_ins +=
+      tape->ins_no_arg(tape, RNIL, try_statement->catch_token) +
+      tape->ins_text(tape, SET, "$try_goto", try_statement->catch_token) +
+      tape->ins_no_arg(tape, BBLK, try_statement->try_token);
 
   tape_delete(try_body_tape);
   tape_delete(error_assign_tape);

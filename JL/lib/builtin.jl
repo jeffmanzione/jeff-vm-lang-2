@@ -326,13 +326,13 @@ class Array {
     }
     self
   }
-  method inssort(c, l=0, h=len-1) {
+  method inssort(c, l=0, h=len) {
     i = l + 1
     while i < h {
       x = self[i]
       j = i-1
-      while (j >= l)  {
-        if (self[j] <= x) {
+      while j >= l  {
+        if c(self[j],x) <= 0 {
           break
         }
         j = j - 1
@@ -344,7 +344,7 @@ class Array {
     self
   }
   method sort() {
-    self.introsort(math.log(len) * 2, cmp, 0, len-1)
+    self.introsort(math.log(len) * 2, cmp, 0, len)
   }
   method iter() {
     IndexIterator(self)
@@ -394,6 +394,9 @@ class String {
     find(substr) != None
   }
   method starts_with(array) {
+    if array.len > len {
+      return False
+    }
     return equals_range(array, 0, array.len)
   }
   method join(array) {

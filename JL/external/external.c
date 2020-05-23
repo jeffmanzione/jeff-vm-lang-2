@@ -271,6 +271,7 @@ bool is_object_type(const Element *e, int type) {
 }
 
 Element throw_error(VM *vm, Thread *t, const char msg[]) {
+  DEBUGF(msg);
   vm_throw_error(vm, t, t_current_ins(t), msg);
   return t_get_resval(t);
 }

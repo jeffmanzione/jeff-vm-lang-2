@@ -11,6 +11,7 @@
 
 #include "../error.h"
 #include "commandline_arg.h"
+#include "lib_finder.h"
 
 void argconfig_compile(ArgConfig* const config) {
   ASSERT(NOT_NULL(config));
@@ -28,7 +29,7 @@ void argconfig_run(ArgConfig* const config) {
   argconfig_add(config, ArgKey__EXECUTE, "ex", arg_bool(true));
   argconfig_add(config, ArgKey__INTERPRETER, "i", arg_bool(false));
   argconfig_add(config, ArgKey__BUILTIN_DIR, "builtin_dir",
-                arg_string("./lib/bin/"));
+                arg_string(path_to_libs()));
   argconfig_add(config, ArgKey__BUILTIN_FILES, "builtin_files",
                 arg_stringlist("error,"
                                "io,"

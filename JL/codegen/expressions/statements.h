@@ -12,7 +12,6 @@
 #include "assignment.h"
 #include "expression_macros.h"
 
-
 typedef struct {
   Token *if_token;
   ExpressionTree *condition;
@@ -28,14 +27,12 @@ void populate_if_else(IfElse *if_else, const SyntaxTree *stree);
 void delete_if_else(IfElse *if_else);
 int produce_if_else(IfElse *if_else, Tape *tape);
 
-DefineExpression(compound_statement) {
-  Expando *expressions;
-};
+DefineExpression(compound_statement) { Expando *expressions; };
 
 DefineExpression(try_statement) {
   ExpressionTree *try_body;
   Assignment error_assignment_lhs;
-  const Token *catch_token;
+  const Token *try_token, *catch_token;
   ExpressionTree *catch_body;
 };
 
@@ -44,9 +41,7 @@ DefineExpression(raise_statement) {
   ExpressionTree *exp;
 };
 
-DefineExpression(selection_statement) {
-  IfElse if_else;
-};
+DefineExpression(selection_statement) { IfElse if_else; };
 
 DefineExpression(jump_statement) {
   const Token *return_token;
@@ -54,14 +49,10 @@ DefineExpression(jump_statement) {
 };
 
 DefineExpression(break_statement) {
-  enum {
-    Break_break, Break_continue
-  } type;
+  enum { Break_break, Break_continue } type;
   const Token *token;
 };
 
-DefineExpression(exit_statement) {
-  const Token *token;
-};
+DefineExpression(exit_statement) { const Token *token; };
 
 #endif /* CODEGEN_EXPRESSIONS_STATEMENTS_H_ */

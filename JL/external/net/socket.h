@@ -10,6 +10,8 @@
 
 #include "../../element.h"
 
+extern Element class_socket;
+
 Element add_sockethandle_class(VM *vm, Element module);
 Element add_socket_class(VM *vm, Element module);
 

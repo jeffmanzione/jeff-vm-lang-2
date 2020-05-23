@@ -65,7 +65,8 @@ void thread_start(Thread *t, VM *vm) {
   Element current_block = t_current_block(t);
 
   if (inherits_from(obj_get_field_obj(fn.obj, CLASS_KEY).obj,
-                    class_function.obj)) {
+                    class_function.obj) ||
+      ISTYPE(fn, class_anon_function)) {
     Element parent_module = obj_get_field(fn, PARENT_MODULE);
     t_set_module(t, parent_module, 0);
     vm_call_fn(vm, t, parent_module, fn);
@@ -105,23 +106,27 @@ void thread_delete(Thread *t) {
 
 Element Thread_constructor(VM *vm, Thread *t, ExternalData *data,
                            Element *arg) {
-  if (!is_object_type(arg, TUPLE)) {
-    DEBUGF("NEVER HERE.");
-    return throw_error(vm, t, "Arguments to Thread must be a tuple.");
+  Element e_fn, e_arg;
+  if (is_object_type(arg, TUPLE)) {
+    Tuple *args = arg->obj->tuple;
+    if (tuple_size(args) < 1) {
+      return throw_error(vm, t, "Too few arguments for Thread constructor.");
+    }
+    e_fn = tuple_get(args, 0);
+    e_arg = tuple_get(args, 1);
+
+  } else {
+    e_fn = *arg;
+    e_arg = create_none();
   }
-  Tuple *args = arg->obj->tuple;
-  if (tuple_size(args) < 2) {
-    DEBUGF("NEVER HERE.");
-    return throw_error(vm, t, "Too few arguments for Thread constructor.");
-  }
-  Element e_fn = tuple_get(args, 0);
   if (!ISTYPE(e_fn, class_function) && !ISTYPE(e_fn, class_methodinstance) &&
       !ISTYPE(e_fn, class_method) && !ISTYPE(e_fn, class_class) &&
       !ISTYPE(e_fn, class_anon_function) &&
-      !ISTYPE(e_fn, class_external_methodinstance)) {
+      !ISTYPE(e_fn, class_external_methodinstance) &&
+      !ISTYPE(e_fn, class_external_function) &&
+      !ISTYPE(e_fn, class_anon_function)) {
     return throw_error(vm, t, "Thread must be passed a function or class.");
   }
-  Element e_arg = tuple_get(args, 1);
 
   memory_graph_set_field(vm->graph, data->object, strings_intern("fn"), e_fn);
   memory_graph_set_field(vm->graph, data->object, strings_intern("arg"), e_arg);
@@ -339,6 +344,7 @@ void t_shift_ip(Thread *t, int num_ins) {
   ASSERT_NOT_NULL(t);
   Element *block = t_current_block_ptr(t);
   ASSERT(OBJECT == block->type);
+  obj_lookup_ptr(block->obj, CKey_$ip)->val.int_val += num_ins;
   ElementContainer *ip = obj_get_field_obj_raw(block->obj, IP_FIELD);
   ASSERT(NOT_NULL(ip), ip->elt.type == VALUE);
   ip->elt.val.int_val += num_ins;
@@ -361,16 +367,14 @@ uint32_t t_get_ip(const Thread *t) {
   ASSERT_NOT_NULL(t);
   Element *block = t_current_block_ptr(t);
   ASSERT(OBJECT == block->type);
-  Element *ip = obj_get_field_ptr(block->obj, IP_FIELD);
-  ASSERT(VALUE == ip->type,
-         INT == ip->val.type);  // @suppress("Symbol is not resolved")
-  return (uint32_t)ip->val.int_val;
+  return obj_lookup(block->obj, CKey_$ip).val.int_val;
 }
 
 void t_set_ip(Thread *t, uint32_t ip) {
   ASSERT_NOT_NULL(t);
   Element *block = t_current_block_ptr(t);
   ASSERT(OBJECT == block->type);
+  obj_lookup_ptr(block->obj, CKey_$ip)->val.int_val = ip;
   Element *ipc = obj_get_field_ptr(block->obj, IP_FIELD);
   ASSERT(NOT_NULL(ipc), ipc->type == VALUE);
   ipc->val.int_val = ip;
@@ -393,9 +397,7 @@ DEB_FN(Element, t_get_module, const Thread *t) {
   ASSERT_NOT_NULL(t);
   Element block = t_current_block(t);
   ASSERT(OBJECT == block.type);
-  Element module = obj_get_field(block, MODULE_FIELD);
-  ASSERT(OBJECT == module.type, MODULE == module.obj->type);
-  return module;
+  return obj_lookup(block.obj, CKey_$module);
 }
 
 void t_set_resval(Thread *t, const Element elt) {

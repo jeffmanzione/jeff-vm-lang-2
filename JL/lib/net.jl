@@ -3,6 +3,7 @@ module net
 import error
 import io
 import struct
+import sync
 import time
 
 self.SOCKET_ERROR = -1
@@ -27,11 +28,15 @@ self.F_SLASH = '/'
 self.COLON = ':'
 self.RETURN_NEWLINE = '\r\n'
 
-self.NOT_FOUND = 'Could not find file.'
+self.COOKIE_KEY = 'Cookie'
+self.COOKIE_SEPARATOR = '; '
 
+self.NOT_FOUND = 'Could not find file.'
 self.HEADER_GENERIC_200_HTML = 'HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n'
 self.HEADER_GENERIC_200_CSS = 'HTTP/1.1 200 OK\r\nContent-Type: text/css; charset=UTF-8\r\n\r\n'
 self.HEADER_GENERIC_200_JS = 'HTTP/1.1 200 OK\r\nContent-Type: text/javascript; charset=UTF-8\r\n\r\n'
+self.HEADER_GENERIC_500 = 'HTTP/1.1 500 Internal Server Error\r\n\r\n'
+self.HEADER_GENERIC_501 = 'HTTP/1.1 501 Not Implemented\r\n\r\n'
 
 def init() {
   if self.is_inited {
@@ -100,9 +105,37 @@ class HttpRequest {
         }
         ret.extend(AMPER.join(param_arr))
       }
-      ret.extend(concat(WHITE_SPACE, protocol, F_SLASH, version))
+      ret.extend(WHITE_SPACE).extend(protocol).extend(F_SLASH)
+          .extend(version).extend('\n')
+      if map {
+        for (k,v) in map {
+          ret.extend('  ').extend(k).extend(': ').extend(str(v))
+              .extend('\n')
+        }
+      }
       return ret
     }
+}
+
+def redirect(request, target) {
+  response = 'HTTP/1.1 301 Internal Redirect\r\nLocation: '
+  if target.ends_with('/') and request.path.starts_with('/') {
+    response.extend(target).extend(request.path.substr(1))
+  } else if target.ends_with('/') or request.path.starts_with('/') or request.path.len == 0 or target.len == 0 {
+    response.extend(target).extend(request.path)
+  } else {
+    response.extend(target).extend('/').extend(request.path)
+  }
+  if request.params and (request.params.keys.len > 0) {
+    response.extend(QUESTION)
+    param_arr = []
+    for (k, v) in request.params {
+      param_arr.append(concat(k, EQUALS, v))
+    }
+    response.extend(AMPER.join(param_arr))
+  }
+  response.extend('\r\nNon-Authoritative-Reason: HSTS\r\n\r\n')
+  return response
 }
 
 def parse_params(path) {
@@ -142,13 +175,37 @@ def parse_request(req) {
     map = {}
     for i=1, i<parts.len, i=i+1 {
       kv = parts[i].split(COLON)
+      key = kv[0].trim()
       map[kv[0].trim()] = kv[1].trim()
     }
-    return HttpRequest(type, path, params, protocol[0], protocol[1], None)
+    return HttpRequest(type, path, params, protocol[0], protocol[1], map)
   } catch e {
     io.fprintln(io.ERROR, e)
     return None
   }
+}
+
+class Cookies {
+  new(field map) {}
+  method get(key) {
+    return map[key]
+  }
+  method to_s() {
+    res = '{'
+    map.each((k,v) -> res.extend('\"').extend(str(k)).extend('\":\"').extend(str(v)).extend('\" '))
+    res.extend('}')
+    return res
+  }
+}
+
+def parse_cookie(cookie) {
+  res = {}
+  kvs = cookie.split(COOKIE_SEPARATOR)
+  for i=0, i<kvs.len, i=i+1 {
+    kv = kvs[i].split(EQUALS)
+    res[kv[0]]= kv[1]
+  }
+  return Cookies(res)
 }
 
 def html_escape(text) {
@@ -252,5 +309,138 @@ class CachedTextRenderer {
         }
       }
     }
+  }
+}
+
+class Server {
+  field ex
+  new(field applications={}, field pool_size) {
+    ex = sync.ThreadPool(pool_size)
+  }
+  
+  method start() {
+    for (port, app) in applications {
+      try {
+        sock = app.create_socket(port)
+        ex.execute(
+          (app) {
+            while True {
+              handle = None
+              handle = sock.accept()
+              ex.execute((handle) {
+                try {
+                  req = parse_request(handle.receive())
+                  app.process(req, handle.send)
+                } catch e {
+                  if handle {
+                    handle.send([HEADER_GENERIC_500, 'Sorry.\n'])
+                  }
+                  io.fprintln(io.ERROR, e)
+                }
+                if handle {
+                  handle.close()
+                }
+              }, handle)
+            }
+          }, app)
+      } catch e {
+        io.fprintln(io.ERROR, e)
+      }
+    }
+    sync.sleep(sync.INFINITE)
+  }
+}
+
+class Application {
+  method create_socket(port) {
+    raise Error('Not Implemented.')
+  }
+  method process(req, sink) {
+    sink([HEADER_GENERIC_501, 'Application not implemented.\n'])
+  }
+}
+
+class HttpApplication : Application {
+  new(field respond) {}
+  method create_socket(port) {
+    Socket(AF_INET, SOCK_STREAM, port, 0, 4)
+  }
+  method process(req, sink) {
+    sink(_get_header(req))
+    respond(req, sink)
+  }
+  method _get_header(req) {
+    if req.path.ends_with('.css') {
+      return HEADER_GENERIC_200_CSS
+    }
+    if req.path.ends_with('.js') {
+      return HEADER_GENERIC_200_JS
+    }
+    return HEADER_GENERIC_200_HTML
+  }
+}
+
+class HttpsWrapperApplication : Application {
+  new(field http_application,
+      field cert_fn,
+      field private_key_fn) {}
+  method create_socket(port) {
+    SSLSocket(
+      http_application.create_socket(port),
+      cert_fn,
+      private_key_fn)
+  }
+  method process(req, sink) {
+    http_application.process(req, sink)
+  }
+}
+
+self.ANY = None
+
+class HttpRedirect : HttpApplication {
+  new(field redirect_to_addr) {
+    self.HttpApplication.new(()->None)
+  }
+  method process(req, sink) {
+    sink(redirect(req, redirect_to_addr))
+  }
+}
+
+def wrap_in_ssl(application, cert_fn, private_key_fn) {
+  HttpsWrapperApplication(application, cert_fn, private_key_fn)
+}
+
+class ShardedHttpApplication : HttpApplication {
+  new(field shards) {
+    directory = 
+        $module.HttpApplication(
+            (req, sink) {
+              response = '<table>'
+              for (path, app) in shards {
+                response.extend('<tr><td><a href=\"').extend(path).extend('\">').extend(path).extend('</a></td><td>')
+                response.extend(str(app)).extend('</td></tr>')
+              }
+              response.extend('</table>')
+              sink(response)
+            })
+    shards['/index'] = directory
+    if '/' notin shards {
+      shards['/'] = directory
+    }
+    ; Sort from longest to shortest.
+    shards.keys.inssort((x,y) -> y.len - x.len)
+  }
+  method process(req, sink) {
+    for (_,shard_key) in shards.keys {
+      if req.path.starts_with(shard_key) {
+        shards[shard_key].process(_rebase(shard_key, req), sink)
+        return
+      }
+    }
+    sink([HEADER_GENERIC_500, 'No such shard.\n'])
+  }
+  method _rebase(shard_key, req) {
+    req.path = req.path.substr(shard_key.len)
+    return req
   }
 }

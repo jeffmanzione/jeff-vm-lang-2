@@ -12,8 +12,6 @@
 #include "arena/strings.h"
 #include "codegen/expressions/expression.h"
 #include "codegen/parse.h"
-#include "codegen/syntax.h"
-#include "codegen/tokenizer.h"
 #include "command/commandline.h"
 #include "command/commandlines.h"
 #include "datastructure/map.h"
@@ -25,37 +23,9 @@
 #include "ltable/ltable.h"
 #include "memory/memory.h"
 #include "optimize/optimize.h"
-#include "program/tape.h"
+#include "program/module.h"
 #include "vm/vm.h"
 
-void test_expression(const char expression[]) {
-  FILE *file = tmpfile();
-  printf("EXPR: %s\n", expression);
-  fflush(stdout);
-  fprintf(file, "%s", expression);
-  rewind(file);
-
-  expression_init();
-  Parser parser;
-  FileInfo *fi = file_info_file(file);
-  parser_init(&parser, fi);
-  SyntaxTree stree = file_level_statement_list(&parser);
-  syntax_tree_to_str(&stree, &parser, stdout);
-  printf("\n");
-  fflush(stdout);
-  ExpressionTree *etree = populate_expression(&stree);
-  Tape *tape = tape_create();
-  produce_instructions(etree, tape);
-  tape_write(tape, stdout);
-  fflush(stdout);
-
-  tape_delete(tape);
-  delete_expression(etree);
-  syntax_tree_delete(&stree);
-  parser_finalize(&parser);
-  file_info_delete(fi);
-  expression_finalize();
-}
 int main(int argc, const char *argv[]) {
 #ifdef MEMORY_WRAPPER
   alloc_init();

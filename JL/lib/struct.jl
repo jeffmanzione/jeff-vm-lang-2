@@ -196,7 +196,7 @@ class RobinHoodMap {
     sz = new_table_size
     first = new_first
     last = new_last
-    entries_thresh _calc_threshold(new_table_size)
+    entries_thresh = _calc_threshold(new_table_size)
   }
   method __in__(const k) {
     __index__(k)

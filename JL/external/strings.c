@@ -560,6 +560,22 @@ Element string_ends_with(VM *vm, Thread *t, ExternalData *data, Element *arg) {
   return cmp == 0 ? create_int(1) : create_none();
 }
 
+Element string_cmp(VM *vm, Thread *t, ExternalData *data, Element *arg) {
+  String *string = String_extract(data->object);
+  if (!ISTYPE(*arg, class_string)) {
+    return throw_error(vm, t,
+                       "Cannot compare string to something not a string.");
+  }
+  String *other_str = String_extract(*arg);
+  size_t len = min(String_size(string), String_size(other_str));
+  int cmp = strncmp(String_cstr(string), String_cstr(other_str), len);
+  return create_int(
+      (cmp == 0) ? String_size(string) > String_size(other_str)
+                       ? 1
+                       : String_size(string) < String_size(other_str) ? -1 : 0
+                 : cmp);
+}
+
 void merge_string_class(VM *vm, Element string_class) {
   merge_external_class(vm, string_class, string_constructor,
                        string_deconstructor);
@@ -588,6 +604,7 @@ void merge_string_class(VM *vm, Element string_class) {
   add_external_method(vm, string_class, strings_intern("eq"), string_eq);
   add_external_method(vm, string_class, strings_intern("equals_range"),
                       string_equals_range);
+  add_external_method(vm, string_class, strings_intern("cmp"), string_cmp);
   add_external_method(vm, string_class, strings_intern("hash"), string_hash);
   add_external_method(vm, string_class, strings_intern("ends_with"),
                       string_ends_with);

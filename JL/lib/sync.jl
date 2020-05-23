@@ -3,7 +3,7 @@ module sync
 import io
 import struct
 
-self.INIFINITE = 2147483647
+self.INFINITE = 2147483647
 self.LOCK_ACQUIRED = 0
 
 class AtomicInt {
@@ -61,7 +61,7 @@ class ThreadPool {
       }
       mutex.release()
 
-      if task != None {
+      if task{
         task.exec()
         task = None
       }
